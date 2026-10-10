@@ -1,0 +1,8 @@
+<%- include('../layout/header', { title: 'Error', currentUser: null }) %>
+<div class="container--narrow text-center" style="padding:80px 24px">
+  <div style="font-size:3rem;margin-bottom:16px">⚠️</div>
+  <h1>Algo salió mal</h1>
+  <p class="text-muted mt-2"><%= message || 'Error interno del servidor.' %></p>
+  <a href="/" class="btn btn--navy mt-3">Volver al inicio</a>
+</div>
+<%- include('../layout/footer') %>

@@ -1,0 +1,21 @@
+<%- include('../layout/header', { title: __('payment.success_title'), currentUser: user }) %>
+
+<div class="container--narrow text-center" style="padding:60px 24px">
+  <div style="font-size:4rem;margin-bottom:16px">✅</div>
+  <h1 style="margin-bottom:8px"><%- __('payment.success_title') %></h1>
+  <p class="text-muted" style="margin-bottom:32px"><%- __('payment.success_subtitle') %> <strong><%= user.email %></strong>.</p>
+
+  <div class="card" style="text-align:left;margin-bottom:24px">
+    <h3 style="margin-bottom:8px"><%- __('payment.success_next_title') %></h3>
+    <ol style="padding-left:20px;line-height:2">
+      <li><%- __('payment.success_next_1') %></li>
+      <li><%- __('payment.success_next_2') %></li>
+      <li><%- __('payment.success_next_3') %></li>
+      <li><%- __('payment.success_next_4') %></li>
+    </ol>
+  </div>
+
+  <a href="/dashboard" class="btn btn--primary"><%- __('payment.success_cta') %></a>
+</div>
+
+<%- include('../layout/footer') %>

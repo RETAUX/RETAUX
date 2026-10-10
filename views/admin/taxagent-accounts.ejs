@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tax Agent Portal — RETAUX Admin</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { min-height: 100vh; background: #F0F4F8; font-family: 'Segoe UI', Arial, sans-serif; color: #1a2430; }
+
+  nav { background: #060C14; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; height: 52px; position: sticky; top: 0; z-index: 100; }
+  .nav-logo { font-size: 1.2rem; font-weight: 900; letter-spacing: 0.04em; }
+  .nav-logo span:first-child { color: #38BDF8; }
+  .nav-logo span:last-child  { color: #FFC107; }
+  .nav-links { display: flex; gap: 20px; }
+  .nav-links a { color: rgba(255,255,255,0.5); text-decoration: none; font-size: 0.82rem; }
+  .nav-links a:hover { color: #fff; }
+
+  .page { max-width: 1200px; margin: 0 auto; padding: 32px 24px 80px; }
+
+  .section-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .section-head h2 { font-size: 1rem; font-weight: 700; color: #060C14; }
+  .section-head p  { font-size: 0.8rem; color: #7a8a9a; margin-top: 3px; }
+
+  .alert { border-radius: 6px; padding: 10px 14px; font-size: 0.85rem; margin-bottom: 20px; }
+  .alert-error   { background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; }
+  .alert-success { background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; }
+
+  .card { background: #fff; border-radius: 10px; padding: 22px 24px; box-shadow: 0 1px 6px rgba(0,0,0,0.07); margin-bottom: 28px; }
+
+  /* Accounts table */
+  .accounts-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .accounts-table th { padding: 9px 12px; text-align: left; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.55); background: #060C14; white-space: nowrap; }
+  .accounts-table td { padding: 10px 12px; border-bottom: 1px solid #EEF1F4; vertical-align: middle; }
+  .accounts-table tbody tr:last-child td { border-bottom: none; }
+  .accounts-table tbody tr:hover { background: #F8FAFC; }
+
+  .badge { display: inline-block; font-size: 0.67rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
+  .badge-active  { background: #D1FAE5; color: #065F46; }
+  .badge-revoked { background: #F3F4F6; color: #6B7280; }
+
+  .btn-sm { border-radius: 5px; padding: 4px 11px; font-size: 0.77rem; font-weight: 600; cursor: pointer; border: 1px solid; }
+  .btn-revoke  { background: #FEF2F2; color: #DC2626; border-color: #FECACA; }
+  .btn-restore { background: #ECFDF5; color: #059669; border-color: #A7F3D0; }
+  .btn-revoke:hover  { background: #FEE2E2; }
+  .btn-restore:hover { background: #D1FAE5; }
+  .created-at { font-size: 0.78rem; color: #9CA3AF; }
+  .empty-sm { padding: 24px; text-align: center; color: #9CA3AF; font-size: 0.87rem; }
+
+  /* Live portal table — identical to tax agent dashboard */
+  .live-controls { margin-bottom: 14px; }
+  .search-live { border: 1px solid #D1D5DB; border-radius: 7px; padding: 8px 12px 8px 34px; font-size: 0.86rem; color: #1a2430; outline: none; background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%239CA3AF' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 10px center; width: 300px; }
+  .search-live:focus { border-color: #38BDF8; }
+
+  .portal-wrap { overflow-x: auto; }
+  .portal-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 1100px; }
+  .portal-table th { padding: 11px 12px; text-align: left; font-size: 0.69rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: rgba(255,255,255,0.5); background: #060C14; white-space: nowrap; }
+  .portal-table th.edit-col { color: #FFC107; }
+  .portal-table td { padding: 10px 12px; border-bottom: 1px solid #EEF1F4; vertical-align: middle; }
+  .portal-table tbody tr:last-child td { border-bottom: none; }
+  .portal-table tbody tr:hover { background: #F8FAFC; }
+  .portal-table tbody tr.overdue-row { background: #FEF2F2; }
+  .portal-table tbody tr.issued-row  { background: #F0FDF4; }
+  .portal-table tbody tr.hidden-row  { display: none; }
+
+  .mono { font-family: 'Courier New', monospace; font-size: 0.8rem; color: #374151; letter-spacing: 0.04em; }
+  .muted { font-size: 0.8rem; color: #9CA3AF; }
+
+  .badge-with-agent { background: #DBEAFE; color: #1D4ED8; }
+  .badge-issued     { background: #8B5CF6; color: #fff; }
+  .badge-processing { background: #F3F4F6; color: #6B7280; }
+  .badge-overdue    { background: #DC2626; color: #fff; }
+  .badge-done       { background: #D1FAE5; color: #065F46; }
+
+  .btn-view { display: inline-flex; align-items: center; gap: 4px; background: #060C14; color: #38BDF8; border: 1px solid #38BDF8; border-radius: 5px; padding: 5px 11px; font-size: 0.77rem; font-weight: 600; text-decoration: none; white-space: nowrap; }
+  .btn-view:hover { background: #0f172a; }
+  .no-rep { font-size: 0.72rem; color: #D1D5DB; }
+
+  .no-results { display: none; text-align: center; padding: 24px; color: #9CA3AF; font-size: 0.86rem; }
+  .dl-btn { display: inline-flex; align-items: center; gap: 6px; background: #F0F4F8; color: #374151; border: 1px solid #D1D5DB; border-radius: 7px; padding: 7px 14px; font-size: 0.82rem; font-weight: 600; text-decoration: none; white-space: nowrap; }
+  .dl-btn:hover { background: #E5E7EB; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo"><span>RE</span><span>TAUX</span> <span style="color:rgba(255,255,255,0.3);font-size:0.73rem;font-weight:400;">Admin</span></div>
+  <div class="nav-links">
+    <a href="/admin">← Dashboard</a>
+    <a href="/admin/logout">Sign out</a>
+  </div>
+</nav>
+
+<div class="page">
+
+  <% if (error)   { %><div class="alert alert-error"><%= error %></div><% } %>
+  <% if (success) { %><div class="alert alert-success"><%= success %></div><% } %>
+
+  <!-- ── Tax Agent accounts ── -->
+  <div class="card">
+    <div class="section-head">
+      <div>
+        <h2>Tax agent accounts</h2>
+        <p>Accounts with access to the tax agent portal.</p>
+      </div>
+    </div>
+    <% const taxAgents = agents.filter(a => a.role === 'taxagent' || a.role === 'taxagent_revoked'); %>
+    <% if (taxAgents.length === 0) { %>
+      <div class="empty-sm">No tax agent accounts.</div>
+    <% } else { %>
+    <table class="accounts-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% taxAgents.forEach(function(a) { %>
+        <tr>
+          <td><strong><%= a.fullName || '—' %></strong></td>
+          <td><%= a.email %></td>
+          <td>
+            <span class="badge <%= a.role === 'taxagent' ? 'badge-active' : 'badge-revoked' %>">
+              <%= a.role === 'taxagent' ? 'Active' : 'Revoked' %>
+            </span>
+          </td>
+          <td><span class="created-at"><%= a.createdAt ? new Date(a.createdAt).toLocaleDateString('en-AU', { day:'2-digit', month:'2-digit', year:'numeric' }) : '—' %></span></td>
+          <td>
+            <% if (a.role === 'taxagent') { %>
+            <form method="POST" action="/admin/taxagent-accounts/<%= a.id %>/revoke" style="display:inline;" onsubmit="return confirm('Revoke access for <%= (a.fullName || a.email).replace(/'/g,'') %>?')">
+              <button type="submit" class="btn-sm btn-revoke">Revoke</button>
+            </form>
+            <% } else { %>
+            <form method="POST" action="/admin/taxagent-accounts/<%= a.id %>/restore" style="display:inline;">
+              <button type="submit" class="btn-sm btn-restore">Restore</button>
+            </form>
+            <% } %>
+          </td>
+        </tr>
+        <% }); %>
+      </tbody>
+    </table>
+    <% } %>
+  </div>
+
+  <!-- ── Live client portal table ── -->
+  <div class="card">
+    <div class="section-head">
+      <div>
+        <h2>Portal clients (<%= portalClients.length %>)</h2>
+        <p>Clients visible in the tax agent portal. Data reflects what the agent has entered.</p>
+      </div>
+      <a href="/admin/export/taxagent-clients.xlsx" class="dl-btn">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download Excel
+      </a>
+    </div>
+
+    <% if (portalClients.length === 0) { %>
+      <div class="empty-sm">No clients in the portal yet. Use "Guardar y agregar al portal del agente" from a client's profile.</div>
+    <% } else { %>
+    <div class="live-controls" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+      <input type="text" class="search-live" id="portalSearch" placeholder="Search by name, TFN or ABN…" oninput="filterPortal()">
+      <select id="portalAgent" onchange="filterPortal()" style="border:1px solid #D1D5DB;border-radius:7px;padding:8px 12px;font-size:0.86rem;color:#1a2430;background:#fff;cursor:pointer;">
+        <option value="">All agents</option>
+        <option value="Estiguan Navas">Estiguan Navas</option>
+        <option value="Hisham & Ghanda">Hisham &amp; Ghanda</option>
+        <option value="—">Sin asignar</option>
+      </select>
+      <span id="portalCount" style="font-size:0.82rem;color:#6B7280;"></span>
+    </div>
+    <div class="portal-wrap">
+      <table class="portal-table">
+        <thead>
+          <tr>
+            <th style="width:40px;text-align:center;">#</th>
+            <th>Report</th>
+            <th>Name</th>
+            <th>TFN</th>
+            <th>ABN</th>
+            <th>Date Added</th>
+            <th class="edit-col">Occupation</th>
+            <th class="edit-col">Gross Income</th>
+            <th class="edit-col">Return Amt</th>
+            <th class="edit-col">Observations</th>
+            <th>Agente</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="portalBody">
+          <% portalClients.forEach(function(c, idx) { %>
+          <tr class="<%= c.stage === 'issued' ? 'issued-row' : (c.overdue ? 'overdue-row' : '') %>"
+              data-search="<%= (c.fullName + ' ' + c.email + ' ' + c.tfn + ' ' + c.abn).toLowerCase() %>"
+              data-agent="<%= c.agentLabel %>">
+            <td style="text-align:center;font-size:0.78rem;color:#9CA3AF;font-family:'Courier New',monospace;"><%= idx + 1 %></td>
+            <td>
+              <% if (c.hasReport) { %>
+                <a href="/admin/user/<%= c.id %>/taxagent-email-preview" target="_blank" class="btn-view">
+                  <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  View
+                </a>
+              <% } else { %>
+                <span class="no-rep">—</span>
+              <% } %>
+            </td>
+            <td>
+              <strong><%= c.fullName %></strong>
+              <% if (c.overdue && c.stage !== 'issued') { %> <span class="badge badge-overdue"><%= c.daysSince %>d</span><% } %>
+              <% if (c.grossIncome && c.returnAmt && c.stage !== 'issued') { %> <span class="badge badge-done">Done</span><% } %>
+            </td>
+            <td><span class="mono"><%= c.tfn || '—' %></span></td>
+            <td><span class="mono"><%= c.abn || '—' %></span></td>
+            <td><span class="muted"><%= c.sentAt %></span></td>
+            <td><%= c.occupation || '—' %></td>
+            <td><%= c.grossIncome || '—' %></td>
+            <td><%= c.returnAmt  || '—' %></td>
+            <td style="max-width:160px;white-space:pre-wrap;word-break:break-word;font-size:0.8rem;"><%= c.notes || '—' %></td>
+            <td>
+              <% var agBg = c.agentLabel === 'Estiguan Navas' ? '#FEF3C7' : c.agentLabel === 'Hisham & Ghanda' ? '#EDE9FE' : '#F3F4F6';
+                 var agFg = c.agentLabel === 'Estiguan Navas' ? '#92400E' : c.agentLabel === 'Hisham & Ghanda' ? '#5B21B6' : '#6B7280'; %>
+              <span style="font-size:0.8rem;font-weight:700;padding:2px 8px;border-radius:8px;background:<%= agBg %>;color:<%= agFg %>;">
+                <%= c.agentLabel %>
+              </span>
+              <% if (c.bothAgents) { %>
+                <br><span style="font-size:0.7rem;color:#6B7280;margin-top:3px;display:inline-block;" title="Informe también enviado a <%= c.sentToLabel %>">
+                  📤 tb. <%= c.sentToLabel %>
+                </span>
+              <% } %>
+            </td>
+            <td>
+              <% if (c.stage === 'issued') { %>
+                <span class="badge badge-issued">Submitted to ATO<% if (c.submittedAt) { %> · <%= c.submittedAt %><% } %></span>
+              <% } else if (c.stage === 'with_agent') { %>
+                <span class="badge badge-with-agent">Tax Agent Hold</span>
+              <% } else { %>
+                <span class="badge badge-processing">Processing</span>
+              <% } %>
+            </td>
+          </tr>
+          <% }); %>
+        </tbody>
+      </table>
+      <div class="no-results" id="portalNoResults">No clients match your search.</div>
+    </div>
+    <% } %>
+  </div>
+
+</div>
+
+<script>
+function filterPortal() {
+  var q     = (document.getElementById('portalSearch').value || '').toLowerCase().trim();
+  var agent = (document.getElementById('portalAgent').value || '');
+  var rows  = document.querySelectorAll('#portalBody tr');
+  var visible = 0;
+  rows.forEach(function(row) {
+    var matchSearch = !q     || (row.dataset.search || '').indexOf(q) !== -1;
+    var matchAgent  = !agent || (row.dataset.agent  || '') === agent;
+    var show = matchSearch && matchAgent;
+    row.classList.toggle('hidden-row', !show);
+    if (show) visible++;
+  });
+  var nr = document.getElementById('portalNoResults');
+  if (nr) nr.style.display = visible === 0 ? 'block' : 'none';
+  var cnt = document.getElementById('portalCount');
+  if (cnt) cnt.textContent = visible + ' cliente' + (visible !== 1 ? 's' : '');
+}
+filterPortal();
+</script>
+
+</body>
+</html>

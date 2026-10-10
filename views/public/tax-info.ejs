@@ -1,0 +1,75 @@
+<%- include('../layout/header', { title: 'Tasas de impuestos', currentUser: null }) %>
+
+<div class="container--narrow" style="padding-top:40px;padding-bottom:60px">
+  <div class="page-header">
+    <h1>Tasas de impuestos en Australia</h1>
+    <p class="text-muted">Información fiscal para titulares de visas temporales · Año fiscal 2023–2024</p>
+  </div>
+
+  <div class="card mt-3">
+    <h2 style="margin-bottom:4px">Working Holiday Visa <span class="text-muted text-sm">(417 / 462)</span></h2>
+    <p class="text-muted text-sm" style="margin-bottom:16px">Régimen especial — tasa plana sin exención inicial</p>
+    <table>
+      <thead><tr><th>Rango de ingresos</th><th>Tasa</th></tr></thead>
+      <tbody>
+        <tr><td>$0 — $45.000 AUD</td><td><strong>15%</strong></td></tr>
+        <tr><td>Más de $45.000 AUD</td><td><strong>32%</strong></td></tr>
+      </tbody>
+    </table>
+    <div class="alert alert--info mt-2">
+      <strong>Importante:</strong> Si tus ingresos totales fueron menores a AUD 45.000, <em>no estás obligado/a a declarar</em>. De todas formas puede convenir hacerlo si tuviste retenciones en tus payslips.
+    </div>
+  </div>
+
+  <div class="card mt-3">
+    <h2 style="margin-bottom:4px">Student Visa / Residente Fiscal</h2>
+    <p class="text-muted text-sm" style="margin-bottom:16px">Mismas tasas que un residente australiano</p>
+    <table>
+      <thead><tr><th>Rango de ingresos</th><th>Tasa</th></tr></thead>
+      <tbody>
+        <tr><td>Hasta $18.200 AUD</td><td><strong>0%</strong> (exención)</td></tr>
+        <tr><td>$18.201 — $45.000 AUD</td><td><strong>16%</strong></td></tr>
+        <tr><td>Más de $45.000 AUD</td><td><strong>32%</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card mt-3">
+    <h2 style="margin-bottom:8px">Países con NDA (Tax Treaties)</h2>
+    <p style="margin-bottom:12px;font-size:15px">Si tenés WHV vigente y sos ciudadano/a de alguno de estos países, podés calificar para el tratamiento de residente fiscal australiano:</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <% ['Chile','Reino Unido','Finlandia','Turquía','Noruega','Alemania','Israel','Japón'].forEach(c => { %>
+        <span style="background:var(--cream);border:1.5px solid var(--border);border-radius:20px;padding:4px 14px;font-size:13px;font-weight:600"><%= c %></span>
+      <% }) %>
+    </div>
+    <p class="text-muted text-sm mt-2">Condición: tener WHV vigente Y ser residente fiscal de Australia Y ciudadano/a del país NDA.</p>
+  </div>
+
+  <div class="card mt-3">
+    <h2 style="margin-bottom:12px">¿Qué se puede deducir?</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <% [
+        ['👷','Uniformes y ropa de trabajo obligatoria'],
+        ['🔧','Herramientas y equipamiento'],
+        ['💻','Tecnología de uso laboral (parte proporcional)'],
+        ['📚','Cursos y capacitaciones relacionadas al trabajo'],
+        ['🏆','Certificaciones (RSA, White Card, First Aid)'],
+        ['🏦','Honorarios de agente impositivo (como RETAUX)'],
+        ['❤️','Donaciones a organizaciones registradas'],
+        ['📈','Gastos de inversión'],
+      ].forEach(([icon, label]) => { %>
+        <div style="display:flex;gap:10px;font-size:14px;align-items:flex-start">
+          <span><%= icon %></span><span><%= label %></span>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+
+
+  <div class="text-center mt-4">
+    <a href="/register" class="btn btn--primary">Empezar mi trámite — AUD 150</a>
+    <p class="text-muted text-sm mt-2">¿Tenés dudas? Escribinos a <a href="mailto:hola@retaux.com">hola@retaux.com</a></p>
+  </div>
+</div>
+
+<%- include('../layout/footer') %>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title><%= typeof title !== 'undefined' ? title + ' — ' : '' %>RETAUX</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<nav class="navbar">
+  <a href="/" class="navbar__logo">RETAU<span>X</span></a>
+  <div class="navbar__links">
+    <% if (typeof user !== 'undefined' && user) { %>
+      <a href="/dashboard">Mi panel</a>
+      <a href="/logout">Salir</a>
+    <% } else { %>
+      <a href="/tax-info">Tasas</a>
+      <a href="/login">Ingresar</a>
+      <a href="/register" class="btn btn--primary btn--sm">Registrarme</a>
+    <% } %>
+  </div>
+</nav>
+<%- body %>
+<footer style="background:var(--navy);color:rgba(247,242,231,.6);text-align:center;padding:24px;font-size:13px;margin-top:auto">
+  RETAUX &copy; <%= new Date().getFullYear() %> &nbsp;·&nbsp; <a href="mailto:hola@retaux.com" style="color:var(--ocre)">hola@retaux.com</a> &nbsp;·&nbsp; <a href="/tax-info" style="color:rgba(247,242,231,.6)">Tasas de impuestos</a>
+</footer>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="<%= lang || 'es' %>">
+<head>
+  <%- include('../partials/head') %>
+  <title><%- __('guide.page_title') %> — RETAUX</title>
+</head>
+<body>
+  <%- include('../partials/nav', { active: 'guide', user: user }) %>
+
+  <section class="section">
+    <div class="container-narrow">
+
+      <div style="margin-bottom:28px;">
+        <a href="/dashboard" style="font-size:0.88rem;color:var(--muted);text-decoration:none;">← <%- __('guide.back') %></a>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:8px;">
+        <span style="font-size:2rem;">🏛️</span>
+        <h1 style="font-size:1.7rem;margin:0;"><%- __('guide.title') %></h1>
+      </div>
+      <p class="muted" style="margin-bottom:36px;"><%- __('guide.subtitle') %></p>
+
+      <!-- PASO 1 -->
+      <div class="card" style="margin-bottom:20px;padding:28px 32px;">
+        <div style="display:flex;align-items:flex-start;gap:18px;">
+          <div style="min-width:44px;height:44px;background:var(--navy);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.3rem;font-weight:700;flex-shrink:0;">1</div>
+          <div style="flex:1;">
+            <h2 style="font-size:1.2rem;margin:0 0 6px;"><%- __('guide.step1_title') %></h2>
+            <p class="muted" style="margin:0 0 18px;font-size:0.92rem;"><%- __('guide.step1_subtitle') %></p>
+
+            <ol style="padding-left:18px;display:flex;flex-direction:column;gap:10px;">
+              <li style="font-size:0.93rem;line-height:1.6;"><%- __('guide.step1_1') %> <a href="https://my.gov.au" target="_blank" rel="noopener" style="color:var(--navy);font-weight:600;">my.gov.au</a> <%- __('guide.step1_1b') %></li>
+              <li style="font-size:0.93rem;line-height:1.6;"><%- __('guide.step1_2') %></li>
+              <li style="font-size:0.93rem;line-height:1.6;"><%- __('guide.step1_3') %></li>
+              <li style="font-size:0.93rem;line-height:1.6;"><%- __('guide.step1_4') %></li>
+              <li style="font-size:0.93rem;line-height:1.6;"><%- __('guide.step1_5') %></li>
+            </ol>
+
+            <div style="margin-top:18px;padding:12px 16px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;font-size:0.85rem;color:#1e3a8a;line-height:1.6;">
+              💡 <%- __('guide.step1_tip') %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PASO 2 -->
+      <div class="card" style="margin-bottom:20px;padding:28px 32px;">
+        <div style="display:flex;align-items:flex-start;gap:18px;">
+          <div style="min-width:44px;height:44px;background:var(--gold);color:var(--text-navy);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.3rem;font-weight:700;flex-shrink:0;">2</div>
+          <div style="flex:1;">
+            <h2 style="font-size:1.2rem;margin:0 0 6px;"><%- __('guide.step2_title') %></h2>
+            <p class="muted" style="margin:0 0 18px;font-size:0.92rem;"><%- __('guide.step2_subtitle') %></p>
+
+            <ol style="padding-left:18px;display:flex;flex-direction:column;gap:10px;">
+              <li style="font-size:0.93rem;line-height:1.6;"><%- __('guide.step2_1') %></li>
+              <li style="font-size:0.93rem;line-height:1.6;"><%- __('guide.step2_2') %></li>
+              <li style="font-size:0.93rem;line-height:1.6;"><%- __('guide.step2_3') %></li>
+              <li style="font-size:0.93rem;line-height:1.6;"><%- __('guide.step2_4') %></li>
+            </ol>
+
+            <div style="margin-top:18px;padding:12px 16px;background:#FEF9C3;border:1px solid #FDE047;border-radius:8px;font-size:0.85rem;color:#713f12;line-height:1.6;">
+              ⚠️ <%- __('guide.step2_tip') %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LISTO -->
+      <div style="background:var(--navy);border-radius:16px;padding:28px 32px;color:#fff;display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+        <span style="font-size:2.5rem;">✅</span>
+        <div style="flex:1;">
+          <h3 style="margin:0 0 6px;color:#fff;font-size:1.1rem;"><%- __('guide.done_title') %></h3>
+          <p style="margin:0;color:rgba(255,255,255,0.75);font-size:0.9rem;line-height:1.6;"><%- __('guide.done_body') %></p>
+        </div>
+        <a href="/dashboard" class="btn" style="background:var(--gold);color:var(--text-navy);font-weight:700;white-space:nowrap;">
+          <%- __('guide.done_cta') %>
+        </a>
+      </div>
+
+    </div>
+  </section>
+
+  <%- include('../partials/footer') %>
+</body>
+</html>

@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="<%= lang || 'es' %>">
+<head>
+  <%- include('../partials/head') %>
+  <title><%- __('documents.title') %> — RETAUX</title>
+</head>
+<body>
+  <%- include('../partials/nav', { active: '', user: user }) %>
+
+  <section class="section">
+    <div class="container">
+
+      <div class="step-nav" style="max-width:680px;">
+        <a href="/onboarding/personal" class="step-item step-item--done">✓ <%- __('steps.personal') %></a>
+        <div class="step-item step-item--active">2 · <%- __('steps.documents') %></div>
+        <a href="/dashboard" class="step-item">3 · <%- __('steps.dashboard') %></a>
+      </div>
+
+      <h1 style="font-size:1.7rem;"><%- __('documents.title') %></h1>
+      <p class="muted"><%- __('documents.subtitle') %></p>
+
+      <!-- Selector de año fiscal -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:24px;">
+        <% availableYears.forEach(function(yr) { %>
+        <a href="/onboarding/documents?year=<%= yr %>"
+           style="display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:8px;font-weight:700;font-family:var(--font-mono);font-size:0.9rem;text-decoration:none;border:2px solid <%= yr === taxYear ? 'var(--gold)' : 'var(--border)' %>;background:<%= yr === taxYear ? 'var(--gold)' : 'var(--bg-page)' %>;color:<%= yr === taxYear ? 'var(--text-navy)' : 'var(--muted)' %>;">
+          FY <%= yr %>
+          <% if (docCountByYear[yr] > 0) { %>
+            <span style="background:<%= yr === taxYear ? 'rgba(0,0,0,0.15)' : '#e5e7eb' %>;color:<%= yr === taxYear ? 'var(--text-navy)' : 'var(--ink)' %>;font-size:0.7rem;padding:1px 7px;border-radius:10px;font-weight:700;"><%= docCountByYear[yr] %></span>
+          <% } %>
+        </a>
+        <% }) %>
+        <div style="display:flex;align-items:center;padding:0 8px;font-size:0.78rem;color:var(--muted);">
+          <%- __('documents.year_selector_hint') %>
+        </div>
+      </div>
+
+      <%
+        var _fyParts     = (taxYear || '2025-26').split('-');
+        var _fyStartYear = parseInt(_fyParts[0]);
+        var _fyEndYear   = _fyParts[1] ? (_fyParts[1].length === 2 ? 2000 + parseInt(_fyParts[1]) : parseInt(_fyParts[1])) : _fyStartYear + 1;
+        var _fyStart     = '01/07/' + _fyStartYear;
+        var _fyEnd       = '30/06/' + _fyEndYear;
+        var _fyTitle     = __('documents.fy_banner_title').replace('{taxYear}', taxYear);
+        var _fyBody      = __('documents.fy_banner_body').replace('{start}', _fyStart).replace('{end}', _fyEnd);
+      %>
+      <div style="display:flex;gap:14px;align-items:flex-start;background:#EFF6FF;border:2px solid #BFDBFE;border-left:5px solid #3B82F6;border-radius:10px;padding:16px 20px;margin-bottom:20px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="#2563EB" viewBox="0 0 16 16" style="flex-shrink:0;margin-top:2px;"><path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/></svg>
+        <div>
+          <p style="margin:0 0 4px;font-weight:700;font-size:0.95rem;color:#1E40AF;"><%- _fyTitle %></p>
+          <p style="margin:0 0 8px;font-size:0.85rem;color:#1E40AF;line-height:1.6;"><%- _fyBody %></p>
+          <p style="margin:0;font-size:0.85rem;color:#1E40AF;line-height:1.6;padding-top:8px;border-top:1px solid #BFDBFE;">⚠️ <%- __('documents.fy_banner_over300') %></p>
+        </div>
+      </div>
+
+      <% if (uploadError) { %><div class="alert alert-error"><%= uploadError %></div><% } %>
+      <% if (saved && !dateWarning) { %><div class="alert alert-success"><%- __('documents.saved_ok') %></div><% } %>
+      <% if (saved && dateWarning) { %>
+        <div class="alert alert-success"><%- __('documents.saved_ok') %></div>
+        <div style="display:flex;gap:12px;align-items:flex-start;background:#FFFBEB;border:2px solid #FCD34D;border-left:5px solid #F59E0B;border-radius:10px;padding:14px 18px;margin-bottom:12px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#B45309" viewBox="0 0 16 16" style="flex-shrink:0;margin-top:2px;"><path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/></svg>
+          <div>
+            <p style="margin:0 0 4px;font-weight:700;font-size:0.9rem;color:#92400E;">⚠️ No pudimos verificar la fecha del archivo</p>
+            <p style="margin:0;font-size:0.84rem;color:#78350F;line-height:1.55;">El archivo <strong><%= dateWarning %></strong> fue guardado, pero no logramos leer la fecha del documento. Nuestro equipo lo va a revisar manualmente para confirmar que corresponde al año fiscal <strong><%= taxYear %></strong>. Si sabés que es de otro año fiscal, por favor eliminalo y subí el correcto.</p>
+          </div>
+        </div>
+      <% } %>
+      <% if (tfnError) { %><div class="alert alert-error" style="font-weight:600;"><%- __('documents.tfn_required_error') %></div><% } %>
+
+      <!-- Jobs & info form -->
+      <form method="POST" action="/onboarding/documents/info" class="card" style="margin-bottom:24px;" id="docs-info-form">
+        <input type="hidden" name="taxYear" value="<%= taxYear %>">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3 style="margin:0"><%- __('documents.vehicle_section') %></h3>
+          <span id="save-status" style="font-size:0.8rem;font-family:var(--font-mono);transition:color 0.3s"></span>
+        </div>
+        <div class="yn-group">
+          <button type="button" class="yn-btn <%= profile.hasCar ? 'active-yes' : '' %>" id="car-yes" onclick="setYN('car','yes')"><%- __('documents.yes') %></button>
+          <button type="button" class="yn-btn <%= !profile.hasCar ? 'active-no' : '' %>" id="car-no" onclick="setYN('car','no')"><%- __('documents.no') %></button>
+        </div>
+        <input type="hidden" name="hasCar" id="hasCar-val" value="<%= profile.hasCar ? '1' : '' %>">
+        <div id="carFields" style="display:<%= profile.hasCar ? 'block' : 'none' %>">
+          <div class="form-row">
+            <div class="form-group"><label><%- __('documents.car_brand') %></label><input type="text" name="carBrand" value="<%= profile.carBrand || '' %>"></div>
+            <div class="form-group"><label><%- __('documents.car_model') %></label><input type="text" name="carModel" value="<%= profile.carModel || '' %>"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label><%- __('documents.car_year') %></label><input type="text" name="carYear" value="<%= profile.carYear || '' %>"></div>
+            <div class="form-group"><label><%- __('documents.car_plate') %></label><input type="text" name="carPlate" class="mono" value="<%= profile.carPlate || '' %>"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label><%- __('documents.car_km') %></label>
+              <input type="number" name="carWorkKm" id="carWorkKm" min="0" step="1"
+                value="<%= profile.carWorkKm || '' %>"
+                placeholder="ej: 3500"
+                oninput="updateKmCalc()">
+              <span style="font-size:0.78rem;color:var(--muted);"><%- __('documents.car_km_hint') %></span>
+            </div>
+            <div class="form-group" style="display:flex;align-items:flex-end;">
+              <div id="km-calc-box" style="display:<%= profile.carWorkKm ? 'block' : 'none' %>;background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:8px;padding:10px 14px;width:100%;">
+                <div style="font-size:0.78rem;color:#1D4ED8;font-weight:600;margin-bottom:4px;"><%- __('documents.car_km_calc_label') %></div>
+                <div style="font-size:1.1rem;font-weight:700;color:#1D4ED8;font-family:var(--font-mono);" id="km-calc-result">
+                  AUD $<%= profile.carWorkKm ? (profile.carWorkKm * 0.88).toFixed(2) : '0.00' %>
+                </div>
+                <div style="font-size:0.72rem;color:#3B82F6;margin-top:2px;" id="km-calc-detail">
+                  <%= profile.carWorkKm || 0 %> km × $0.88
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Logbook warning — solo si km > 5000 -->
+          <div id="logbook-warning" style="display:<%= (profile.carWorkKm && profile.carWorkKm > 5000) ? 'block' : 'none' %>;background:#FEF3C7;border:1.5px solid #FCD34D;border-radius:8px;padding:12px 14px;margin-top:4px;">
+            <div style="font-size:0.85rem;font-weight:700;color:#92400E;margin-bottom:6px;">⚠ Superás los 5,000 km — requerís un logbook</div>
+            <div style="font-size:0.78rem;color:#78350F;margin-bottom:10px;">El método cents-per-km de ATO tiene un tope de 5,000 km. Para reclamar más km necesitás subir tu logbook (libro de registro de viajes).</div>
+            <form method="POST" action="/onboarding/documents/upload" enctype="multipart/form-data" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <input type="hidden" name="taxYear" value="<%= taxYear %>">
+              <input type="hidden" name="category" value="logbook">
+              <label style="font-size:0.8rem;font-weight:600;color:#92400E;cursor:pointer;background:#FDE68A;border:1.5px solid #F59E0B;padding:6px 12px;border-radius:6px;display:inline-flex;align-items:center;gap:6px;">
+                📋 Subir logbook
+                <input type="file" name="files" style="display:none" onchange="this.closest('form').submit()">
+              </label>
+              <span style="font-size:0.75rem;color:#92400E;">PDF, JPG o foto del libro</span>
+            </form>
+          </div>
+        </div>
+
+        <hr class="divider">
+        <h3><%- __('documents.health_section') %></h3>
+        <div class="yn-group">
+          <button type="button" class="yn-btn <%= profile.hasHealthInsurance ? 'active-yes' : '' %>" id="health-yes" onclick="setYN('health','yes')"><%- __('documents.yes') %></button>
+          <button type="button" class="yn-btn <%= !profile.hasHealthInsurance ? 'active-no' : '' %>" id="health-no" onclick="setYN('health','no')"><%- __('documents.no') %></button>
+        </div>
+        <input type="hidden" name="hasHealthInsurance" id="hasHealth-val" value="<%= profile.hasHealthInsurance ? '1' : '' %>">
+        <div id="healthFields" style="display:<%= profile.hasHealthInsurance ? 'block' : 'none' %>">
+          <div class="form-row">
+            <div class="form-group"><label><%- __('documents.health_provider') %></label><input type="text" name="healthProvider" value="<%= profile.healthProvider || '' %>" placeholder="BUPA, Medibank..."></div>
+            <div class="form-group"><label><%- __('documents.health_member') %></label><input type="text" name="healthMemberNumber" class="mono" value="<%= profile.healthMemberNumber || '' %>"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label><%- __('documents.health_start') %></label><input type="date" name="healthStartDate" value="<%= profile.healthStartDate || '' %>"></div>
+            <div class="form-group"><label><%- __('documents.health_end') %></label><input type="date" name="healthEndDate" value="<%= profile.healthEndDate || '' %>"></div>
+          </div>
+          <div class="form-group"><label><%- __('documents.health_plan') %></label><input type="text" name="healthPlanType" value="<%= profile.healthPlanType || '' %>"></div>
+        </div>
+
+        <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;align-items:center;">
+          <button type="submit" class="btn btn--primary" style="flex:1;min-width:200px;font-size:1rem;">
+            <%- __('documents.btn_save_data') %>
+          </button>
+          <span id="save-status" style="font-size:0.85rem;font-family:var(--font-mono);transition:color 0.3s;"></span>
+        </div>
+      </form>
+
+      <%
+        // Deduction map: category id → deduction field name + label key
+        var catDedMap = {
+          logbook:            null, // D1 se muestra en el bloque de deducciones al fondo (con cálculo km)
+          work_travel:        { field: 'ded_d2', badge: 'D2', titleKey: 'deductions.d2_title', infoKey: 'deductions.d2_info', placeholder: '0.00' },
+          work_expenses:      { field: 'ded_d3', badge: 'D3', titleKey: 'deductions.d3_title', infoKey: 'deductions.d3_info', hintKey: 'deductions.d3_hint', placeholder: '267.00' },
+          training:           { field: 'ded_d4', badge: 'D4', titleKey: 'deductions.d4_title', infoKey: 'deductions.d4_info', placeholder: '0.00' },
+          certifications:     { field: 'ded_d5', badge: 'D5', titleKey: 'deductions.d5_title', infoKey: 'deductions.d5_info', placeholder: '0.00' },
+          tech_purchases:     null, // D5 — input shown once on certifications section
+          donation_receipts:  { field: 'ded_d9', badge: 'D9', titleKey: 'deductions.d9_title', infoKey: 'deductions.d9_info', placeholder: '0.00' },
+          home_office:        { field: 'ded_d6', badge: 'D6', titleKey: 'deductions.d6_title', infoKey: 'deductions.d6_info', placeholder: '0.00' },
+          abn_income:         null,
+          investment_statements: null
+        };
+      %>
+
+      <!-- Document upload per category (excluding payslips) -->
+      <% categories.filter(function(c){ return c.id !== 'payslips'; }).forEach(function(cat) { %>
+        <% var catDocs = documents.filter(function(d){ return d.category === cat.id; }); %>
+        <% var ded = catDedMap[cat.id]; %>
+        <% var dedBadge = ded ? ded.badge : (cat.id === 'logbook' ? 'D1' : null); %>
+
+        <div class="doc-category">
+          <div class="doc-category-header">
+            <div style="flex:1;">
+              <h4 style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <% if (dedBadge) { %>
+                  <span style="font-size:0.72rem;font-family:var(--font-mono);background:var(--navy,#1C2B45);color:#fff;border-radius:4px;padding:3px 8px;letter-spacing:0.03em;flex-shrink:0;"><%= dedBadge %></span>
+                <% } %>
+                <%- __('doc_cat.' + cat.id + '_label', cat.label) %>
+                <% if (__('doc_cat.' + cat.id + '_info', '')) { %>
+                  <button class="info-btn" type="button" onclick="toggleInfo('cat-info-<%= cat.id %>')" style="font-size:0.7rem;width:16px;height:16px;" title="Más información">i</button>
+                <% } %>
+              </h4>
+              <% if (__('doc_cat.' + cat.id + '_info', '')) { %>
+                <div class="info-popup" id="cat-info-<%= cat.id %>"><%- __('doc_cat.' + cat.id + '_info') %></div>
+              <% } %>
+              <p class="field-hint"><%- __('doc_cat.' + cat.id + '_desc', cat.description) %></p>
+            </div>
+            <span class="doc-count"><%= catDocs.length %> archivo<%= catDocs.length===1?'':'s' %></span>
+          </div>
+
+          <% if (catDocs.length) { %>
+            <ul class="doc-list">
+              <% catDocs.forEach(function(d) { %>
+                <li>
+                  <span class="doc-name">📎 <%= d.originalName %></span>
+                  <span class="doc-meta"><%= new Date(d.uploadedAt || Date.now()).toLocaleDateString('es-AR', {day:'numeric',month:'short',year:'numeric'}) %></span>
+                  <div class="doc-actions">
+                    <button type="button" class="btn btn-danger btn--sm" onclick="deleteDoc('<%= d.id %>', this)"><%- __('documents.delete_doc') %></button>
+                    <label class="btn btn--outline btn--sm" style="cursor:pointer;margin:0">
+                      <span><%- __('documents.replace_doc') %></span>
+                      <input type="file" name="file" style="display:none" onchange="replaceDoc('<%= d.id %>','<%= cat.id %>',this)">
+                    </label>
+                  </div>
+                </li>
+              <% }); %>
+            </ul>
+          <% } %>
+
+          <% if (cat.id === 'certifications' || cat.id === 'training') { %>
+          <div style="display:flex;align-items:flex-start;gap:10px;background:#FFF8E1;border:1.5px solid #FFC107;border-radius:8px;padding:12px 14px;margin-bottom:10px;">
+            <span style="font-size:1.2rem;flex-shrink:0;">⚠️</span>
+            <span style="font-size:0.85rem;color:#7B5800;line-height:1.5;"><%- __('documents.receipt_not_cert_notice') %></span>
+          </div>
+          <% } %>
+          <% if (cat.id === 'tech_purchases') { %>
+          <div style="display:flex;align-items:flex-start;gap:10px;background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:8px;padding:12px 14px;margin-bottom:10px;">
+            <span style="font-size:1.2rem;flex-shrink:0;">💡</span>
+            <span style="font-size:0.85rem;color:#1e3a8a;line-height:1.55;"><%- __('doc_cat.tech_purchases_tip') %></span>
+          </div>
+          <% } %>
+
+          <form method="POST" action="/onboarding/documents/upload" enctype="multipart/form-data" class="upload-row">
+            <input type="hidden" name="taxYear" value="<%= taxYear %>">
+            <input type="hidden" name="category" value="<%= cat.id %>">
+            <input type="file" name="files" multiple>
+            <button type="submit" class="btn btn--secondary btn--sm"><%- __('documents.upload_btn') %></button>
+          </form>
+
+
+        </div>
+      <% }); %>
+
+      <!-- Empleadores detectados automáticamente desde los payslips -->
+      <% if (user.employers && user.employers.length) { %>
+      <div class="card" style="margin-top:24px;">
+        <h3><%- __('documents.employers_title') %></h3>
+        <p class="field-hint" style="margin-bottom:14px;"><%- __('documents.employers_hint') %></p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;">
+          <% user.employers.forEach(function(emp) { %>
+            <div style="background:var(--paper-alt);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;">
+              <div style="font-weight:700;color:var(--ink);margin-bottom:4px;">🏢 <%= emp.employerName %></div>
+              <% if (emp.employerABN) { %><div style="font-family:var(--font-mono);font-size:0.78rem;color:var(--muted);">ABN <%= emp.employerABN %></div><% } %>
+              <% if (emp.startDate && emp.endDate) { %>
+                <div style="font-size:0.82rem;color:var(--muted);margin-top:6px;">
+                  <%= new Date(emp.startDate).toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'numeric'}) %> → <%= new Date(emp.endDate).toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'numeric'}) %>
+                </div>
+              <% } %>
+              <% if (emp.extractionStatus === 'manual_review') { %>
+                <div style="margin-top:8px;font-size:0.76rem;color:#7B5800;background:#FFF8E1;border:1px solid #FFE082;border-radius:4px;padding:4px 8px;display:inline-block;">⚠️ <%- __('documents.employers_review') %></div>
+              <% } %>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+      <% } %>
+
+      <!-- ── DEDUCCIONES RESTANTES (D1 auto + D10 contador) ───────── -->
+      <style>
+        .ded-row { display:flex; align-items:flex-start; gap:14px; padding:14px 0; border-bottom:1px solid var(--border); }
+        .ded-row:last-child { border-bottom:none; }
+        .ded-icon { font-size:1.4rem; flex-shrink:0; margin-top:2px; }
+        .ded-info { flex:1; }
+        .ded-title { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+        .ded-title strong { font-size:0.95rem; color:var(--text-navy); }
+        .ded-badge { font-size:0.72rem; font-family:var(--font-mono); background:var(--navy); color:#fff; border-radius:4px; padding:2px 6px; }
+        .info-btn { background:none; border:1px solid var(--border); border-radius:50%; width:20px; height:20px; font-size:0.72rem; cursor:pointer; color:var(--muted); line-height:1; padding:0; flex-shrink:0; }
+        .info-popup { display:none; margin-top:8px; padding:10px 14px; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:8px; font-size:0.83rem; color:#1e3a8a; line-height:1.6; }
+        .info-popup.open { display:block; }
+      </style>
+
+      <div class="card" style="margin-top:24px;">
+        <h3 style="margin-bottom:4px;"><%- __('deductions.title') %></h3>
+        <p class="field-hint" style="margin-bottom:20px;"><%- __('deductions.subtitle') %></p>
+
+        <!-- D1 — Auto (solo si declaró tener vehículo) -->
+        <% if (profile.hasCar) { %>
+        <div class="ded-row">
+          <div class="ded-icon">🚗</div>
+          <div class="ded-info">
+            <div class="ded-title">
+              <span class="ded-badge">D1</span>
+              <strong><%- __('deductions.d1_title') %></strong>
+              <button class="info-btn" type="button" onclick="toggleInfo('d1-info')">i</button>
+            </div>
+            <div class="info-popup" id="d1-info"><%- __('deductions.d1_info') %></div>
+            <div style="margin-top:10px;display:flex;align-items:flex-start;gap:8px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;padding:10px 12px;">
+              <span style="font-size:1rem;flex-shrink:0;">ℹ️</span>
+              <span style="font-size:0.82rem;color:#92400E;line-height:1.5;"><%- __('deductions.d1_receipt_note') %></span>
+            </div>
+          </div>
+        </div>
+        <% } %>
+
+        <!-- D10 — Honorarios del contador (informativo) -->
+        <div class="ded-row">
+          <div class="ded-icon">🧾</div>
+          <div class="ded-info">
+            <div class="ded-title">
+              <span class="ded-badge">D10</span>
+              <strong><%- __('deductions.d10_title') %></strong>
+            </div>
+            <div style="margin-top:6px;font-size:0.83rem;color:var(--muted);line-height:1.5;"><%- __('deductions.d10_auto_note') %></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Confirm button / post-payment notice -->
+      <% if (alreadyPaid) { %>
+      <div class="card" style="margin-top:32px;text-align:center;background:#F0FDF4;border:1.5px solid #BBF7D0;">
+        <div style="font-size:1.6rem;margin-bottom:8px;">✅</div>
+        <h3 style="color:#166534;margin:0 0 8px;">Pago confirmado — podés seguir agregando archivos</h3>
+        <p style="color:#14532D;font-size:0.88rem;margin:0 0 16px;">Cualquier archivo que agregues o modifiques se va a reflejar automáticamente en la preparación de tu declaración. No necesitás hacer nada más.</p>
+        <a href="/dashboard" class="btn btn--primary">← Volver al panel</a>
+      </div>
+      <% } else { %>
+      <div class="card" style="margin-top:32px;text-align:center;">
+        <h3><%- __('documents.confirm_title') %></h3>
+        <p class="muted"><%- __('documents.confirm_desc') %></p>
+        <button type="button" class="btn btn--primary" id="confirm-btn" onclick="saveAndConfirm()"><%- __('documents.btn_confirm') %></button>
+        <p style="font-size:0.78rem;color:var(--muted);margin-top:10px"><%- __('documents.btn_confirm_hint') %></p>
+      </div>
+      <% } %>
+
+    </div>
+  </section>
+
+  <%- include('../partials/footer') %>
+
+<script>
+// ─── Strings traducidos (inyectados desde el servidor) ──────
+var STR = {
+  saving:           '<%- __("documents.js_saving") %>',
+  saved:            '<%- __("documents.js_saved") %>',
+  errorSave:        '<%- __("documents.js_error_save") %>',
+  savingBtn:        '<%- __("documents.js_saving_btn") %>',
+  otherSpecify:     '<%- __("documents.js_other_specify") %>',
+  searching:        '<%- __("documents.js_searching") %>',
+  noResults:        '<%- __("documents.js_no_results") %>',
+  confirmDelete:    '<%- __("documents.js_confirm_delete") %>',
+  errorDelete:      '<%- __("documents.js_error_delete") %>',
+  eliminar:         '<%- __("documents.js_eliminar_btn") %>',
+  jobTypeLabel:     '<%- __("documents.job_type") %>',
+  jobCityLabel:     '<%- __("documents.job_location") %>',
+  selectPlaceholder:'<%- __("documents.select_placeholder") %>',
+  jobCityPlaceholder:'<%- __("documents.job_city_placeholder") %>',
+  jobOtherOption:   '<%- __("documents.job_other_option") %>'
+};
+// ─── Autosave real al servidor + localStorage ──────────────
+var _saveTimer = null;
+var _saveStatus = document.getElementById('save-status');
+
+function updateKmCalc() {
+  var input   = document.getElementById('carWorkKm');
+  var box     = document.getElementById('km-calc-box');
+  var result  = document.getElementById('km-calc-result');
+  var detail  = document.getElementById('km-calc-detail');
+  var logbook = document.getElementById('logbook-warning');
+  if (!input) return;
+  var km = parseInt(input.value) || 0;
+  if (km > 0) {
+    box.style.display = 'block';
+    result.textContent = 'AUD $' + (km * 0.88).toFixed(2);
+    detail.textContent = km + ' km × $0.88';
+  } else {
+    box.style.display = 'none';
+  }
+  if (logbook) logbook.style.display = km > 5000 ? 'block' : 'none';
+}
+
+function getFormData() {
+  var params = new URLSearchParams();
+  params.append('taxYear', '<%= taxYear %>');
+  params.append('hasCar', document.getElementById('hasCar-val') ? document.getElementById('hasCar-val').value : '');
+  params.append('hasHealthInsurance', document.getElementById('hasHealth-val') ? document.getElementById('hasHealth-val').value : '');
+  ['carBrand','carModel','carYear','carPlate','carWorkKm',
+   'healthProvider','healthMemberNumber','healthStartDate','healthEndDate','healthPlanType'
+  ].forEach(function(f){
+    var el = document.querySelector('[name="'+f+'"]');
+    if(el) params.append(f, el.value);
+  });
+  return params;
+}
+
+function showSaveStatus(state) {
+  if(!_saveStatus) return;
+  if(state === 'saving') {
+    _saveStatus.textContent = STR.saving;
+    _saveStatus.style.color = 'var(--muted)';
+  } else if(state === 'saved') {
+    _saveStatus.textContent = STR.saved;
+    _saveStatus.style.color = 'var(--green)';
+  } else if(state === 'error') {
+    _saveStatus.textContent = STR.errorSave;
+    _saveStatus.style.color = 'var(--red)';
+  }
+}
+
+// Limpiar localStorage stale — el servidor es la fuente de verdad
+try { localStorage.removeItem('retaux_docs_draft'); } catch(e) {}
+
+function autoSaveNow(callback) {
+  showSaveStatus('saving');
+  var params = getFormData();
+
+  var saveController = new AbortController();
+  setTimeout(function(){ try { saveController.abort(); } catch(e){} }, 8000);
+
+  fetch('/onboarding/documents/autosave', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' },
+    body: params.toString(),
+    signal: saveController.signal
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    if(d.ok){
+      showSaveStatus('saved');
+      if(callback) callback();
+    } else { showSaveStatus('error'); }
+  })
+  .catch(function(){ showSaveStatus('error'); if(callback) callback(); });
+}
+
+function triggerAutoSave() {
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(autoSaveNow, 800);
+}
+
+// Attach listeners to all form fields
+(function attachListeners(){
+  var form = document.getElementById('docs-info-form');
+  if(!form) return;
+  form.querySelectorAll('input,select,textarea').forEach(function(el){
+    el.addEventListener('change', triggerAutoSave);
+    el.addEventListener('blur',   triggerAutoSave);
+  });
+})();
+
+// ─── Guardar antes de recargar por upload de archivo ───────
+(function interceptUploads(){
+  document.querySelectorAll('form[action*="/upload"]').forEach(function(form) {
+    form.addEventListener('submit', function(e) {
+      // Solo interceptar si hay datos sin guardar (campos del docs-info-form)
+      var infoForm = document.getElementById('docs-info-form');
+      if (!infoForm) return;
+      e.preventDefault();
+      var submittedForm = this;
+      autoSaveNow(function() {
+        submittedForm.submit();
+      });
+    });
+  });
+})();
+
+// ─── Guardar y continuar al pago ───────────────────────────
+function saveAndConfirm() {
+  var btn = document.getElementById('confirm-btn');
+  btn.disabled = true;
+  btn.textContent = STR.savingBtn;
+  autoSaveNow(function(){
+    // After saving, submit the confirm form
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/onboarding/confirm';
+    document.body.appendChild(form);
+    form.submit();
+  });
+}
+
+// ─── Borrar documento sin recargar la página ───────────────
+function deleteDoc(docId, btn) {
+  if(!confirm(STR.confirmDelete)) return;
+  var li = btn.closest('li');
+  btn.disabled = true;
+  btn.textContent = '...';
+  fetch('/onboarding/documents/delete', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-Requested-With': 'XMLHttpRequest'
+    },
+    body: 'docId=' + encodeURIComponent(docId)
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data){
+    if(data.ok){
+      // Fade out and remove the list item
+      li.style.transition = 'opacity 0.3s';
+      li.style.opacity = '0';
+      setTimeout(function(){
+        li.remove();
+        // Update counter
+        var catDiv = btn.closest('.doc-category');
+        if(catDiv){
+          var remaining = catDiv.querySelectorAll('.doc-list li').length;
+          var counter = catDiv.querySelector('.doc-count');
+          if(counter) counter.textContent = remaining + ' archivo' + (remaining===1?'':'s');
+        }
+      }, 300);
+    }
+  })
+  .catch(function(){
+    btn.disabled = false;
+    btn.textContent = STR.eliminar;
+    alert(STR.errorDelete);
+  });
+}
+
+// ─── SÍ/NO toggle ──────────────────────────────────────────
+function setYN(key, val) {
+  var yes = document.getElementById(key+'-yes');
+  var no = document.getElementById(key+'-no');
+  var fields = document.getElementById(key==='car'?'carFields':'healthFields');
+  var hidden = document.getElementById(key==='car'?'hasCar-val':'hasHealth-val');
+  if (val === 'yes') {
+    yes.classList.add('active-yes'); yes.classList.remove('active-no');
+    no.classList.remove('active-yes','active-no');
+    fields.style.display = 'block';
+    hidden.value = '1';
+  } else {
+    no.classList.add('active-no'); no.classList.remove('active-yes');
+    yes.classList.remove('active-yes','active-no');
+    fields.style.display = 'none';
+    hidden.value = '';
+  }
+}
+
+
+// ─── Deducciones — toggle info popup ────────────────────────
+function toggleInfo(id) {
+  var el = document.getElementById(id);
+  if (el) el.classList.toggle('open');
+}
+
+// ─── Deducciones — valor mínimo para D1 y D3 ─────────────────
+function enforceDedMin(input) {
+  if (input.value === '' || input.value == null) { triggerAutoSave(); return; }
+  var min = parseFloat(input.getAttribute('data-min'));
+  var val = parseFloat(input.value);
+  if (!isNaN(val) && val < min) input.value = min.toFixed(2);
+  triggerAutoSave();
+}
+
+// ─── Deducciones — upload comprobante ────────────────────────
+function uploadDedReceipt(input, category) {
+  if (!input.files.length) return;
+  var form = document.createElement('form');
+  form.method = 'POST';
+  form.action = '/onboarding/documents/upload';
+  form.enctype = 'multipart/form-data';
+  var cat = document.createElement('input'); cat.type='hidden'; cat.name='category'; cat.value=category; form.appendChild(cat);
+  var ty = document.createElement('input'); ty.type='hidden'; ty.name='taxYear'; ty.value='<%= taxYear %>'; form.appendChild(ty);
+  var dt = new DataTransfer(); dt.items.add(input.files[0]);
+  var fi = document.createElement('input'); fi.type='file'; fi.name='files'; form.appendChild(fi);
+  fi.files = dt.files;
+  document.body.appendChild(form);
+  form.submit();
+}
+
+// ─── Replace doc helper ─────────────────────────────────────
+function replaceDoc(docId, category, fileInput) {
+  var form = document.createElement('form');
+  form.method = 'POST';
+  form.action = '/onboarding/documents/replace';
+  form.enctype = 'multipart/form-data';
+  var f1 = document.createElement('input'); f1.type='hidden'; f1.name='docId'; f1.value=docId; form.appendChild(f1);
+  var f2 = document.createElement('input'); f2.type='hidden'; f2.name='category'; f2.value=category; form.appendChild(f2);
+  var f3 = document.createElement('input'); f3.type='hidden'; f3.name='taxYear'; f3.value='<%= taxYear %>'; form.appendChild(f3);
+  var newFile = document.createElement('input'); newFile.type='file'; newFile.name='file'; form.appendChild(newFile);
+  var dt = new DataTransfer();
+  dt.items.add(fileInput.files[0]);
+  newFile.files = dt.files;
+  document.body.appendChild(form);
+  form.submit();
+}
+</script>
+
+<%- include('../partials/unsaved-warning') %>
+</body>
+</html>

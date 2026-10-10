@@ -1,0 +1,157 @@
+<%- include('../layout/admin-header', { title: user.firstName + ' ' + user.lastName }) %>
+
+<div style="margin-bottom:16px">
+  <a href="/admin" style="font-size:14px;color:var(--text-muted)">← Volver al panel</a>
+</div>
+
+<% if (success) { %><div class="alert alert--success"><%= success %></div><% } %>
+<% if (error) { %><div class="alert alert--error"><%= error %></div><% } %>
+
+<div class="admin-header">
+  <div>
+    <h2 style="font-family:'Fraunces',serif"><%= user.firstName %> <%= user.lastName %></h2>
+    <p class="text-muted text-sm"><%= user.email %> · <span class="mono"><%= user.referralCode %></span></p>
+  </div>
+  <div>
+    <% if (!user.verified) { %>
+      <span class="status-badge status--cancelled">Sin verificar</span>
+    <% } else if (!user.paymentComplete) { %>
+      <span class="status-badge status--pending">Sin pagar</span>
+    <% } else { %>
+      <span class="status-badge status--paid">Pagó ✓</span>
+    <% } %>
+  </div>
+</div>
+
+<div class="grid-2" style="gap:20px;margin-bottom:20px">
+  <div class="card">
+    <h3 style="margin-bottom:12px">Datos personales</h3>
+    <table style="font-size:14px">
+      <tr><td style="color:var(--text-muted);padding:4px 12px 4px 0;width:120px">Teléfono</td><td><%= user.profile && user.profile.phone ? user.profile.phone : '—' %></td></tr>
+      <tr><td style="color:var(--text-muted);padding:4px 12px 4px 0">Nacionalidad</td><td><%= user.profile && user.profile.nationality ? user.profile.nationality : '—' %></td></tr>
+      <tr><td style="color:var(--text-muted);padding:4px 12px 4px 0">Visa</td><td><%= user.profile && user.profile.visaType ? user.profile.visaType.toUpperCase() + (user.profile.visaSubclass ? ' / ' + user.profile.visaSubclass : '') : '—' %></td></tr>
+      <tr><td style="color:var(--text-muted);padding:4px 12px 4px 0">Dirección</td><td><%= user.profile && user.profile.address ? user.profile.address : '—' %></td></tr>
+      <tr><td style="color:var(--text-muted);padding:4px 12px 4px 0">TFN</td><td class="mono"><%= user.profile && user.profile.tfn ? user.profile.tfn : '—' %></td></tr>
+      <tr><td style="color:var(--text-muted);padding:4px 12px 4px 0">Año fiscal</td><td><%= user.profile && user.profile.fiscalYear ? 'FY ' + user.profile.fiscalYear : '—' %></td></tr>
+      <tr><td style="color:var(--text-muted);padding:4px 12px 4px 0">Registro</td><td><%= new Date(user.createdAt).toLocaleDateString('es-AR') %></td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:12px">Datos bancarios</h3>
+    <table style="font-size:14px">
+      <tr><td style="color:var(--text-muted);padding:4px 12px 4px 0;width:120px">Banco</td><td><%= user.profile && user.profile.bankName ? user.profile.bankName : '—' %></td></tr>
+      <tr><td style="color:var(--text-muted);padding:4px 12px 4px 0">BSB</td><td class="mono"><%= user.profile && user.profile.bankBSB ? user.profile.bankBSB : '—' %></td></tr>
+      <tr><td style="color:var(--text-muted);padding:4px 12px 4px 0">Cuenta</td><td class="mono"><%= user.profile && user.profile.bankAccount ? user.profile.bankAccount : '—' %></td></tr>
+    </table>
+    <% if (user.atoCode) { %>
+    <hr class="divider">
+    <h4 style="margin-bottom:8px">Código ATO</h4>
+    <div class="mono" style="font-size:1.2rem;letter-spacing:4px;color:var(--ocre)"><%= user.atoCode %></div>
+    <div class="text-muted text-sm">Enviado: <%= new Date(user.atoCodeSubmittedAt).toLocaleDateString('es-AR') %></div>
+    <% } %>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <h3 style="margin-bottom:16px">Gestión del trámite</h3>
+  <form method="POST" action="/admin/client/<%= user.id %>/update">
+    <div class="form-row">
+      <div class="form-group">
+        <label>Estimado de devolución ATO (AUD)</label>
+        <input type="number" name="estimatedRefund" step="0.01" placeholder="1250.00"
+          value="<%= user.estimatedRefund !== null && user.estimatedRefund !== undefined ? user.estimatedRefund : '' %>"
+          class="mono-input">
+      </div>
+      <div class="form-group">
+        <label>Estado de vinculación ATO</label>
+        <select name="atoLinkingStatus">
+          <option value="no-code" <%= (user.atoLinkingStatus || 'no-code') === 'no-code' ? 'selected' : '' %>>Sin código</option>
+          <option value="code-received" <%= user.atoLinkingStatus === 'code-received' ? 'selected' : '' %>>Código recibido</option>
+          <option value="linked" <%= user.atoLinkingStatus === 'linked' ? 'selected' : '' %>>Vinculado</option>
+        </select>
+      </div>
+    </div>
+    <button type="submit" class="btn btn--primary btn--sm">Guardar cambios</button>
+  </form>
+</div>
+
+<% if (appointment) { %>
+<div class="card mb-3">
+  <h3 style="margin-bottom:12px">Turno asignado</h3>
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+    <div>
+      <div class="mono" style="font-size:1.1rem"><%= new Date(appointment.date).toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) %></div>
+      <div class="text-muted text-sm"><%= appointment.hour %>:00 hs (AEST)</div>
+    </div>
+    <form method="POST" action="/admin/appointment/<%= appointment.id %>/update" style="display:flex;gap:8px;align-items:center">
+      <input type="hidden" name="userId" value="<%= user.id %>">
+      <select name="status" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px">
+        <option value="pending" <%= appointment.status === 'pending' ? 'selected' : '' %>>Pendiente</option>
+        <option value="confirmed" <%= appointment.status === 'confirmed' ? 'selected' : '' %>>Confirmado</option>
+        <option value="completed" <%= appointment.status === 'completed' ? 'selected' : '' %>>Completado</option>
+        <option value="cancelled" <%= appointment.status === 'cancelled' ? 'selected' : '' %>>Cancelado</option>
+      </select>
+      <button type="submit" class="btn btn--sm btn--navy">Actualizar</button>
+    </form>
+  </div>
+</div>
+<% } %>
+
+<div class="card mb-3">
+  <h3 style="margin-bottom:12px">Documentos (<%= docs.length %>)</h3>
+  <% if (docs.length === 0) { %>
+    <p class="text-muted text-sm">No subió documentos todavía.</p>
+  <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Categoría</th><th>Archivo</th><th>Subido</th><th></th></tr></thead>
+        <tbody>
+          <% docs.forEach(doc => { %>
+          <tr>
+            <td class="text-sm"><%= doc.category %></td>
+            <td class="text-sm">📎 <%= doc.originalName %></td>
+            <td class="text-sm"><%= new Date(doc.uploadedAt).toLocaleDateString('es-AR') %></td>
+            <td><a href="/admin/documents/<%= doc.id %>/download" class="btn btn--sm btn--outline">Descargar</a></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
+
+<% if (referrals.length > 0) { %>
+<div class="card mb-3">
+  <h3 style="margin-bottom:12px">Referidos de este cliente</h3>
+  <table>
+    <thead><tr><th>Fecha</th><th>Monto</th><th>Estado</th><th></th></tr></thead>
+    <tbody>
+      <% referrals.forEach(r => { %>
+      <tr>
+        <td class="text-sm"><%= new Date(r.createdAt).toLocaleDateString('es-AR') %></td>
+        <td class="mono text-sm">AUD <%= r.amount %></td>
+        <td>
+          <span class="status-badge status--<%= r.status === 'paid' ? 'paid' : r.status === 'ready' ? 'ready' : 'pending' %>">
+            <%= r.status === 'paid' ? 'Pagado' : r.status === 'ready' ? 'Listo para pago' : 'Pendiente' %>
+          </span>
+        </td>
+        <td>
+          <form method="POST" action="/admin/referral/<%= r.id %>/update" style="display:flex;gap:6px">
+            <input type="hidden" name="referrerId" value="<%= user.id %>">
+            <select name="status" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:6px;font-size:13px">
+              <option value="pending" <%= r.status === 'pending' ? 'selected' : '' %>>Pendiente</option>
+              <option value="ready" <%= r.status === 'ready' ? 'selected' : '' %>>Listo para pago</option>
+              <option value="paid" <%= r.status === 'paid' ? 'selected' : '' %>>Pagado</option>
+            </select>
+            <button type="submit" class="btn btn--sm btn--navy">OK</button>
+          </form>
+        </td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<% } %>
+
+<%- include('../layout/admin-footer') %>

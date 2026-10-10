@@ -1,0 +1,102 @@
+<%- include('../layout/header', { title: 'Tus datos', currentUser: user }) %>
+
+<div class="container--narrow" style="padding:40px 24px 60px">
+  <div class="steps">
+    <div class="step active">Datos personales</div>
+    <div class="step">Documentos</div>
+    <div class="step">Pago</div>
+  </div>
+
+  <h1 style="margin-bottom:4px">Tus datos personales</h1>
+  <p class="text-muted" style="margin-bottom:28px">Necesitamos esta información para preparar tu declaración.</p>
+
+  <% if (error) { %><div class="alert alert--error"><%= error %></div><% } %>
+
+  <form method="POST" action="/onboarding/profile">
+    <div class="card">
+      <h3 style="margin-bottom:16px">Información de contacto</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nombre completo</label>
+          <input type="text" value="<%= user.fullName || '' %>" readonly style="background:var(--bg-page)">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Teléfono / WhatsApp *</label>
+        <input type="tel" name="phone" required placeholder="+61 4XX XXX XXX" value="<%= user.profile && user.profile.phone ? user.profile.phone : '' %>">
+      </div>
+      <div class="form-group">
+        <label>Dirección en Australia *</label>
+        <input type="text" name="address" required placeholder="123 Main St, Melbourne VIC 3000" value="<%= user.profile && user.profile.address ? user.profile.address : '' %>">
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <h3 style="margin-bottom:16px">Información de visa</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nacionalidad *</label>
+          <input type="text" name="nationality" required placeholder="Argentina" value="<%= user.profile && user.profile.nationality ? user.profile.nationality : '' %>">
+        </div>
+        <div class="form-group">
+          <label>Año fiscal *</label>
+          <select name="fiscalYear">
+            <option value="2024">FY 2023–2024</option>
+            <option value="2023">FY 2022–2023</option>
+            <option value="2022">FY 2021–2022</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Tipo de visa *</label>
+          <select name="visaType" required>
+            <option value="">Seleccioná...</option>
+            <option value="whv">Working Holiday (417/462)</option>
+            <option value="student">Student Visa</option>
+            <option value="resident">Residente fiscal</option>
+            <option value="other">Otra</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Subclase (opcional)</label>
+          <input type="text" name="visaSubclass" placeholder="417, 462, 500..." value="<%= user.profile && user.profile.visaSubclass ? user.profile.visaSubclass : '' %>">
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <h3 style="margin-bottom:4px">TFN (Tax File Number)</h3>
+      <p class="text-muted text-sm" style="margin-bottom:16px">Lo necesitamos para hacer la declaración. Se guarda de forma segura.</p>
+      <div class="form-group">
+        <label>TFN *</label>
+        <input type="text" name="tfn" required placeholder="XXX XXX XXX" class="mono-input" value="<%= user.profile && user.profile.tfn ? user.profile.tfn : '' %>">
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <h3 style="margin-bottom:4px">Datos bancarios para la devolución</h3>
+      <p class="text-muted text-sm" style="margin-bottom:16px">El ATO depositará tu devolución en esta cuenta. Tiene que ser a tu nombre.</p>
+      <div class="form-group">
+        <label>Banco *</label>
+        <input type="text" name="bankName" required placeholder="Commonwealth Bank, ANZ, Westpac..." value="<%= user.profile && user.profile.bankName ? user.profile.bankName : '' %>">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>BSB *</label>
+          <input type="text" name="bankBSB" required placeholder="062-000" class="mono-input" value="<%= user.profile && user.profile.bankBSB ? user.profile.bankBSB : '' %>">
+          <p class="form-hint">6 dígitos, formato XXX-XXX</p>
+        </div>
+        <div class="form-group">
+          <label>Número de cuenta *</label>
+          <input type="text" name="bankAccount" required placeholder="12345678" class="mono-input" value="<%= user.profile && user.profile.bankAccount ? user.profile.bankAccount : '' %>">
+        </div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn--primary btn--full mt-3">Guardar y continuar →</button>
+  </form>
+</div>
+
+<%- include('../partials/unsaved-warning') %>
+<%- include('../layout/footer') %>

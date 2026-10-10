@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('partials/head') %>
+  <title>Términos y Condiciones — RETAUX</title>
+</head>
+<body>
+  <%- include('partials/nav', { active: '', user: typeof user !== 'undefined' ? user : null }) %>
+
+  <section class="section">
+    <div class="container-narrow">
+      <h1 style="font-size:2rem;margin-bottom:6px;">Términos y Condiciones</h1>
+      <p class="muted" style="margin-bottom:32px;font-size:0.9rem;">Última actualización: septiembre de 2026</p>
+
+      <div class="card" style="line-height:1.8;font-size:0.95rem;">
+
+        <h2 style="font-size:1.2rem;margin-bottom:12px;color:var(--navy);">1. Descripción del servicio</h2>
+        <p>RETAUX es una plataforma digital de intermediación y tercerización de clientes. Nuestro servicio consiste en organizar, ordenar y simplificar el proceso de recopilación de información y documentación del cliente, para luego derivarlo a un agente impositivo registrado ante la ATO (Tax Agent) que es quien efectivamente prepara y presenta la declaración de impuestos (tax return).</p>
+        <p><strong>RETAUX no es un agente impositivo registrado y no opera directamente con la ATO.</strong> RETAUX actúa como intermediario: organiza el camino del cliente y lo conecta con el agente impositivo calificado. La preparación y presentación formal de la declaración ante la ATO es responsabilidad exclusiva del agente impositivo asignado, quien opera bajo supervisión de su entidad supervisora.</p>
+        <p>RETAUX recibe un beneficio económico por organizar y facilitar la llegada del cliente al agente impositivo. Este beneficio está incluido en el costo total del servicio que el cliente abona a RETAUX.</p>
+        <p>El servicio incluye: recopilación y ordenamiento de información contable provista por el usuario, orientación general sobre deducciones aplicables, coordinación con el agente impositivo asignado, y seguimiento del estado del trámite.</p>
+
+        <hr class="divider">
+
+        <h2 style="font-size:1.2rem;margin-bottom:12px;color:var(--navy);">2. Responsabilidades del usuario</h2>
+        <p>Al utilizar RETAUX, el usuario declara y garantiza que:</p>
+        <ul style="margin:0 0 16px 20px;color:var(--muted);">
+          <li>Toda la información, documentación e datos provistos a través de la plataforma son verídicos, completos y exactos.</li>
+          <li>Es responsable de conservar y proveer a RETAUX todos los comprobantes, recibos, payslips y documentación de respaldo necesaria para la correcta confección de su declaración.</li>
+          <li>Comprende que cualquier inexactitud u omisión en la información suministrada puede generar inconvenientes con el ATO, siendo esta responsabilidad exclusiva del usuario.</li>
+        </ul>
+
+        <hr class="divider">
+
+        <h2 style="font-size:1.2rem;margin-bottom:12px;color:var(--navy);">3. Alcance del asesoramiento</h2>
+        <p>RETAUX brinda orientación y asesoramiento fiscal de carácter general y de referencia, basado en la información provista por el usuario y la normativa vigente de la ATO. La decisión final sobre la declaración corresponde al agente impositivo registrado asignado.</p>
+        <p>En caso de que la ATO emita alertas (<em>warnings</em>), notificaciones, solicitudes de información adicional o inicie procesos de revisión, RETAUX colaborará activamente en la medida de sus posibilidades para asistir al usuario en la resolución de dichas situaciones.</p>
+        <p>Sin perjuicio de lo anterior, <strong>RETAUX no asume responsabilidad alguna por cargos económicos, multas, intereses, penalidades impositivas ni acciones judiciales o administrativas</strong> que pudieran originarse como consecuencia de información incorrecta, incompleta o fraudulenta provista por el usuario, ni por decisiones adoptadas por la ATO o cualquier organismo gubernamental australiano.</p>
+
+        <hr class="divider">
+
+        <h2 style="font-size:1.2rem;margin-bottom:12px;color:var(--navy);">4. Privacidad, confidencialidad y terceros</h2>
+        <p>RETAUX trata la información personal de sus usuarios con la máxima confidencialidad. Los datos personales, bancarios e impositivos provistos serán utilizados para la gestión del tax return del usuario.</p>
+        <p><strong>Consentimiento para compartir información con terceros:</strong> al aceptar estos términos, el usuario consiente expresamente que su información personal (nombre completo, fecha de nacimiento, dirección, correo electrónico, teléfono, TFN, datos bancarios y documentación adjunta) sea compartida con el agente impositivo registrado asignado por RETAUX, quien la necesita para preparar y presentar la declaración ante la ATO. Dicho agente opera bajo supervisión de su entidad regulatoria y está obligado a mantener la confidencialidad de la información.</p>
+        <p>Los documentos cargados a la plataforma son almacenados en servidores seguros y accesibles exclusivamente por el equipo de RETAUX y el agente impositivo asignado, a los efectos del servicio contratado.</p>
+
+        <hr class="divider">
+
+        <h2 style="font-size:1.2rem;margin-bottom:12px;color:var(--navy);">5. Honorarios, plazos y política de reembolso</h2>
+        <p>El servicio tiene un costo de <strong>AUD 150</strong> por declaración fiscal. Dicho monto contempla la gestión completa descripta en el punto 1. En caso de contar con un código de referido válido, se aplicará un descuento de <strong>AUD 30</strong>, resultando un total de <strong>AUD 120</strong>.</p>
+        <p><strong>Plazos:</strong> el proceso de presentación ante la ATO tiene un plazo estimado de 30 a 45 días hábiles desde que el agente impositivo recibe toda la documentación completa. RETAUX apunta a coordinar la entrega al agente en un plazo de 2 semanas desde el pago, pero los tiempos de procesamiento de la ATO son ajenos al control de RETAUX y del agente impositivo.</p>
+        <p>Una vez iniciado el proceso de presentación ante el ATO, el honorario no es reembolsable, dado que el servicio ya habrá sido prestado en su totalidad o en parte significativa.</p>
+        <p><strong>Deducibilidad:</strong> el honorario del agente impositivo (la porción correspondiente a los servicios del agente, no el total abonado a RETAUX) puede ser deducible en la declaración fiscal del ejercicio siguiente. RETAUX lo informará automáticamente en el formulario de deducciones correspondiente.</p>
+
+        <hr class="divider">
+
+        <h2 style="font-size:1.2rem;margin-bottom:12px;color:var(--navy);">6. Sistema de referidos y divulgación de arreglos de derivación</h2>
+        <p><strong>Divulgación obligatoria:</strong> en cumplimiento de las normas de transparencia aplicables, RETAUX declara que recibe una compensación económica por la derivación de clientes al agente impositivo registrado. Esta compensación está incluida en el precio que abona el usuario y no representa un costo adicional para éste.</p>
+        <p>RETAUX cuenta además con un programa de referidos entre usuarios: quienes compartan su código personal y logren que un nuevo cliente abone el servicio, recibirán un crédito de <strong>AUD 20</strong>. Al utilizar un código de referido, el usuario acepta que quien lo refirió reciba dicho crédito como compensación por la introducción. Los pagos de referidos se realizan el primer viernes hábil de cada mes, a la cuenta bancaria registrada por el usuario en su perfil. RETAUX se reserva el derecho de verificar la validez de los referidos antes de proceder al pago.</p>
+
+        <hr class="divider">
+
+        <h2 style="font-size:1.2rem;margin-bottom:12px;color:var(--navy);">7. Modificaciones</h2>
+        <p>RETAUX se reserva el derecho de modificar estos Términos y Condiciones en cualquier momento. Los cambios serán notificados a los usuarios registrados vía correo electrónico y entrarán en vigencia a los 7 días de su publicación. El uso continuado del servicio implicará la aceptación de los nuevos términos.</p>
+
+        <hr class="divider">
+
+        <h2 style="font-size:1.2rem;margin-bottom:12px;color:var(--navy);">8. Contacto</h2>
+        <p>Para consultas sobre estos Términos y Condiciones, podés escribirnos a <a href="mailto:hola@retaux.com">hola@retaux.com</a>. Nuestro equipo responderá a la brevedad.</p>
+
+      </div>
+    </div>
+  </section>
+
+  <%- include('partials/footer') %>
+</body>
+</html>

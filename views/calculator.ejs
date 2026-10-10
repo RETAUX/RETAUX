@@ -1,0 +1,10 @@
+<%- include('layout/header', { title: __('calc.title') || 'Tax Refund Calculator', currentUser: user }) %>
+
+<div class="container" style="max-width:680px; padding:40px 24px 80px;">
+  <div class="page-header" style="margin-bottom:24px;">
+    <h1 style="font-size:1.5rem;"><%- __('calc.title') %></h1>
+  </div>
+  <%- include('partials/tax-calculator') %>
+</div>
+
+<%- include('layout/footer') %>

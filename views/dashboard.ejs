@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="<%= lang || 'es' %>">
+<head>
+  <%- include('partials/head') %>
+  <title><%- __('dashboard.page_title') %> — RETAUX</title>
+  <style>
+    .hub-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 28px;
+    }
+    @media (max-width: 640px) {
+      .hub-grid { grid-template-columns: 1fr; }
+    }
+    .hub-card {
+      background: #fff;
+      border: 1px solid rgba(10,14,92,0.07);
+      border-radius: 16px;
+      padding: 26px 22px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 2px 8px rgba(10,14,92,0.07), 0 8px 24px rgba(10,14,92,0.05);
+      transition: box-shadow 0.22s, transform 0.22s;
+    }
+    .hub-card:hover {
+      box-shadow: 0 6px 20px rgba(10,14,92,0.12), 0 16px 40px rgba(10,14,92,0.08);
+      transform: translateY(-4px);
+    }
+    .hub-card-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+    }
+    .hub-card-title { font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; color: var(--ink); margin: 0; }
+    .hub-card-desc { font-size: 0.88rem; color: var(--muted); margin: 0; line-height: 1.5; }
+    .hub-card-status {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.78rem; font-family: var(--font-mono);
+      padding-top: 10px;
+      border-top: 1px solid rgba(10,14,92,0.07);
+      margin-top: auto;
+    }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .dot-green  { background: #10B981; }
+    .dot-amber  { background: var(--ochre); }
+    .dot-grey   { background: #aaa; }
+    .dot-blue   { background: var(--blue-light); }
+    .hub-card-cta { margin-top: auto; }
+
+    .hub-card--tax   { border-top: 4px solid var(--ochre);      }
+    .hub-card--tax   .hub-card-icon { background: #FFF8E1; }
+    .hub-card--dasp  { border-top: 4px solid #3B82F6;            }
+    .hub-card--dasp  .hub-card-icon { background: #EFF6FF; }
+    .hub-card--data  { border-top: 4px solid var(--eucalyptus);  }
+    .hub-card--data  .hub-card-icon { background: #ECFDF5; }
+    .hub-card--refs  { border-top: 4px solid var(--terracotta);  }
+    .hub-card--refs  .hub-card-icon { background: #FFF7ED; }
+
+    /* Stage tracker */
+    .stage-track {
+      display: flex;
+      align-items: flex-start;
+      margin-top: 8px;
+    }
+    .stage-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      width: 90px;
+      flex-shrink: 0;
+    }
+    .stage-dot {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      background: var(--paper-alt);
+      border: 2px solid var(--line);
+      color: var(--muted);
+      margin-bottom: 8px;
+      flex-shrink: 0;
+    }
+    .stage-step.done .stage-dot {
+      background: var(--eucalyptus);
+      border-color: var(--eucalyptus);
+      color: #fff;
+    }
+    .stage-step.current .stage-dot {
+      background: var(--ochre);
+      border-color: var(--ochre);
+      color: #fff;
+      box-shadow: 0 0 0 4px rgba(217,138,61,0.18);
+    }
+    .stage-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--muted);
+      line-height: 1.3;
+    }
+    .stage-step.done .stage-label,
+    .stage-step.current .stage-label {
+      color: var(--ink);
+    }
+    .stage-time {
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .stage-line {
+      flex: 1;
+      height: 3px;
+      background: var(--line);
+      margin-top: 19px;
+      min-width: 16px;
+    }
+    .stage-line.done { background: var(--eucalyptus); }
+    @media (max-width: 640px) {
+      .stage-track { overflow-x: auto; padding-bottom: 4px; }
+      .stage-step { width: 72px; }
+      .stage-dot { width: 32px; height: 32px; font-size: 0.85rem; }
+      .stage-label { font-size: 0.7rem; }
+      .hub-card { padding: 20px 16px; }
+      .hub-ref-row { flex-direction: column; align-items: stretch !important; }
+      .hub-ref-row button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <%- include('partials/nav', { active: 'dashboard', user: user }) %>
+
+  <section class="section">
+    <div class="container">
+      <h1 style="font-size:1.9rem;"><%- __('dashboard.greeting') %>, <%= user.fullName.split(' ')[0] %> 👋</h1>
+      <p class="muted"><%- __('dashboard.subtitle') %></p>
+
+      <% if (user.taxEstimate) { %>
+      <% var est = user.taxEstimate; %>
+      <% var fmtAUD = function(v) { return (v !== null && v !== undefined) ? '$' + Number(v).toFixed(2) : '—'; }; %>
+      <div style="background:var(--paper);border:2px solid <%= est.status==='accepted'?'#A7F3D0':est.status==='doubts'?'#FDE68A':'#BFDBFE' %>;border-radius:12px;padding:24px 28px;margin-top:24px;margin-bottom:4px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+          <div>
+            <div style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px;">Tu estimación de tax return</div>
+            <div style="font-size:1.4rem;font-weight:800;color:#065F46;font-family:var(--font-mono);">Reintegro estimado: <%= fmtAUD(est.estimatedRefund) %> AUD</div>
+          </div>
+          <% if (est.status === 'accepted') { %>
+            <span style="background:#D1FAE5;color:#065F46;font-size:0.82rem;font-weight:700;padding:6px 14px;border-radius:20px;">✅ Aceptaste esta estimación</span>
+          <% } else if (est.status === 'doubts') { %>
+            <span style="background:#FEF3C7;color:#92400E;font-size:0.82rem;font-weight:700;padding:6px 14px;border-radius:20px;">⚠ Enviaste tus dudas</span>
+          <% } else { %>
+            <span style="background:#DBEAFE;color:#1E40AF;font-size:0.82rem;font-weight:700;padding:6px 14px;border-radius:20px;">Esperando tu respuesta</span>
+          <% } %>
+        </div>
+
+        <%
+          var showRow = function(label, val, bold, indent) {
+            if (val === null || val === undefined || val === 0) return '';
+            var s = '<tr>';
+            s += '<td style="padding:6px 12px ' + (indent?'6px 24px':'') + ';font-size:0.88rem;' + (bold?'font-weight:700;':'') + 'color:var(--ink);border-bottom:1px solid var(--line);">' + label + '</td>';
+            s += '<td style="padding:6px 12px;text-align:right;font-family:var(--font-mono);font-size:0.88rem;' + (bold?'font-weight:700;':'') + 'color:var(--ink);border-bottom:1px solid var(--line);">$' + Number(val).toFixed(2) + '</td>';
+            s += '</tr>';
+            return s;
+          };
+          var subRow = function(label, val) {
+            var s = '<tr style="background:#FFF8E1;">';
+            s += '<td style="padding:7px 12px;font-size:0.88rem;font-weight:700;color:var(--ink);border-bottom:1px solid #FDE68A;">' + label + '</td>';
+            s += '<td style="padding:7px 12px;text-align:right;font-family:var(--font-mono);font-size:0.88rem;font-weight:700;color:var(--ink);border-bottom:1px solid #FDE68A;">' + (val !== null && val !== undefined ? '$' + Number(val).toFixed(2) : '—') + '</td>';
+            s += '</tr>';
+            return s;
+          };
+          var secHead = function(label) {
+            return '<tr><td colspan="2" style="padding:7px 12px;background:#0A0E5C;color:#fff;font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">' + label + '</td></tr>';
+          };
+        %>
+        <table style="width:100%;border-collapse:collapse;font-size:0.88rem;margin-bottom:20px;border:1px solid var(--line);border-radius:8px;overflow:hidden;">
+          <%- showRow('Taxable Income', est.taxableIncome) %>
+          <%- showRow('Tax Payable on Taxable Income', est.taxPayableOnTaxableIncome, true) %>
+          <% if (est.lowIncomeOffset) { %><%- showRow('Less — Low Income Offset', est.lowIncomeOffset, false, true) %><% } %>
+          <%- showRow('Less — Tax Withheld (salary)', est.taxWithheldSalary, false, true) %>
+          <tr style="background:#ECFDF5;">
+            <td style="padding:12px;font-size:1rem;font-weight:800;color:#065F46;">Estimated Tax Refund</td>
+            <td style="padding:12px;text-align:right;font-family:var(--font-mono);font-size:1rem;font-weight:800;color:#065F46;"><%= fmtAUD(est.estimatedRefund) %></td>
+          </tr>
+        </table>
+
+        <% if (est.status === 'pending') { %>
+        <div style="border-top:1px solid var(--line);padding-top:16px;">
+          <p style="font-size:0.88rem;color:var(--ink);margin:0 0 16px;">Revisá tu estimación de reintegro. ¿Estás de acuerdo con los valores calculados por tu agente de impuestos?</p>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start;">
+            <form method="POST" action="/dashboard/tax-estimate/accept" style="margin:0;">
+              <button type="submit" style="background:#059669;color:#fff;border:none;border-radius:8px;padding:11px 24px;font-size:0.95rem;font-weight:700;cursor:pointer;" onclick="return confirm('¿Confirmás que aceptás esta estimación?')">✅ Acepto la estimación</button>
+            </form>
+            <div>
+              <button type="button" onclick="var f=document.getElementById('doubt-form-main');f.style.display=f.style.display==='none'?'block':'none'" style="background:#F59E0B;color:#fff;border:none;border-radius:8px;padding:11px 24px;font-size:0.95rem;font-weight:700;cursor:pointer;">❓ Tengo dudas</button>
+              <form id="doubt-form-main" method="POST" action="/dashboard/tax-estimate/doubt" style="display:none;margin-top:10px;">
+                <textarea name="comment" rows="3" placeholder="Escribí tu consulta o comentario..." style="width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:6px;padding:10px;font-size:0.88rem;resize:vertical;background:var(--paper);color:var(--ink);"></textarea>
+                <button type="submit" style="margin-top:8px;background:#F59E0B;color:#fff;border:none;border-radius:6px;padding:8px 20px;font-size:0.88rem;font-weight:700;cursor:pointer;">Enviar consulta</button>
+              </form>
+            </div>
+          </div>
+        </div>
+        <% } else if (est.status === 'doubts' && est.clientComment) { %>
+        <div style="border-top:1px solid var(--line);padding-top:12px;font-size:0.85rem;color:#78350F;background:#FFF8E1;border-radius:6px;padding:12px 16px;margin-top:4px;">
+          Tu consulta: "<%= est.clientComment %>" — Un asesor te contactará pronto.
+        </div>
+        <% } %>
+
+        <% if (est.status === 'accepted' && !user.declarationSignedAt) { %>
+        <!-- ── Firma de declaración ENPRESA ── -->
+        <div style="margin-top:16px;border-top:2px solid #FDE68A;padding-top:16px;">
+          <div style="font-size:0.82rem;font-weight:700;color:#0A0E5C;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">📄 Paso final — Firma tu declaración</div>
+          <p style="font-size:0.88rem;color:#374151;margin:0 0 14px;">Para autorizar el procesamiento de tu declaración de impuestos, necesitamos tu firma. Al firmar confirmás que la información provista es correcta y autorizás a nuestro agente impositivo a presentarla ante la ATO.</p>
+          <form method="POST" action="/dashboard/sign-declaration" onsubmit="return this.signedName.value.trim().length > 2 || (alert('Escribí tu nombre completo para firmar.'), false)">
+            <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:8px;padding:16px;margin-bottom:14px;font-size:0.82rem;color:#374151;">
+              <strong>Declaración:</strong> Declaro que la información provista en este formulario y en todos los documentos de soporte es verdadera y correcta a mi leal saber. Autorizo a ENPRESA OF ACCOUNTING &amp; FINANCE, bajo la supervisión de The Accounting Academy Services Pty Ltd, a utilizar esta información únicamente para los servicios impositivos acordados.
+            </div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+              <div style="flex:1;min-width:200px;">
+                <label style="font-size:0.78rem;font-weight:700;color:#6B7280;display:block;margin-bottom:4px;">Tu nombre completo (firma electrónica)</label>
+                <input type="text" name="signedName" placeholder="Escribí tu nombre completo" required
+                  style="width:100%;box-sizing:border-box;border:1.5px solid #D1D5DB;border-radius:8px;padding:10px 14px;font-size:0.95rem;background:var(--paper);color:var(--ink);">
+              </div>
+              <button type="submit" style="background:#0A0E5C;color:#fff;border:none;border-radius:8px;padding:11px 24px;font-size:0.95rem;font-weight:700;cursor:pointer;white-space:nowrap;">✍️ Firmar declaración</button>
+            </div>
+          </form>
+        </div>
+        <% } else if (user.declarationSignedAt) { %>
+        <div style="margin-top:16px;border-top:2px solid #A7F3D0;padding-top:14px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:1.4rem;">✅</span>
+          <div>
+            <div style="font-size:0.88rem;font-weight:700;color:#065F46;">Declaración firmada</div>
+            <div style="font-size:0.8rem;color:#6B7280;">Firmado como "<%= user.declarationSignedName %>" el <%= new Date(user.declarationSignedAt).toLocaleDateString('es-AR', {day:'2-digit',month:'long',year:'numeric'}) %></div>
+          </div>
+        </div>
+        <% } %>
+
+      </div>
+      <% } %>
+
+      <div class="hub-grid">
+
+        <!-- ── Tax Return ─────────────────────────────────────── -->
+        <div class="hub-card hub-card--tax">
+          <div class="hub-card-icon">🇦🇺</div>
+          <p class="hub-card-title"><%- __('dashboard.hub_tax_title') %></p>
+          <p class="hub-card-desc"><%- __('dashboard.tax_desc') %></p>
+
+          <%
+            var taxCTA, taxLabel, taxStatusLabel, taxStatusClass;
+            if (!payment) {
+              if (user.onboardingStep === 'personal' || !user.onboardingStep) {
+                taxStatusLabel = __('dashboard.status_personal_pending'); taxStatusClass = 'dot-amber';
+                taxCTA = '/onboarding/personal'; taxLabel = __('dashboard.cta_personal');
+              } else if (user.onboardingStep === 'documents') {
+                taxStatusLabel = __('dashboard.status_docs_pending'); taxStatusClass = 'dot-amber';
+                taxCTA = '/onboarding/documents'; taxLabel = __('dashboard.cta_documents');
+              } else if (user.onboardingStep === 'payment') {
+                taxStatusLabel = __('dashboard.status_ready_pay'); taxStatusClass = 'dot-blue';
+                taxCTA = '/payment'; taxLabel = __('dashboard.cta_payment');
+              } else {
+                taxStatusLabel = __('dashboard.status_pay_verifying'); taxStatusClass = 'dot-amber';
+                taxCTA = '/payment/pending'; taxLabel = __('dashboard.cta_view_status');
+              }
+            } else {
+              taxStatusLabel = __('dashboard.status_paid_processing'); taxStatusClass = 'dot-blue';
+              taxCTA = '/case/status'; taxLabel = __('dashboard.cta_view_status');
+            }
+          %>
+
+          <div class="hub-card-status">
+            <div class="status-dot <%= taxStatusClass %>"></div>
+            <span><%= taxStatusLabel %></span>
+          </div>
+
+          <div class="hub-card-cta">
+            <a href="<%= taxCTA %>" class="btn btn--primary btn--sm" style="width:100%; text-align:center;"><%= taxLabel %></a>
+          </div>
+        </div>
+
+        <!-- ── DASP ───────────────────────────────────────────── -->
+        <div class="hub-card hub-card--dasp">
+          <div class="hub-card-icon">💼</div>
+          <p class="hub-card-title"><%- __('dashboard.hub_dasp_title') %></p>
+          <p class="hub-card-desc"><%- __('dashboard.dasp_desc') %></p>
+
+          <div class="hub-card-status">
+            <% if (daspRequest) { %>
+              <div class="status-dot dot-green"></div>
+              <span><%- __('dashboard.dasp_status_sent') %></span>
+            <% } else { %>
+              <div class="status-dot dot-grey"></div>
+              <span><%- __('dashboard.dasp_status_none') %></span>
+            <% } %>
+          </div>
+
+          <div class="hub-card-cta">
+            <a href="/dasp" class="btn btn--secondary btn--sm" style="width:100%; text-align:center; background:#3B82F6; border-color:#3B82F6; color:#fff; margin-bottom:8px;">
+              <%= daspRequest ? __('dashboard.dasp_cta_update') : __('dashboard.dasp_cta_start') %>
+            </a>
+            <% if (!superPayment || superPayment.status === 'rejected') { %>
+            <a href="/super" class="btn btn--sm" style="width:100%; text-align:center; background:#1D4ED8; border-color:#1D4ED8; color:#fff;">
+              💳 <%- __('dashboard.super_pay_cta') %>
+            </a>
+            <% } else if (superPayment.status === 'pending_manual') { %>
+            <a href="/super/pending" class="btn btn--sm btn--outline" style="width:100%; text-align:center;">
+              ⏳ <%- __('dashboard.super_pay_pending') %>
+            </a>
+            <% } else if (superPayment.status === 'paid') { %>
+            <div style="text-align:center; font-size:0.82rem; color:var(--green); font-weight:600; padding:6px;">
+              ✅ <%- __('dashboard.super_pay_done') %>
+            </div>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- ── Datos personales ───────────────────────────────── -->
+        <div class="hub-card hub-card--data">
+          <div class="hub-card-icon">👤</div>
+          <p class="hub-card-title"><%- __('dashboard.data_title') %></p>
+          <p class="hub-card-desc"><%- __('dashboard.data_desc') %></p>
+
+          <div class="hub-card-status">
+            <% if (profileComplete) { %>
+              <div class="status-dot dot-green"></div>
+              <span><%- __('dashboard.profile_complete') %></span>
+            <% } else { %>
+              <div class="status-dot dot-amber"></div>
+              <span><%= profilePct %>% <%- __('dashboard.profile_pct') %></span>
+            <% } %>
+          </div>
+
+          <% if (!profileComplete) { %>
+            <div class="progress-bar"><div class="progress-bar-fill" style="width:<%= profilePct %>%;"></div></div>
+          <% } %>
+
+          <div class="hub-card-cta">
+            <a href="/onboarding/personal" class="btn btn--secondary btn--sm" style="width:100%; text-align:center;">
+              <%= profileComplete ? __('dashboard.data_cta_update') : __('dashboard.data_cta_complete') %>
+            </a>
+          </div>
+        </div>
+
+        <!-- ── Referidos ──────────────────────────────────────── -->
+        <div class="hub-card hub-card--refs">
+          <div class="hub-card-icon">🤝</div>
+          <p class="hub-card-title"><%- __('dashboard.refs_title') %></p>
+          <p class="hub-card-desc"><%- __('dashboard.refs_desc') %></p>
+
+          <div class="hub-card-status">
+            <div class="status-dot dot-green"></div>
+            <span><%= paidReferrals %> <%- __('dashboard.refs_count') %> · <strong>AUD <%= paidReferrals * 20 %></strong> <%- __('dashboard.refs_earned') %></span>
+          </div>
+
+          <!-- Código para copiar -->
+          <div class="hub-ref-row" style="display:flex; align-items:center; gap:8px; background:var(--paper-alt); border:1px solid var(--line); border-radius:4px; padding:10px 12px;">
+            <span id="hub-ref-code" style="font-family:var(--font-mono); font-size:0.95rem; font-weight:700; flex:1; color:var(--ink);"><%= user.referralCode %></span>
+            <button onclick="copyCode()" id="hub-copy-btn"
+              style="background:var(--ochre); border:none; color:#fff; border-radius:4px; padding:6px 12px; cursor:pointer; font-size:0.78rem; font-weight:700; white-space:nowrap; transition:background 0.15s;">
+              📋 <%- __('dashboard.copy_btn') %>
+            </button>
+          </div>
+
+          <div class="hub-card-cta">
+            <a href="/referrals" class="btn btn--secondary btn--sm" style="width:100%; text-align:center;"><%- __('dashboard.refs_cta') %></a>
+          </div>
+        </div>
+
+      </div><!-- /.hub-grid -->
+
+      <!-- Estado del trámite (post-pago, siempre visible) -->
+      <% if (payment) {
+        var stageOrder = ['paid', 'lodged', 'processed', 'reviewed'];
+        var stages = [
+          { key: 'paid',      label: __('dashboard.stage_paid'),      icon: '💳', time: null },
+          { key: 'lodged',    label: __('dashboard.stage_lodged'),    icon: '📤', time: null },
+          { key: 'processed', label: __('dashboard.stage_processed'), icon: '🗂️', time: __('dashboard.stage_processed_time') },
+          { key: 'reviewed',  label: __('dashboard.stage_reviewed'),  icon: '🔎', time: __('dashboard.stage_reviewed_time') }
+        ];
+        var currentIdx = stageOrder.indexOf(user.taxReturnStage || 'paid');
+        if (currentIdx < 0) currentIdx = 0;
+      %>
+      <div class="card" style="margin-top:28px;">
+        <h3 style="margin-bottom:4px;"><%- __('dashboard.stage_title') %></h3>
+        <p class="muted" style="font-size:0.88rem;margin-bottom:18px;"><%- __('dashboard.stage_subtitle') %></p>
+        <div class="stage-track">
+          <% stages.forEach(function(s, i) { %>
+            <div class="stage-step <%= i < currentIdx ? 'done' : (i === currentIdx ? 'current' : '') %>">
+              <div class="stage-dot"><%= i < currentIdx ? '✓' : s.icon %></div>
+              <div class="stage-label"><%= s.label %></div>
+              <% if (s.time) { %><div class="stage-time"><%= s.time %></div><% } %>
+            </div>
+            <% if (i < stages.length - 1) { %><div class="stage-line <%= i < currentIdx ? 'done' : '' %>"></div><% } %>
+          <% }); %>
+        </div>
+      </div>
+      <% } %>
+
+      <!-- Documentos (sección secundaria) -->
+      <% if (payment || user.onboardingStep === 'documents' || user.onboardingStep === 'payment') { %>
+      <div class="card" style="margin-top:28px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <h3 style="margin:0;"><%- __('dashboard.my_docs') %></h3>
+          <a href="/onboarding/documents" class="btn btn--secondary btn--sm"><%- __('dashboard.manage_docs') %></a>
+        </div>
+        <%
+          var CATS = [
+            { id:'payslips',            label: __('dashboard.cat_payslips'),         icon:'💼' },
+            { id:'abn_income',          label: __('dashboard.cat_abn'),              icon:'🧾' },
+            { id:'certifications',      label: __('dashboard.cat_certs'),            icon:'📜' },
+            { id:'training',            label: __('dashboard.cat_training'),         icon:'🎓' },
+            { id:'work_expenses',       label: __('dashboard.cat_work_expenses'),    icon:'🔧' },
+            { id:'tech_purchases',      label: __('dashboard.cat_tech'),             icon:'💻' },
+            { id:'investment_statements',label: __('dashboard.cat_investments'),     icon:'📈' },
+            { id:'donation_receipts',   label: __('dashboard.cat_donations'),        icon:'🤝' }
+          ];
+        %>
+        <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:10px;">
+          <% CATS.forEach(function(cat) {
+            var count = yearSummaries.length ? (yearSummaries[0]['cat_' + cat.id] || 0) : 0;
+          %>
+            <a href="/onboarding/documents" style="text-decoration:none;">
+              <div style="background:var(--paper-alt); border:1px solid var(--line); border-radius:4px; padding:12px 14px; display:flex; align-items:center; gap:10px;">
+                <span><%= cat.icon %></span>
+                <div style="flex:1; min-width:0;">
+                  <div style="font-size:0.85rem; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><%= cat.label %></div>
+                  <div style="font-size:0.75rem; color:var(--muted); font-family:var(--font-mono);"><%= count %> <%- __('dashboard.files') %></div>
+                </div>
+                <% if (count > 0) { %><span style="color:var(--eucalyptus); font-size:0.85rem;">✓</span><% } %>
+              </div>
+            </a>
+          <% }); %>
+        </div>
+      </div>
+      <% } %>
+
+      <!-- Tax agent notice -->
+      <div style="margin-top:12px; padding:14px 18px; background:#f0fdf4; border-radius:var(--radius); border:1px solid #86efac; display:flex; align-items:center; gap:12px;">
+        <span style="font-size:1.3rem;">✅</span>
+        <span style="font-size:0.88rem; color:#166534; line-height:1.5;"><%- __('dashboard.taxagent_notice') %></span>
+      </div>
+
+      <!-- Guía de tasas (siempre visible al final) -->
+      <div style="margin-top:12px; padding:14px 18px; background:var(--paper-alt); border-radius:var(--radius); border:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div>
+          <span style="font-size:0.88rem; color:var(--muted);"><%- __('dashboard.tax_guide_hint') %></span>
+        </div>
+        <a href="/tax-info" class="btn btn--secondary btn--sm"><%- __('dashboard.tax_guide_btn') %></a>
+      </div>
+
+    </div>
+  </section>
+
+  <%- include('partials/footer') %>
+<script>
+function copyCode() {
+  var code = document.getElementById('hub-ref-code').innerText.trim();
+  navigator.clipboard.writeText(code).then(function(){
+    var btn = document.getElementById('hub-copy-btn');
+    var orig = btn.innerHTML;
+    btn.innerHTML = '✓ <%- __("dashboard.copied") %>';
+    btn.style.background = 'var(--eucalyptus)';
+    setTimeout(function(){ btn.innerHTML = orig; btn.style.background = ''; }, 2000);
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+  <title>Admin — RETAUX</title>
+  <style>
+    .admin-wrap { display:flex; min-height:100vh; }
+    .sidebar { width:210px; background:var(--ink); flex-shrink:0; padding:0; position:sticky; top:0; height:100vh; overflow-y:auto; }
+    .sidebar-logo { padding:24px 20px 20px; font-family:var(--font-display); font-size:1.2rem; color:var(--paper); border-bottom:1px solid rgba(255,255,255,.1); }
+    .sidebar-logo span { color:var(--ochre); }
+    .sidebar nav { padding:12px 0; }
+    .sidebar nav a { display:block; padding:10px 20px; color:rgba(247,242,231,.65); font-size:0.9rem; text-decoration:none; transition:all .15s; }
+    .sidebar nav a:hover, .sidebar nav a.active { color:var(--paper); background:rgba(255,255,255,.07); text-decoration:none; }
+    .sidebar-divider { border:none; border-top:1px solid rgba(255,255,255,.08); margin:8px 0; }
+    .admin-main { flex:1; overflow-y:auto; padding:32px; background:var(--paper); }
+    .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px; }
+    /* ── Mobile topbar ── */
+    .admin-topbar { display:none; }
+    .admin-nav-drawer { display:none; }
+    @media(max-width:768px) {
+      .admin-wrap { flex-direction:column; }
+      .sidebar { display:none; }
+      .admin-topbar { display:flex; align-items:center; justify-content:space-between; background:var(--ink); padding:14px 16px; position:sticky; top:0; z-index:100; }
+      .admin-topbar-logo { font-family:var(--font-display); font-size:1.1rem; color:var(--paper); }
+      .admin-topbar-logo span { color:var(--ochre); }
+      .admin-hamburger { background:none; border:none; cursor:pointer; padding:4px; display:flex; flex-direction:column; gap:5px; }
+      .admin-hamburger span { display:block; width:22px; height:2px; background:var(--paper); border-radius:2px; transition:all .2s; }
+      .admin-nav-drawer { position:fixed; top:0; left:0; right:0; bottom:0; z-index:200; }
+      .admin-nav-drawer.open { display:block; }
+      .admin-nav-overlay { position:absolute; inset:0; background:rgba(0,0,0,.45); }
+      .admin-nav-panel { position:absolute; top:0; right:0; width:260px; height:100%; background:var(--ink); padding:0; overflow-y:auto; }
+      .admin-nav-panel-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid rgba(255,255,255,.1); }
+      .admin-nav-panel-logo { font-family:var(--font-display); font-size:1.1rem; color:var(--paper); }
+      .admin-nav-panel-logo span { color:var(--ochre); }
+      .admin-nav-close { background:none; border:none; color:var(--paper); font-size:1.4rem; cursor:pointer; line-height:1; padding:0; }
+      .admin-nav-panel nav { padding:12px 0; }
+      .admin-nav-panel nav a { display:block; padding:13px 20px; color:rgba(247,242,231,.65); font-size:1rem; text-decoration:none; border-bottom:1px solid rgba(255,255,255,.05); }
+      .admin-nav-panel nav a:active { background:rgba(255,255,255,.1); color:var(--paper); }
+      .admin-main { padding:16px; }
+      .stats-row { grid-template-columns:repeat(2,1fr); gap:10px; }
+      table { font-size:0.8rem; }
+      th, td { padding:8px 6px; }
+      .search-bar { flex-direction:column; }
+      .search-bar input, .search-bar select { width:100%; box-sizing:border-box; }
+      .kanban-grid { grid-template-columns:1fr !important; }
+    }
+    @media(max-width:480px) {
+      .stats-row { grid-template-columns:1fr 1fr; }
+    }
+    .stat-box { background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:18px 20px; }
+    .stat-box .label { font-family:var(--font-mono); font-size:0.72rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+    .stat-box .value { font-family:var(--font-mono); font-size:1.8rem; font-weight:700; color:var(--ink); margin-top:4px; }
+    .search-bar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
+    .search-bar input { flex:1; min-width:220px; padding:9px 12px; border:1px solid var(--line); border-radius:var(--radius); font-size:0.9rem; background:var(--paper); color:var(--ink); }
+    .search-bar input:focus { outline:2px solid var(--ochre); border-color:var(--ochre); }
+    .search-bar select { padding:9px 12px; border:1px solid var(--line); border-radius:var(--radius); font-size:0.9rem; background:var(--paper); color:var(--ink); }
+    .bdg { display:inline-block; font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:10px; }
+    .bdg-paid { background:#EBF1ED; color:var(--eucalyptus); }
+    .bdg-pending { background:var(--paper-alt); color:var(--muted); }
+    .bdg-unverified { background:#FBEAE5; color:var(--terracotta); }
+    .bdg-linked { background:#EBF1ED; color:var(--eucalyptus); }
+    .bdg-submitted { background:#FBF2E4; color:var(--ochre-dark); }
+    .bdg-not_started { background:var(--paper-alt); color:var(--muted); }
+    .bdg-confirmed { background:#EBF1ED; color:var(--eucalyptus); }
+    .bdg-completed { background:#cce5ff; color:#004085; }
+    .bdg-cancelled { background:#FBEAE5; color:var(--terracotta); }
+  </style>
+</head>
+<body>
+<div class="admin-wrap">
+  <!-- Sidebar desktop -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">RE<span>TAUX</span></div>
+    <nav>
+      <a href="/admin" class="active">Panel principal</a>
+      <a href="/admin/chats">💬 Chats WhatsApp</a>
+      <a href="/admin/referrals">Referidos</a>
+      <a href="/admin/referrers">Crear referidor</a>
+      <a href="/admin/calendar">Calendario de turnos</a>
+      <a href="/admin/taxagent-accounts">Tax Agent Access</a>
+      <hr class="sidebar-divider">
+      <a href="/admin/logout" style="color:rgba(247,242,231,.35); font-size:0.82rem;">
+        Cerrar sesión<br><span style="font-family:var(--font-mono); font-size:0.75rem;"><%= adminUser.email %></span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Topbar móvil -->
+  <header class="admin-topbar">
+    <div class="admin-topbar-logo">RE<span>TAUX</span> <span style="font-size:0.75rem;color:rgba(247,242,231,.4);font-family:var(--font-mono);">admin</span></div>
+    <button class="admin-hamburger" onclick="document.getElementById('adminDrawer').classList.add('open')" aria-label="Menú">
+      <span></span><span></span><span></span>
+    </button>
+  </header>
+
+  <!-- Drawer móvil -->
+  <div class="admin-nav-drawer" id="adminDrawer">
+    <div class="admin-nav-overlay" onclick="document.getElementById('adminDrawer').classList.remove('open')"></div>
+    <div class="admin-nav-panel">
+      <div class="admin-nav-panel-header">
+        <span class="admin-nav-panel-logo">RE<span>TAUX</span></span>
+        <button class="admin-nav-close" onclick="document.getElementById('adminDrawer').classList.remove('open')">✕</button>
+      </div>
+      <nav>
+        <a href="/admin">Panel principal</a>
+        <a href="/admin/chats">💬 Chats WhatsApp</a>
+        <a href="/admin/referrals">Referidos</a>
+        <a href="/admin/referrers">Crear referidor</a>
+        <a href="/admin/calendar">Calendario de turnos</a>
+        <a href="/admin/logout" style="color:rgba(247,242,231,.4);margin-top:8px;">Cerrar sesión</a>
+      </nav>
+    </div>
+  </div>
+
+  <main class="admin-main">
+    <% if (deleted) { %>
+      <div class="alert alert-success" style="margin-bottom:20px;">✓ Usuario eliminado correctamente.</div>
+    <% } %>
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
+      <div>
+        <h1 style="font-size:1.6rem; margin-bottom:4px;">Panel de administración</h1>
+        <p class="muted" style="font-size:0.88rem; margin:0;">
+          <%= new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) %>
+        </p>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a href="/admin/export/users.xlsx" class="btn btn--navy btn--sm" style="display:flex;align-items:center;gap:6px;">
+          📊 Exportar Excel
+        </a>
+        <a href="/admin/export/files.zip" class="btn btn--secondary btn--sm" style="display:flex;align-items:center;gap:6px;">
+          📁 Descargar archivos ZIP
+        </a>
+      </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="label">Clientes registrados</div>
+        <div class="value"><%= totalUsers %></div>
+      </div>
+      <div class="stat-box">
+        <div class="label">Clientes activos</div>
+        <div class="value"><%= totalPaid %></div>
+        <div style="font-size:0.75rem;color:var(--muted);margin-top:6px;line-height:1.8;">
+          <span style="color:var(--ink);font-weight:600;"><%= rev150 %></span> × AUD 150
+          &nbsp;·&nbsp;
+          <span style="color:var(--ink);font-weight:600;"><%= rev120 %></span> × AUD 120
+          &nbsp;·&nbsp;
+          <span style="color:var(--ink);font-weight:600;"><%= rev100 %></span> × AUD 100
+          <% if (totalWithCollab > 0) { %>
+          &nbsp;·&nbsp;
+          <span style="color:#6366f1;font-weight:600;"><%= totalWithCollab %></span> cortesías
+          <% } %>
+        </div>
+      </div>
+      <div class="stat-box">
+        <div class="label">Con el agente</div>
+        <div class="value"><%= totalSentToAgent %></div>
+        <div style="font-size:0.75rem;color:var(--muted);margin-top:6px;">
+          <a href="/admin/taxagent-accounts" style="color:#1a56db;text-decoration:none;font-size:0.75rem;">Ver lista →</a>
+        </div>
+      </div>
+      <div class="stat-box">
+        <div class="label">Informal</div>
+        <div class="value"><%= totalInformal %></div>
+      </div>
+      <div class="stat-box">
+        <div class="label">En proceso</div>
+        <div class="value"><%= totalInProcess %></div>
+      </div>
+      <div class="stat-box">
+        <div class="label">Casos emitidos</div>
+        <div class="value"><%= totalIssued %></div>
+      </div>
+    </div>
+
+    <!-- ── Estimaciones pendientes de aceptación ──────────────────────────── -->
+    <% if (typeof pendingEstimates !== 'undefined' && pendingEstimates && pendingEstimates.length > 0) { %>
+    <div style="background:#FFFBEB; border:2px solid #F59E0B; border-radius:10px; padding:20px 24px; margin-bottom:24px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
+        <h3 style="margin:0; font-size:1rem; display:flex; align-items:center; gap:8px; color:#92400E;">
+          ⏳ Estimaciones pendientes de confirmación
+          <span style="background:#F59E0B; color:#fff; font-size:0.72rem; font-weight:700; border-radius:20px; padding:2px 10px;"><%= pendingEstimates.length %></span>
+        </h3>
+        <form method="POST" action="/admin/tax-estimate/remind-all" onsubmit="return confirm('¿Enviar recordatorio a los <%= pendingEstimates.length %> clientes pendientes?')">
+          <button type="submit" style="background:#D97706; color:#fff; border:none; border-radius:6px; padding:8px 16px; font-size:0.85rem; font-weight:700; cursor:pointer;">
+            📧 Recordar a todos (<%= pendingEstimates.length %>)
+          </button>
+        </form>
+      </div>
+      <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+        <thead>
+          <tr style="background:#FEF3C7;">
+            <th style="padding:8px 10px; text-align:left; font-weight:600; color:#78350F; border-bottom:1px solid #FDE68A;">Cliente</th>
+            <th style="padding:8px 10px; text-align:left; font-weight:600; color:#78350F; border-bottom:1px solid #FDE68A;">Email</th>
+            <th style="padding:8px 10px; text-align:left; font-weight:600; color:#78350F; border-bottom:1px solid #FDE68A;">Estimación cargada</th>
+            <th style="padding:8px 10px; border-bottom:1px solid #FDE68A;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% pendingEstimates.forEach(function(pe) { %>
+          <tr style="border-bottom:1px solid #FDE68A;">
+            <td style="padding:8px 10px; font-weight:600; color:#1C2B45;"><%= pe.fullName %></td>
+            <td style="padding:8px 10px; color:#374151; font-size:0.8rem;"><%= pe.email %></td>
+            <td style="padding:8px 10px; color:#6B7280; font-family:var(--font-mono); font-size:0.78rem;">
+              <%= pe.loadedAt ? new Date(pe.loadedAt).toLocaleString('es-AR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—' %>
+            </td>
+            <td style="padding:8px 10px; text-align:right;">
+              <a href="/admin/user/<%= pe.id %>" style="color:#1a56db; font-size:0.8rem; text-decoration:none;">Ver →</a>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <% } %>
+    <% if (typeof reminded !== 'undefined' && reminded > 0) { %>
+    <div style="background:#ECFDF5; border:1px solid #6EE7B7; border-radius:8px; padding:12px 16px; margin-bottom:20px; font-size:0.9rem; color:#065F46; font-weight:600;">
+      ✅ Recordatorio enviado a <%= reminded %> cliente<%= reminded > 1 ? 's' : '' %>
+    </div>
+    <% } %>
+
+    <!-- ── Pagos pendientes de Superannuation ───────────────────────────────── -->
+    <% if (pendingSuperPayments && pendingSuperPayments.length > 0) { %>
+    <div style="background:#EFF6FF; border:2px solid #3B82F6; border-radius:10px; padding:20px 24px; margin-bottom:24px;">
+      <h3 style="margin-bottom:14px; font-size:1rem; display:flex; align-items:center; gap:8px; color:#1D4ED8;">
+        🏦 Pagos pendientes — Superannuation (DASP)
+        <span style="background:#3B82F6; color:#fff; font-size:0.72rem; font-weight:700; border-radius:20px; padding:2px 10px;"><%= pendingSuperPayments.length %></span>
+      </h3>
+      <% pendingSuperPayments.forEach(function(p) { %>
+      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; padding:10px 0; border-bottom:1px solid rgba(0,0,0,0.07);">
+        <div>
+          <div style="font-weight:600; font-size:0.92rem;"><%= p.userName %></div>
+          <div style="font-size:0.8rem; color:var(--muted);"><%= p.userEmail %> · AUD <%= (p.amountCents/100).toFixed(2) %> · <%= new Date(p.createdAt).toLocaleDateString('es-AR') %></div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <a href="/admin/user/<%= p.userId %>" class="btn btn--sm btn--outline">Ver detalle</a>
+          <form method="POST" action="/admin/super-payment/<%= p.id %>/confirm" style="display:inline;">
+            <button type="submit" class="btn btn--sm btn--navy" onclick="return confirm('¿Confirmar pago DASP de <%= p.userName %>?')">
+              ✅ Confirmar DASP
+            </button>
+          </form>
+          <form method="POST" action="/admin/super-payment/<%= p.id %>/reject" style="display:inline;">
+            <button type="submit" class="btn btn--sm" style="background:#C0392B;color:#fff;border-color:#C0392B;" onclick="return confirm('¿Rechazar pago DASP de <%= p.userName %>?')">
+              ❌ Rechazar
+            </button>
+          </form>
+        </div>
+      </div>
+      <% }); %>
+    </div>
+    <% } %>
+
+    <!-- ── Pagos pendientes de confirmación ─────────────────────────────────── -->
+    <% if (pendingPayments && pendingPayments.length > 0) { %>
+    <div id="pending-payments-alert" style="background:#FFF8E1; border:2px solid #FFC107; border-radius:10px; padding:20px 24px; margin-bottom:24px;">
+      <h3 style="margin-bottom:14px; font-size:1rem; display:flex; align-items:center; gap:8px;">
+        ⏳ Pagos pendientes de confirmación
+        <span style="background:#FFC107; color:#060920; font-size:0.72rem; font-weight:700; border-radius:20px; padding:2px 10px;"><%= pendingPayments.length %></span>
+        <button onclick="document.getElementById('pending-payments-alert').style.display='none'" style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:1.1rem;color:#7B5800;line-height:1;padding:2px 6px;border-radius:4px;" title="Ocultar">✕</button>
+      </h3>
+      <% pendingPayments.forEach(function(p) { %>
+      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; padding:10px 0; border-bottom:1px solid rgba(0,0,0,0.07);">
+        <div>
+          <div style="font-weight:600; font-size:0.92rem;"><%= p.userName %></div>
+          <div style="font-size:0.8rem; color:var(--muted);"><%= p.userEmail %> · AUD <%= (p.amountCents/100).toFixed(2) %> · <%= new Date(p.createdAt).toLocaleDateString('es-AR') %></div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <a href="/admin/user/<%= p.userId %>" class="btn btn--sm btn--outline">Ver detalle</a>
+          <form method="POST" action="/admin/payment/<%= p.id %>/confirm" style="display:inline;">
+            <button type="submit" class="btn btn--sm btn--navy" onclick="return confirm('¿Confirmar pago de <%= p.userName %>?')">
+              ✅ Confirmar pago
+            </button>
+          </form>
+          <form method="POST" action="/admin/payment/<%= p.id %>/reject" style="display:inline;">
+            <button type="submit" class="btn btn--sm" style="background:#C0392B;color:#fff;border-color:#C0392B;" onclick="return confirm('¿Rechazar pago de <%= p.userName %>? Se le enviará un email pidiendo comprobante.')">
+              ❌ No confirmado
+            </button>
+          </form>
+        </div>
+      </div>
+      <% }); %>
+    </div>
+    <% } %>
+
+    <!-- ── Pagos rechazados (esperando comprobante) ──────────────────────────── -->
+    <% if (rejectedPayments && rejectedPayments.length > 0) { %>
+    <div style="background:#FFF5F5; border:2px solid #C0392B; border-radius:10px; padding:20px 24px; margin-bottom:24px;">
+      <h3 style="margin-bottom:14px; font-size:1rem; display:flex; align-items:center; gap:8px; color:#C0392B;">
+        ❌ Pagos no confirmados — esperando comprobante
+        <span style="background:#C0392B; color:#fff; font-size:0.72rem; font-weight:700; border-radius:20px; padding:2px 10px;"><%= rejectedPayments.length %></span>
+      </h3>
+      <% rejectedPayments.forEach(function(p) { %>
+      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; padding:10px 0; border-bottom:1px solid rgba(0,0,0,0.07);">
+        <div>
+          <div style="font-weight:600; font-size:0.92rem;"><%= p.userName %></div>
+          <div style="font-size:0.8rem; color:var(--muted);"><%= p.userEmail %> · AUD <%= (p.amountCents/100).toFixed(2) %> · Rechazado: <%= new Date(p.rejectedAt || p.createdAt).toLocaleDateString('es-AR') %></div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <a href="/admin/user/<%= p.userId %>" class="btn btn--sm btn--outline">Ver detalle</a>
+          <form method="POST" action="/admin/payment/<%= p.id %>/confirm" style="display:inline;">
+            <button type="submit" class="btn btn--sm btn--navy" onclick="return confirm('¿Confirmar pago de <%= p.userName %>?')">
+              ✅ Confirmar pago
+            </button>
+          </form>
+        </div>
+      </div>
+      <% }); %>
+    </div>
+    <% } %>
+
+    <!-- ── Funnel por etapa ──────────────────────────────────────────────────── -->
+    <div class="card" style="margin-bottom:24px;">
+      <h3 style="margin-bottom:18px; font-size:1rem;">Funnel por etapa</h3>
+      <% [
+        ['Datos personales', metrics.funnelSteps.personal, '#aaa'],
+        ['Documentación',    metrics.funnelSteps.documents, '#f59e0b'],
+        ['Pago pendiente',   metrics.funnelSteps.payment,   '#3B82F6'],
+        ['Pago en verificación', metrics.funnelSteps.done,  '#6366f1'],
+        ['Pagaron',          metrics.funnelSteps.paid,      '#10b981']
+      ].forEach(function(row) { %>
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+          <div style="width:12px;height:12px;border-radius:50%;background:<%= row[2] %>;flex-shrink:0;"></div>
+          <div style="font-size:0.9rem; flex:1; color:var(--ink);"><%= row[0] %></div>
+          <span style="font-size:0.95rem; font-family:var(--font-mono); font-weight:700; color:var(--ink);"><%= row[1] %></span>
+          <div style="width:140px; background:var(--bg-page); border-radius:4px; height:10px; overflow:hidden;">
+            <div style="height:100%; background:<%= row[2] %>; width:<%= totalUsers ? Math.round(row[1]/totalUsers*100) : 0 %>%;"></div>
+          </div>
+          <span style="font-size:0.78rem; font-family:var(--font-mono); color:var(--muted); width:36px; text-align:right;"><%= totalUsers ? Math.round(row[1]/totalUsers*100) : 0 %>%</span>
+        </div>
+      <% }); %>
+    </div>
+
+    <!-- ── Kanban por etapa del trámite ────────────────────────────────────────── -->
+    <div style="margin-bottom:28px;">
+      <h2 style="font-size:1.05rem;font-weight:700;margin-bottom:14px;color:var(--ink);">Estado de trámites — clientes que pagaron</h2>
+      <div class="kanban-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;">
+
+        <!-- Procesamiento -->
+        <div style="background:#F9FAFB;border:2px solid #D1D5DB;border-radius:10px;overflow:hidden;">
+          <div style="background:#374151;padding:12px 16px;display:flex;align-items:center;gap:8px;">
+            <span style="font-size:1rem;">⚙️</span>
+            <span style="color:#fff;font-weight:700;font-size:0.9rem;">Procesamiento</span>
+            <span style="margin-left:auto;background:rgba(255,255,255,.18);color:#fff;font-size:0.72rem;font-weight:700;padding:2px 9px;border-radius:12px;"><%= kanban.processing.length %></span>
+          </div>
+          <div style="padding:10px;max-height:340px;overflow-y:auto;">
+            <% if (kanban.processing.length === 0) { %>
+              <p style="text-align:center;color:var(--muted);font-size:0.82rem;padding:18px 0;">Sin clientes en esta etapa</p>
+            <% } %>
+            <% kanban.processing.forEach(function(u) { %>
+            <div style="background:#fff;border:1px solid #E5E7EB;border-radius:7px;padding:10px 12px;margin-bottom:8px;">
+              <div style="font-weight:600;font-size:0.88rem;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><%= u.fullName %></div>
+              <div style="font-size:0.75rem;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><%= u.email %></div>
+              <a href="/admin/user/<%= u.id %>" style="display:inline-block;margin-top:8px;font-size:0.75rem;color:#374151;border:1px solid #D1D5DB;border-radius:5px;padding:3px 10px;text-decoration:none;font-weight:600;">Ver →</a>
+            </div>
+            <% }) %>
+          </div>
+        </div>
+
+        <!-- Con el Tax Agent -->
+        <div style="background:#FFFBEB;border:2px solid #FCD34D;border-radius:10px;overflow:hidden;">
+          <div style="background:#92400E;padding:12px 16px;display:flex;align-items:center;gap:8px;">
+            <span style="font-size:1rem;">🔎</span>
+            <span style="color:#fff;font-weight:700;font-size:0.9rem;">Con el Tax Agent</span>
+            <span style="margin-left:auto;background:rgba(255,255,255,.2);color:#fff;font-size:0.72rem;font-weight:700;padding:2px 9px;border-radius:12px;"><%= kanban.with_agent.length %></span>
+          </div>
+          <div style="padding:10px;max-height:340px;overflow-y:auto;">
+            <% if (kanban.with_agent.length === 0) { %>
+              <p style="text-align:center;color:var(--muted);font-size:0.82rem;padding:18px 0;">Sin clientes en esta etapa</p>
+            <% } %>
+            <% kanban.with_agent.forEach(function(u) { %>
+            <div style="background:#fff;border:1px solid #FDE68A;border-radius:7px;padding:10px 12px;margin-bottom:8px;">
+              <div style="font-weight:600;font-size:0.88rem;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><%= u.fullName %></div>
+              <div style="font-size:0.75rem;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><%= u.email %></div>
+              <% if (u.assignedAgent) { %>
+                <div style="font-size:0.7rem;font-weight:700;color:#1D4ED8;margin-top:3px;">
+                  👤 <%= u.assignedAgent === 'estiguan' ? 'Estiguan Navas' : u.assignedAgent === 'hisham_ghanda' ? 'Hisham & Ghanda' : 'Otro' %>
+                </div>
+              <% } %>
+              <% if (u.sentAt) { %>
+                <div style="font-size:0.7rem;color:#92400E;margin-top:2px;">Enviado: <%= new Date(u.sentAt).toLocaleDateString('es-AR', {day:'2-digit',month:'2-digit',year:'numeric'}) %></div>
+              <% } %>
+              <div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;">
+                <span style="font-size:0.65rem;padding:2px 7px;border-radius:10px;font-weight:700;background:<%= u.agentPaid ? '#D1FAE5':'#FEF3C7' %>;color:<%= u.agentPaid ? '#065F46':'#92400E' %>;">
+                  <%= u.agentPaid ? '✅ Agente pagado' : '⏳ Sin pagar' %>
+                </span>
+                <span style="font-size:0.65rem;padding:2px 7px;border-radius:10px;font-weight:700;background:<%= u.refundReturned ? '#D1FAE5':'#F3F4F6' %>;color:<%= u.refundReturned ? '#065F46':'#374151' %>;">
+                  <%= u.refundReturned ? '✅ Reembolso enviado' : '⏳ Reembolso pendiente' %>
+                </span>
+              </div>
+              <a href="/admin/user/<%= u.id %>" style="display:inline-block;margin-top:8px;font-size:0.75rem;color:#92400E;border:1px solid #FCD34D;border-radius:5px;padding:3px 10px;text-decoration:none;font-weight:600;">Ver →</a>
+            </div>
+            <% }) %>
+          </div>
+        </div>
+
+        <!-- Informal -->
+        <div style="background:#F5F3FF;border:2px solid #C4B5FD;border-radius:10px;overflow:hidden;">
+          <div style="background:#5B21B6;padding:12px 16px;display:flex;align-items:center;gap:8px;">
+            <span style="font-size:1rem;">🤝</span>
+            <span style="color:#fff;font-weight:700;font-size:0.9rem;">Informal</span>
+            <span style="margin-left:auto;background:rgba(255,255,255,.2);color:#fff;font-size:0.72rem;font-weight:700;padding:2px 9px;border-radius:12px;"><%= kanban.informal.length %></span>
+          </div>
+          <div style="padding:10px;max-height:340px;overflow-y:auto;">
+            <% if (kanban.informal.length === 0) { %>
+              <p style="text-align:center;color:var(--muted);font-size:0.82rem;padding:18px 0;">Sin clientes en esta etapa</p>
+            <% } %>
+            <% kanban.informal.forEach(function(u) { %>
+            <div style="background:#fff;border:1px solid #C4B5FD;border-radius:7px;padding:10px 12px;margin-bottom:8px;">
+              <div style="font-weight:600;font-size:0.88rem;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><%= u.fullName %></div>
+              <div style="font-size:0.75rem;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><%= u.email %></div>
+              <a href="/admin/user/<%= u.id %>" style="display:inline-block;margin-top:8px;font-size:0.75rem;color:#5B21B6;border:1px solid #C4B5FD;border-radius:5px;padding:3px 10px;text-decoration:none;font-weight:600;">Ver →</a>
+            </div>
+            <% }) %>
+          </div>
+        </div>
+
+        <!-- Caso Emitido -->
+        <div style="background:#F0FDF4;border:2px solid #86EFAC;border-radius:10px;overflow:hidden;">
+          <div style="background:#166534;padding:12px 16px;display:flex;align-items:center;gap:8px;">
+            <span style="font-size:1rem;">🎉</span>
+            <span style="color:#fff;font-weight:700;font-size:0.9rem;">Caso Emitido</span>
+            <span style="margin-left:auto;background:rgba(255,255,255,.2);color:#fff;font-size:0.72rem;font-weight:700;padding:2px 9px;border-radius:12px;"><%= kanban.issued.length %></span>
+          </div>
+          <div style="padding:10px;max-height:340px;overflow-y:auto;">
+            <% if (kanban.issued.length === 0) { %>
+              <p style="text-align:center;color:var(--muted);font-size:0.82rem;padding:18px 0;">Sin clientes en esta etapa</p>
+            <% } %>
+            <% kanban.issued.forEach(function(u) { %>
+            <div style="background:#fff;border:1px solid #86EFAC;border-radius:7px;padding:10px 12px;margin-bottom:8px;">
+              <div style="font-weight:600;font-size:0.88rem;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><%= u.fullName %></div>
+              <div style="font-size:0.75rem;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><%= u.email %></div>
+              <a href="/admin/user/<%= u.id %>" style="display:inline-block;margin-top:8px;font-size:0.75rem;color:#166534;border:1px solid #86EFAC;border-radius:5px;padding:3px 10px;text-decoration:none;font-weight:600;">Ver →</a>
+            </div>
+            <% }) %>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Buscador + tabla -->
+    <div class="card">
+      <form method="GET" action="/admin" class="search-bar">
+        <input type="text" name="q" value="<%= q %>"
+          placeholder="Buscar por nombre, e-mail o código RTX-..." autofocus>
+        <select name="status">
+          <option value="">Clientes</option>
+          <option value="paid"             <%= status === 'paid'             ? 'selected' : '' %>>Pagaron</option>
+          <option value="pending"          <%= status === 'pending'          ? 'selected' : '' %>>Sin pagar (verificados)</option>
+          <option value="unverified"       <%= status === 'unverified'       ? 'selected' : '' %>>Sin verificar e-mail</option>
+          <optgroup label="── Etapa del trámite ──">
+          <option value="stage_processing"  <%= status === 'stage_processing'  ? 'selected' : '' %>>⚙️ En procesamiento</option>
+          <option value="stage_with_agent"  <%= status === 'stage_with_agent'  ? 'selected' : '' %>>🔎 Con el tax agent</option>
+          <option value="stage_informal"    <%= status === 'stage_informal'    ? 'selected' : '' %>>🤝 Informal</option>
+          <option value="stage_issued"      <%= status === 'stage_issued'      ? 'selected' : '' %>>🎉 Caso emitido</option>
+          <option value="referrer"          <%= status === 'referrer'          ? 'selected' : '' %>>👥 Referidores</option>
+          </optgroup>
+          <optgroup label="── Trámite ──">
+          <option value="dasp"             <%= status === 'dasp'             ? 'selected' : '' %>>🟡 Solo DASP</option>
+          </optgroup>
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm">Buscar</button>
+        <% if (q || status) { %>
+          <a href="/admin" class="btn btn-ghost btn-sm">Limpiar filtros</a>
+        <% } %>
+      </form>
+
+      <% if (q || status) { %>
+        <p style="font-size:0.85rem; color:var(--muted); margin:0 0 16px;">
+          <strong><%= users.length %></strong> resultado(s)
+          <% if (q) { %> para "<%= q %>"<% } %>
+          <% if (status) { %> · estado: <%= status %><% } %>
+        </p>
+      <% } %>
+
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>E-mail</th>
+              <th>Visa</th>
+              <th>Estado</th>
+              <th>Turno</th>
+              <th>Ref.</th>
+              <th>Docs</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (users.length === 0) { %>
+              <tr>
+                <td colspan="9" style="text-align:center; padding:40px; color:var(--muted);">
+                  No hay clientes que coincidan.
+                </td>
+              </tr>
+            <% } %>
+            <% users.forEach(u => { %>
+            <tr style="<%= u._type === 'dasp' ? 'background:#fffbeb;' : '' %>">
+              <td>
+                <strong style="font-size:0.95rem;"><%= u.fullName || '—' %></strong><br>
+                <% if (u._type === 'dasp') { %>
+                  <span style="font-size:0.72rem;background:#fef08a;color:#854d0e;padding:1px 6px;border-radius:4px;font-weight:600;">DASP</span>
+                <% } else { %>
+                  <span class="mono" style="font-size:0.72rem; color:var(--muted);"><%= u.referralCode %></span>
+                <% } %>
+              </td>
+              <td style="font-size:0.85rem;"><%= u.email %></td>
+              <td style="font-size:0.82rem; font-family:var(--font-mono);">
+                <% if (u._type === 'dasp') { %>
+                  <span style="color:var(--muted);">DASP</span>
+                <% } else { %>
+                  <%= (u.currentVisaSubclass || '—').replace('Working Holiday Visa (subclass ','WHV ').replace(')','') %>
+                <% } %>
+              </td>
+              <td>
+                <% if (u._type === 'dasp') { %>
+                  <% const ds = u.daspStatus; %>
+                  <span class="bdg" style="background:#fef9c3;color:#854d0e;border:1px solid #fde047;">
+                    <%= ds === 'pending_review' ? '⏳ Pendiente' : ds === 'processing' ? '⚙️ Procesando' : ds === 'done' ? '✅ Listo' : ds %>
+                  </span>
+                <% } else if (!u.emailVerified) { %>
+                  <span class="bdg bdg-unverified">Sin verificar</span>
+                  <% if (u.role === 'referrer') { %><span class="bdg" style="background:#E8F0FE;color:#1a56db;border:1px solid #93c5fd;margin-left:3px;">Referidor</span><% } %>
+                <% } else if (u.payment) { %>
+                  <span class="bdg bdg-paid">Pagó ✓</span>
+                  <% if (u.role === 'referrer') { %><span class="bdg" style="background:#E8F0FE;color:#1a56db;border:1px solid #93c5fd;margin-left:3px;">Referidor</span><% } %>
+                  <% if (u.lastModifiedByClientAt) { %>
+                    <span class="bdg" style="background:#FEF3C7;color:#92400E;border:1px solid #FDE68A;margin-left:3px;" title="El cliente modificó sus archivos el <%= new Date(u.lastModifiedByClientAt).toLocaleString('es-AR') %>">📎 Actualizado <%= new Date(u.lastModifiedByClientAt).toLocaleDateString('es-AR') %></span>
+                  <% } %>
+                  <% if (u.consentSignedAt) { %>
+                    <span class="bdg" style="background:#dcfce7;color:#166534;border:1px solid #86efac;margin-left:3px;" title="Firmó el <%= new Date(u.consentSignedAt).toLocaleDateString('es-AR') %> como <%= u.consentSignedName %>">✍️ Firmado</span>
+                  <% } else { %>
+                    <span class="bdg" style="background:#fef2f2;color:#991b1b;border:1px solid #fca5a5;margin-left:3px;">⚠️ Sin firma</span>
+                  <% } %>
+                  <% if (u.taxReturnStage === 'with_agent') { %>
+                    <span class="bdg" style="background:#fef3c7;color:#92400e;border:1px solid #fcd34d;margin-left:3px;" title="<%= u.taxAgentSentAt ? 'Enviado ' + new Date(u.taxAgentSentAt).toLocaleDateString('es-AR') : 'Con el tax agent' %>">🔎 Tax Agent</span>
+                  <% } else if (u.taxReturnStage === 'issued') { %>
+                    <span class="bdg" style="background:#dcfce7;color:#166534;border:1px solid #86efac;margin-left:3px;">🎉 Emitido</span>
+                  <% } %>
+                <% } else { %>
+                  <span class="bdg bdg-pending">Sin pagar</span>
+                  <% if (u.role === 'referrer') { %><span class="bdg" style="background:#E8F0FE;color:#1a56db;border:1px solid #93c5fd;margin-left:3px;">Referidor</span><% } %>
+                <% } %>
+              </td>
+              <td style="font-size:0.8rem;">
+                <% if (u._type === 'dasp') { %>
+                  <span style="color:var(--muted); font-size:0.8rem;"><%= u._dasp && u._dasp.departureDate ? u._dasp.departureDate : '—' %></span>
+                <% } else if (u.appt) { %>
+                  <span class="mono"><%= new Date(u.appt.date + 'T12:00:00').toLocaleDateString('es-AR', { day:'2-digit', month:'2-digit' }) %> <%= u.appt.hour %>h</span><br>
+                  <span class="bdg bdg-<%= u.appt.status %>"><%= u.appt.status %></span>
+                <% } else { %><span style="color:var(--muted);">—</span><% } %>
+              </td>
+              <td style="font-family:var(--font-mono); font-size:0.88rem; text-align:center;"><%= u._type === 'dasp' ? '—' : u.referralCount %></td>
+              <td style="font-family:var(--font-mono); font-size:0.88rem; text-align:center;"><%= u._type === 'dasp' ? '—' : u.docCount %></td>
+              <td style="white-space:nowrap;">
+                <% if (u._type === 'dasp') { %>
+                  <a href="/admin/user/<%= u.id %>" class="btn btn-ghost btn-sm" style="border-color:#fde047;">Ver DASP →</a>
+                <% } else { %>
+                  <a href="/admin/user/<%= u.id %>" class="btn btn-ghost btn-sm">Ver →</a>
+                  <% if (u.emailVerified && !u.payment) { %>
+                  <%
+                    var remindTitle = '✉️ Enviar recordatorio';
+                    if (u.lastRemindAt) {
+                      var remDays = Math.floor((Date.now() - new Date(u.lastRemindAt)) / 864e5);
+                      remindTitle = '✉️ x' + u.remindCount + ' — último hace ' + (remDays === 0 ? 'hoy' : remDays + 'd');
+                    }
+                  %>
+                  <% var remindName = (u.fullName || u.email).replace(/'/g, ''); %>
+                  <form method="POST" action="/admin/user/<%= u.id %>/remind" style="display:inline;" onsubmit="return confirm('¿Enviar recordatorio a <%= remindName %>?')">
+                    <button type="submit" class="btn btn-ghost btn-sm"
+                      style="border-color:<%= u.lastRemindAt ? '#F0C040' : '#38BDF8' %>;color:<%= u.lastRemindAt ? '#b45309' : '#38BDF8' %>;"
+                      title="<%= remindTitle %>">
+                      ✉️<% if (u.remindCount) { %><span style="font-size:0.65rem;font-family:var(--font-mono);margin-left:2px;">×<%= u.remindCount %></span><% } %>
+                    </button>
+                  </form>
+                  <% } %>
+                <% } %>
+                <% if (u.phone) { %>
+                  <%
+                    var _rp = (u.phone||'').replace(/\D/g,'');
+                    var _wp = _rp.startsWith('0') ? '61'+_rp.slice(1) : _rp;
+                  %>
+                  <a href="/admin/chats/<%= _wp %>"
+                     style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:#25D366;border-radius:6px;text-decoration:none;font-size:0.85rem;margin-left:4px;"
+                     title="Chat WhatsApp <%= u.phone %>">💬</a>
+                <% } %>
+              </td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

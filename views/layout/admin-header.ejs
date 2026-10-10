@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title><%= typeof title !== 'undefined' ? title + ' — ' : '' %>Admin · RETAUX</title>
+<link rel="stylesheet" href="/css/style.css">
+<style>
+  .admin-layout { display:flex; min-height:100vh; }
+  .admin-sidebar { width:210px; background:var(--ink); flex-shrink:0; position:sticky; top:0; height:100vh; overflow-y:auto; }
+  .admin-sidebar__logo { padding:24px 20px 20px; font-family:var(--font-display); font-size:1.2rem; color:var(--paper); border-bottom:1px solid rgba(255,255,255,.1); }
+  .admin-sidebar__logo span { color:var(--ochre); }
+  .admin-sidebar nav a { display:block; padding:10px 20px; color:rgba(247,242,231,.65); font-size:0.9rem; text-decoration:none; transition:all .15s; }
+  .admin-sidebar nav a:hover { color:var(--paper); background:rgba(255,255,255,.07); text-decoration:none; }
+  .admin-main { flex:1; padding:32px; background:var(--paper); overflow-y:auto; }
+  /* ── Mobile ── */
+  .admin-topbar { display:none; }
+  .admin-nav-drawer { display:none; }
+  @media(max-width:768px) {
+    .admin-layout { flex-direction:column; }
+    .admin-sidebar { display:none; }
+    .admin-topbar { display:flex; align-items:center; justify-content:space-between; background:var(--ink); padding:14px 16px; position:sticky; top:0; z-index:100; }
+    .admin-topbar-logo { font-family:var(--font-display); font-size:1.1rem; color:var(--paper); }
+    .admin-topbar-logo span { color:var(--ochre); }
+    .admin-hamburger { background:none; border:none; cursor:pointer; padding:4px; display:flex; flex-direction:column; gap:5px; }
+    .admin-hamburger span { display:block; width:22px; height:2px; background:var(--paper); border-radius:2px; }
+    .admin-nav-drawer { position:fixed; top:0; left:0; right:0; bottom:0; z-index:200; }
+    .admin-nav-drawer.open { display:block; }
+    .admin-nav-overlay { position:absolute; inset:0; background:rgba(0,0,0,.45); }
+    .admin-nav-panel { position:absolute; top:0; right:0; width:260px; height:100%; background:var(--ink); overflow-y:auto; }
+    .admin-nav-panel-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid rgba(255,255,255,.1); }
+    .admin-nav-panel-logo { font-family:var(--font-display); font-size:1.1rem; color:var(--paper); }
+    .admin-nav-panel-logo span { color:var(--ochre); }
+    .admin-nav-close { background:none; border:none; color:var(--paper); font-size:1.4rem; cursor:pointer; line-height:1; padding:0; }
+    .admin-nav-panel nav a { display:block; padding:13px 20px; color:rgba(247,242,231,.65); font-size:1rem; text-decoration:none; border-bottom:1px solid rgba(255,255,255,.05); }
+    .admin-main { padding:16px; }
+    table { font-size:0.8rem; }
+    th, td { padding:8px 6px; }
+  }
+</style>
+</head>
+<body>
+<div class="admin-layout">
+
+  <!-- Sidebar desktop -->
+  <aside class="admin-sidebar">
+    <div class="admin-sidebar__logo">RETAU<span>X</span></div>
+    <nav>
+      <a href="/admin">Panel principal</a>
+      <a href="/admin/calendar">Calendario de turnos</a>
+      <a href="/admin/referrers">Referidores</a>
+      <hr style="border-color:rgba(255,255,255,.1);margin:8px 16px">
+      <a href="/admin/logout" style="color:rgba(247,242,231,.4)">Cerrar sesión</a>
+    </nav>
+  </aside>
+
+  <!-- Topbar móvil -->
+  <header class="admin-topbar">
+    <div class="admin-topbar-logo">RE<span>TAUX</span> <span style="font-size:0.75rem;color:rgba(247,242,231,.4);font-family:var(--font-mono);">admin</span></div>
+    <button class="admin-hamburger" onclick="document.getElementById('adminDrawerAlt').classList.add('open')" aria-label="Menú">
+      <span></span><span></span><span></span>
+    </button>
+  </header>
+
+  <!-- Drawer móvil -->
+  <div class="admin-nav-drawer" id="adminDrawerAlt">
+    <div class="admin-nav-overlay" onclick="document.getElementById('adminDrawerAlt').classList.remove('open')"></div>
+    <div class="admin-nav-panel">
+      <div class="admin-nav-panel-header">
+        <span class="admin-nav-panel-logo">RE<span>TAUX</span></span>
+        <button class="admin-nav-close" onclick="document.getElementById('adminDrawerAlt').classList.remove('open')">✕</button>
+      </div>
+      <nav>
+        <a href="/admin">Panel principal</a>
+        <a href="/admin/calendar">Calendario de turnos</a>
+        <a href="/admin/referrers">Referidores</a>
+        <a href="/admin/logout" style="color:rgba(247,242,231,.4);margin-top:8px;">Cerrar sesión</a>
+      </nav>
+    </div>
+  </div>
+
+<main class="admin-main">

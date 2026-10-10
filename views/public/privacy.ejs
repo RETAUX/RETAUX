@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="<%= lang || 'es' %>">
+<head>
+  <%- include('../partials/head') %>
+  <title><%- __('privacy.title') %> — RETAUX</title>
+</head>
+<body>
+  <%- include('../partials/nav', { active: '', user: typeof user !== 'undefined' ? user : null }) %>
+
+  <section class="section">
+    <div class="container" style="max-width:720px;padding-top:40px;padding-bottom:80px">
+
+      <h1 style="font-size:1.8rem;margin-bottom:6px"><%- __('privacy.title') %></h1>
+      <p class="muted" style="margin-bottom:36px;font-size:0.88rem"><%- __('privacy.subtitle') %></p>
+
+      <div style="display:flex;flex-direction:column;gap:32px">
+
+        <div>
+          <h3 style="margin-bottom:10px"><%- __('privacy.s1_title') %></h3>
+          <p><%- __('privacy.s1_body') %></p>
+        </div>
+
+        <div>
+          <h3 style="margin-bottom:10px"><%- __('privacy.s2_title') %></h3>
+          <p style="margin-bottom:8px"><%- __('privacy.s2_intro') %></p>
+          <ul style="padding-left:20px;line-height:2">
+            <li><%- __('privacy.s2_li1') %></li>
+            <li><%- __('privacy.s2_li2') %></li>
+            <li><%- __('privacy.s2_li3') %></li>
+            <li><%- __('privacy.s2_li4') %></li>
+            <li><%- __('privacy.s2_li5') %></li>
+            <li><%- __('privacy.s2_li6') %></li>
+            <li><%- __('privacy.s2_li7') %></li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 style="margin-bottom:10px"><%- __('privacy.s3_title') %></h3>
+          <ul style="padding-left:20px;line-height:2">
+            <li><%- __('privacy.s3_li1') %></li>
+            <li><%- __('privacy.s3_li2') %></li>
+            <li><%- __('privacy.s3_li3') %></li>
+            <li><%- __('privacy.s3_li4') %></li>
+          </ul>
+          <p style="margin-top:10px"><%- __('privacy.s3_note') %></p>
+        </div>
+
+        <div>
+          <h3 style="margin-bottom:10px"><%- __('privacy.s4_title') %></h3>
+          <p style="margin-bottom:8px"><%- __('privacy.s4_intro') %></p>
+          <ul style="padding-left:20px;line-height:2">
+            <li><strong><%- __('privacy.s4_li1') %></strong></li>
+            <li><strong><%- __('privacy.s4_li2') %></strong></li>
+            <li><strong><%- __('privacy.s4_li3') %></strong></li>
+          </ul>
+          <p style="margin-top:10px"><%- __('privacy.s4_note') %></p>
+        </div>
+
+        <div>
+          <h3 style="margin-bottom:10px"><%- __('privacy.s5_title') %></h3>
+          <ul style="padding-left:20px;line-height:2">
+            <li><%- __('privacy.s5_li1') %></li>
+            <li><%- __('privacy.s5_li2') %></li>
+            <li><%- __('privacy.s5_li3') %></li>
+            <li><%- __('privacy.s5_li4') %></li>
+            <li><%- __('privacy.s5_li5') %></li>
+            <li><%- __('privacy.s5_li6') %></li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 style="margin-bottom:10px"><%- __('privacy.s6_title') %></h3>
+          <p><%- __('privacy.s6_body') %></p>
+        </div>
+
+        <div>
+          <h3 style="margin-bottom:10px"><%- __('privacy.s7_title') %></h3>
+          <p style="margin-bottom:8px"><%- __('privacy.s7_intro') %></p>
+          <ul style="padding-left:20px;line-height:2">
+            <li><%- __('privacy.s7_li1') %></li>
+            <li><%- __('privacy.s7_li2') %></li>
+            <li><%- __('privacy.s7_li3') %></li>
+            <li><%- __('privacy.s7_li4') %></li>
+          </ul>
+          <p style="margin-top:10px"><%- __('privacy.s7_note') %></p>
+        </div>
+
+        <div>
+          <h3 style="margin-bottom:10px"><%- __('privacy.s8_title') %></h3>
+          <p><%- __('privacy.s8_body') %></p>
+        </div>
+
+        <div>
+          <h3 style="margin-bottom:10px"><%- __('privacy.s9_title') %></h3>
+          <p><%- __('privacy.s9_body') %></p>
+        </div>
+
+        <div style="background:var(--bg-page);border-radius:var(--radius);padding:20px 24px;border:1px solid var(--border)">
+          <p style="margin:0;font-size:0.88rem;color:var(--muted)"><%- __('privacy.contact_note') %></p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <%- include('../partials/footer') %>
+</body>
+</html>

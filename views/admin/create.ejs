@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Crear Admin — RETAUX</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="auth-page" style="background:var(--navy)">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <h1>RETAU<span>X</span></h1>
+      <p>Crear cuenta de administrador</p>
+    </div>
+
+    <% if (error) { %><div class="alert alert--error"><%= error %></div><% } %>
+    <% if (success) { %><div class="alert alert--success"><%= success %></div><% } %>
+
+    <form method="POST" action="/admin/create">
+      <div class="form-group">
+        <label>Clave de creación</label>
+        <input type="password" name="creationKey" required placeholder="Clave especial de creación" class="mono-input">
+        <p class="form-hint">La clave ADMIN_CREATION_KEY configurada en el servidor.</p>
+      </div>
+      <div class="form-group">
+        <label>E-mail del nuevo admin</label>
+        <input type="email" name="email" required placeholder="nuevo@retaux.com">
+      </div>
+      <div class="form-group">
+        <label>Clave (8 dígitos numéricos)</label>
+        <input type="password" name="password" required pattern="\d{8}" maxlength="8" inputmode="numeric" placeholder="••••••••" class="mono-input">
+      </div>
+      <button type="submit" class="btn btn--primary btn--full mt-2">Crear cuenta</button>
+    </form>
+
+    <div class="auth-footer" style="margin-top:16px">
+      <a href="/admin/login" style="color:var(--text-muted);font-size:13px">← Volver al login</a>
+    </div>
+  </div>
+</div>
+</body>
+</html>

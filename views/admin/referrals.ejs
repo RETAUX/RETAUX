@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+  <title>Referidos — Admin RETAUX</title>
+  <style>
+    .admin-wrap { display:flex; min-height:100vh; }
+    .sidebar { width:210px; background:var(--ink); flex-shrink:0; padding:0; position:sticky; top:0; height:100vh; overflow-y:auto; }
+    .sidebar-logo { padding:24px 20px 20px; font-family:var(--font-display); font-size:1.2rem; color:var(--paper); border-bottom:1px solid rgba(255,255,255,.1); }
+    .sidebar-logo span { color:var(--ochre); }
+    .sidebar nav { padding:12px 0; }
+    .sidebar nav a { display:block; padding:10px 20px; color:rgba(247,242,231,.65); font-size:0.9rem; text-decoration:none; transition:all .15s; }
+    .sidebar nav a:hover, .sidebar nav a.active { color:var(--paper); background:rgba(255,255,255,.07); text-decoration:none; }
+    .sidebar-divider { border:none; border-top:1px solid rgba(255,255,255,.08); margin:8px 0; }
+    .admin-main { flex:1; padding:32px; background:var(--paper); overflow-y:auto; }
+    @media(max-width:900px) { .admin-wrap{flex-direction:column;} .sidebar{width:100%;height:auto;position:static;} }
+
+    .total-box { background:var(--ink); color:var(--paper); border-radius:10px; padding:20px 24px; display:flex; gap:32px; flex-wrap:wrap; margin-bottom:28px; }
+    .total-box .item { text-align:center; }
+    .total-box .val { font-family:var(--font-mono); font-size:2rem; font-weight:700; color:var(--ochre); }
+    .total-box .lbl { font-size:0.78rem; color:rgba(247,242,231,.5); margin-top:4px; }
+
+    .filters { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:16px; }
+    .filters input, .filters select {
+      padding:7px 12px; border:1px solid var(--line); border-radius:6px;
+      background:var(--paper); color:var(--ink); font-size:0.85rem; font-family:var(--font-body);
+    }
+    .filters input { width:200px; }
+
+    .ref-table { width:100%; border-collapse:collapse; font-size:0.88rem; }
+    .ref-table th { background:var(--ink); color:var(--paper); padding:10px 14px; text-align:left; font-size:0.78rem; letter-spacing:0.06em; text-transform:uppercase; }
+    .ref-table td { padding:10px 14px; border-bottom:1px solid var(--line); vertical-align:middle; }
+    .ref-table tr:nth-child(even) td { background:var(--paper-alt); }
+    .ref-table tr:hover td { background:#EBF4FD; }
+
+    .badge-paid    { background:#E6F4EE; color:#1d5c2e; font-size:0.72rem; font-weight:700; padding:3px 9px; border-radius:10px; }
+    .badge-pending { background:#FFF3CD; color:#856404; font-size:0.72rem; font-weight:600; padding:3px 9px; border-radius:10px; }
+  </style>
+</head>
+<body>
+<div class="admin-wrap">
+  <aside class="sidebar">
+    <div class="sidebar-logo">RE<span>TAUX</span></div>
+    <nav>
+      <a href="/admin">Panel principal</a>
+      <a href="/admin/referrals" class="active">Referidos</a>
+      <a href="/admin/referrers">Crear referidor</a>
+      <a href="/admin/calendar">Calendario de turnos</a>
+      <hr class="sidebar-divider">
+      <a href="/admin/logout" style="color:rgba(247,242,231,.35); font-size:0.82rem;">
+        Cerrar sesión<br><span style="font-family:var(--font-mono); font-size:0.75rem;"><%= adminUser.email %></span>
+      </a>
+    </nav>
+  </aside>
+
+  <main class="admin-main">
+    <h1 style="font-size:1.6rem;margin-bottom:4px;">Panel de Referidos</h1>
+    <p style="color:var(--muted);font-size:0.88rem;margin-bottom:24px;">Los pagos se realizan el primer viernes de cada mes.</p>
+
+    <!-- Totales globales (fijos) -->
+    <div class="total-box">
+      <div class="item">
+        <div class="val"><%= totalReferrers %></div>
+        <div class="lbl">Referidores activos</div>
+      </div>
+      <div class="item">
+        <div class="val"><%= totalPaidRefs %></div>
+        <div class="lbl">Referidos pagados</div>
+      </div>
+      <div class="item">
+        <div class="val"><%= totalPending %></div>
+        <div class="lbl">Pendientes de pago</div>
+      </div>
+      <div class="item">
+        <div class="val">AUD <%= totalPaidOut %></div>
+        <div class="lbl">Total pagado históricamente</div>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filters">
+      <input id="f-name" type="text" placeholder="Buscar referidor…" oninput="applyFilters()">
+      <select id="f-month" onchange="applyFilters()">
+        <option value="">Todos los meses</option>
+        <% months.forEach(function(m) { %>
+        <option value="<%= m.key %>"><%= m.label %></option>
+        <% }); %>
+      </select>
+      <select id="f-status" onchange="applyFilters()">
+        <option value="">Todos</option>
+        <option value="paid">Pagado</option>
+        <option value="pending">Pendiente</option>
+      </select>
+      <span id="f-count" style="font-size:0.82rem;color:var(--muted);margin-left:4px;"></span>
+    </div>
+
+    <!-- Tabla única -->
+    <div style="overflow-x:auto;">
+      <table class="ref-table" id="ref-table">
+        <thead>
+          <tr>
+            <th>Referidor</th>
+            <th>Cliente referido</th>
+            <th>Mes</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% referralsList.forEach(function(r) { %>
+          <tr data-name="<%= (r.referrerName||'').toLowerCase() %>"
+              data-month="<%= r.monthKey %>"
+              data-status="<%= r.status === 'paid' ? 'paid' : 'pending' %>">
+            <td>
+              <strong><%= r.referrerName %></strong>
+              <% if (r.referrerBSB || r.referrerAccount) { %>
+                <br><span style="font-family:var(--font-mono);font-size:0.76rem;color:var(--muted);">BSB <%= r.referrerBSB %> / <%= r.referrerAccount %></span>
+              <% } %>
+            </td>
+            <td>
+              <%= r.referredName %>
+              <br><span style="font-size:0.78rem;color:var(--muted);"><%= r.referredEmail %></span>
+            </td>
+            <td style="font-size:0.84rem;white-space:nowrap;"><%= r.monthLabel %></td>
+            <td>
+              <% if (r.status === 'paid') { %>
+                <span class="badge-paid">✓ Pagado</span>
+              <% } else { %>
+                <span class="badge-pending">Pendiente</span>
+              <% } %>
+            </td>
+          </tr>
+          <% }); %>
+          <% if (!referralsList.length) { %>
+          <tr><td colspan="4" style="text-align:center;color:var(--muted);padding:32px;">No hay referidos registrados todavía.</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+    <p id="f-empty" style="display:none;color:var(--muted);font-size:0.88rem;padding:16px 0;">Sin resultados para este filtro.</p>
+
+  </main>
+</div>
+
+<script>
+function applyFilters() {
+  var name   = (document.getElementById('f-name').value || '').toLowerCase().trim();
+  var month  = document.getElementById('f-month').value;
+  var status = document.getElementById('f-status').value;
+  var rows   = document.querySelectorAll('#ref-table tbody tr');
+  var visible = 0;
+  rows.forEach(function(row) {
+    var show = (!name   || (row.dataset.name   || '').includes(name))
+            && (!month  || row.dataset.month  === month)
+            && (!status || row.dataset.status === status);
+    row.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+  document.getElementById('f-count').textContent = visible + ' resultado' + (visible !== 1 ? 's' : '');
+  document.getElementById('f-empty').style.display  = visible === 0 ? 'block' : 'none';
+  document.getElementById('ref-table').style.display = visible === 0 ? 'none' : '';
+}
+applyFilters();
+</script>
+</body>
+</html>

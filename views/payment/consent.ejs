@@ -1,0 +1,107 @@
+<%- include('../layout/header', { title: __('consent.title') + ' — RETAUX', currentUser: user }) %>
+
+<style>
+  .consent-tabs { display:flex; gap:0; margin-bottom:32px; border-radius:4px; overflow:hidden; border:1px solid var(--border); max-width:680px; }
+  .consent-tabs a, .consent-tabs span { flex:1; padding:10px 16px; font-size:0.82rem; font-weight:700; font-family:var(--font-mono); text-decoration:none; display:block; text-align:center; }
+  .consent-tabs a.done  { background:var(--green); color:#fff; }
+  .consent-tabs span.active { background:var(--gold); color:var(--text-navy); }
+  .consent-tabs span.pending { background:var(--bg-page); color:var(--muted); }
+
+  .consent-card { background:#fff; border:1px solid var(--border); border-radius:16px; padding:36px; max-width:580px; box-shadow:var(--shadow); }
+
+  .auth-box { background:var(--bg-page); border:1px solid var(--border); border-radius:12px; padding:24px 28px; margin-bottom:28px; }
+  .auth-box p { font-size:0.95rem; color:var(--text-navy); line-height:1.7; margin:0; }
+
+  .retaux-info { display:flex; gap:32px; flex-wrap:wrap; margin-bottom:28px; padding:16px 20px; border:1px solid var(--border); border-radius:10px; background:#fff; }
+  .retaux-info-item { font-size:0.82rem; color:var(--muted); }
+  .retaux-info-item strong { display:block; color:var(--text-navy); font-size:0.9rem; margin-bottom:2px; }
+
+  .sign-label { font-weight:700; font-size:0.9rem; color:var(--text-navy); margin-bottom:8px; display:block; }
+  .sign-input { width:100%; padding:14px 16px; border:2px solid var(--border); border-radius:10px; font-size:1rem; font-family:var(--font-body); color:var(--text-navy); background:#fff; transition:border-color 0.2s; box-sizing:border-box; }
+  .sign-input:focus { outline:none; border-color:var(--navy); }
+
+  .date-display { font-size:0.85rem; color:var(--muted); margin-top:8px; margin-bottom:24px; }
+
+  .sign-btn { width:100%; padding:16px; background:linear-gradient(135deg,#191C87,#2d31c7); color:#fff; border:none; border-radius:10px; font-size:1.05rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; transition:transform 0.1s, box-shadow 0.2s; box-shadow:0 4px 20px rgba(25,28,135,0.35); font-family:var(--font-body); }
+  .sign-btn:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(25,28,135,0.5); }
+  .sign-btn:disabled { opacity:0.45; cursor:not-allowed; transform:none; }
+
+  .security-note { display:flex; align-items:center; gap:8px; font-size:0.78rem; color:var(--muted); margin-top:12px; justify-content:center; }
+</style>
+
+<section class="section">
+  <div class="container-narrow">
+
+    <% if (!alreadyPaid) { %>
+    <div class="consent-tabs">
+      <a href="/onboarding/personal" class="done">✓ <%- __('payment.tab_data') %></a>
+      <a href="/onboarding/documents" class="done">✓ <%- __('payment.tab_docs') %></a>
+      <span class="active">3 · <%- __('consent.tab_auth') %></span>
+      <span class="pending">4 · <%- __('payment.tab_pay') %></span>
+    </div>
+    <% } %>
+
+    <h1 style="font-size:1.7rem;margin-bottom:6px;"><%- __('consent.title') %></h1>
+    <p class="muted" style="margin-bottom:28px;"><%- __('consent.subtitle') %></p>
+
+    <div class="consent-card">
+
+      <div class="auth-box">
+        <p><%- __('consent.auth_body') %></p>
+      </div>
+
+      <div class="retaux-info">
+        <div class="retaux-info-item">
+          <strong>RETAUX</strong>
+          <%- __('consent.label_name') %>
+        </div>
+        <div class="retaux-info-item">
+          <strong>ABN 35 642 590 932</strong>
+          <%- __('consent.label_abn') %>
+        </div>
+      </div>
+
+      <% if (error) { %>
+        <div class="alert alert--error" style="margin-bottom:20px;"><%- __('consent.error_name') %></div>
+      <% } %>
+
+      <form method="POST" action="/consent" id="consentForm">
+        <label class="sign-label" for="signedName"><%- __('consent.sign_label') %></label>
+        <input
+          type="text"
+          id="signedName"
+          name="signedName"
+          class="sign-input"
+          placeholder="<%- __('consent.sign_placeholder') %>"
+          autocomplete="name"
+          required
+        >
+        <p class="date-display"><%- __('consent.date_label') %> <strong id="todayDate"></strong></p>
+
+        <button type="submit" class="sign-btn" id="signBtn" disabled>
+          ✍️ <%- alreadyPaid ? __('consent.btn_sign_paid') : __('consent.btn_sign') %>
+        </button>
+      </form>
+
+      <div class="security-note">
+        🔒 <%- __('consent.security_note') %>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<script>
+  const nameInput = document.getElementById('signedName');
+  const signBtn   = document.getElementById('signBtn');
+  const todayEl   = document.getElementById('todayDate');
+
+  const d = new Date();
+  todayEl.textContent = d.toLocaleDateString(undefined, { day:'2-digit', month:'long', year:'numeric' });
+
+  nameInput.addEventListener('input', () => {
+    signBtn.disabled = nameInput.value.trim().length < 3;
+  });
+</script>
+
+<%- include('../layout/footer') %>

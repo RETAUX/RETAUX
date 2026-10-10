@@ -1,0 +1,1531 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+  <title><%= u.fullName %> — Admin RETAUX</title>
+  <style>
+    .admin-wrap { display:flex; min-height:100vh; }
+    .sidebar { width:210px; background:var(--ink); flex-shrink:0; padding:0; position:sticky; top:0; height:100vh; overflow-y:auto; }
+    .sidebar-logo { padding:24px 20px 20px; font-family:var(--font-display); font-size:1.2rem; color:var(--paper); border-bottom:1px solid rgba(255,255,255,.1); }
+    .sidebar-logo span { color:var(--ochre); }
+    .sidebar nav { padding:12px 0; }
+    .sidebar nav a { display:block; padding:10px 20px; color:rgba(247,242,231,.65); font-size:0.9rem; text-decoration:none; }
+    .sidebar nav a:hover { color:var(--paper); background:rgba(255,255,255,.07); text-decoration:none; }
+    .sidebar-divider { border:none; border-top:1px solid rgba(255,255,255,.08); margin:8px 0; }
+    .admin-main { flex:1; padding:32px; background:var(--paper); overflow-y:auto; }
+    @media(max-width:900px) { .admin-wrap{flex-direction:column;} .sidebar{width:100%;height:auto;position:static;} }
+
+    /* Report layout */
+    .report { max-width:900px; margin:0 auto; }
+    .report-header { background:var(--ink); color:var(--paper); border-radius:10px; padding:24px 28px; margin-bottom:24px; display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px; }
+    .report-header h1 { margin:0 0 4px; font-size:1.5rem; color:#fff; }
+    .report-header .sub { font-size:0.82rem; color:rgba(255,255,255,0.5); font-family:var(--font-mono); }
+    .report-header .badges { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+
+    .section { background:#fff; border:1px solid var(--border); border-radius:10px; margin-bottom:20px; overflow:hidden; }
+    .section-title { background:var(--navy); color:#fff; padding:10px 18px; font-size:0.78rem; font-weight:700; font-family:var(--font-mono); letter-spacing:0.1em; text-transform:uppercase; display:flex; align-items:center; gap:8px; }
+    .section-body { padding:0; }
+
+    .report-table { width:100%; border-collapse:collapse; font-size:0.88rem; }
+    .report-table th { background:#F8FAFC; color:var(--muted); font-weight:600; font-size:0.78rem; text-transform:uppercase; letter-spacing:0.05em; padding:10px 16px; text-align:left; border-bottom:1px solid var(--border); width:36%; }
+    .report-table td { padding:10px 16px; border-bottom:1px solid #F0F4F8; color:var(--text-navy); vertical-align:top; }
+    .report-table tr:last-child td, .report-table tr:last-child th { border-bottom:none; }
+    .report-table .mono { font-family:var(--font-mono); }
+    .report-table .empty { color:var(--muted); font-style:italic; }
+    .report-table .missing { color:#C0392B; font-weight:600; font-size:0.8rem; background:#FFF5F5; padding:2px 8px; border-radius:4px; border:1px solid #FFC0C0; display:inline-block; }
+    .report-table .optional { color:var(--muted); font-style:italic; font-size:0.85rem; }
+
+    .subsection-label { padding:8px 16px; background:#F0F4F8; font-size:0.75rem; font-weight:700; color:var(--navy); font-family:var(--font-mono); letter-spacing:0.06em; text-transform:uppercase; border-bottom:1px solid var(--border); border-top:1px solid var(--border); }
+
+    .employer-block { border-bottom:1px solid var(--border); padding:12px 16px; }
+    .employer-block:last-child { border-bottom:none; }
+    .employer-name { font-weight:700; font-size:0.92rem; margin-bottom:6px; display:flex; align-items:center; gap:8px; }
+
+    .doc-pill { display:inline-flex; align-items:center; gap:6px; background:#F0F4F8; border:1px solid var(--border); border-radius:20px; padding:4px 12px; font-size:0.8rem; margin:3px; }
+    .doc-pill a { color:var(--navy); text-decoration:none; font-size:0.75rem; }
+    .doc-pill a:hover { text-decoration:underline; }
+
+    .badge-sm { display:inline-block; font-size:0.7rem; font-weight:700; font-family:var(--font-mono); padding:2px 8px; border-radius:4px; }
+    .badge-paid   { background:#EBF4EE; color:#1a7a3c; border:1px solid #b6dfbf; }
+    .badge-pending { background:#FFF8E1; color:#7B5800; border:1px solid #FFE082; }
+    .badge-disc   { background:#E8F0FE; color:#1a56db; border:1px solid #93c5fd; }
+    .badge-full   { background:#F0FDF4; color:#166534; border:1px solid #86efac; }
+    .badge-ref    { background:#FFF3E0; color:#7B3F00; border:1px solid #FFCC80; }
+    .badge-auto   { background:#EBF4EE; color:#1a7a3c; border:1px solid #b6dfbf; }
+
+    .ref-alert { background:#FFF8E1; border:1px solid #FFE082; border-radius:8px; padding:14px 18px; margin:16px; font-size:0.88rem; color:#7B5800; display:flex; align-items:flex-start; gap:10px; }
+    .ref-alert strong { display:block; margin-bottom:2px; }
+
+    .payment-box { padding:16px; }
+    .payment-amount { font-size:2rem; font-family:var(--font-display); font-weight:700; color:var(--navy); line-height:1; }
+    .payment-amount .currency { font-size:1rem; font-weight:400; color:var(--muted); margin-right:4px; }
+
+    .action-bar { display:flex; gap:10px; flex-wrap:wrap; padding:16px; border-top:1px solid var(--border); background:#FAFAFA; }
+
+    .stage-form { padding:16px; border-top:1px solid var(--border); }
+    .stage-form label { font-size:0.82rem; font-weight:600; color:var(--muted); display:block; margin-bottom:6px; }
+    .stage-form select { width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:0.88rem; margin-bottom:10px; }
+
+    /* Year tabs */
+    .year-tabs { display:flex; gap:6px; margin-bottom:-1px; padding:0 0 0 0; }
+    .year-tab { padding:7px 18px; font-size:0.78rem; font-weight:700; font-family:var(--font-mono); letter-spacing:0.06em; border:1px solid var(--border); border-bottom:none; border-radius:6px 6px 0 0; cursor:pointer; background:#F8FAFC; color:var(--muted); user-select:none; }
+    .year-tab.active { background:var(--navy); color:#fff; border-color:var(--navy); }
+    .year-tab:hover:not(.active) { background:#EEF2F7; color:var(--navy); }
+    .year-panel { display:none; }
+    .year-panel.active { display:block; }
+    .year-tab-bar { display:flex; align-items:center; gap:8px; margin-bottom:0; border-bottom:2px solid var(--navy); padding-bottom:0; }
+  </style>
+</head>
+<body>
+<div class="admin-wrap">
+  <aside class="sidebar">
+    <div class="sidebar-logo">RE<span>TAUX</span></div>
+    <nav>
+      <a href="/admin">← Panel principal</a>
+      <a href="/admin/calendar">Calendario de turnos</a>
+      <hr class="sidebar-divider">
+      <a href="/admin/logout" style="color:rgba(247,242,231,.35); font-size:0.82rem;">Cerrar sesión</a>
+    </nav>
+  </aside>
+
+  <main class="admin-main">
+    <% if (saved) { %>
+      <div class="alert alert-success" style="margin-bottom:20px;">✓ Cambios guardados.</div>
+    <% } %>
+
+    <div class="report">
+
+      <!-- ── Encabezado del informe ─────────────────────────────────────── -->
+      <div class="report-header">
+        <div>
+          <h1><%= u.fullName %></h1>
+          <div class="sub"><%= u.email %> · Registrado <%= new Date(u.createdAt).toLocaleDateString('es-AR') %> · Código <strong style="color:var(--ochre)"><%= u.referralCode %></strong></div>
+          <div class="badges">
+            <% if (u.emailVerified) { %>
+              <span class="badge-sm badge-paid">✓ Email verificado</span>
+            <% } else { %>
+              <span class="badge-sm badge-pending">Email sin verificar</span>
+              <form method="POST" action="/admin/user/<%= u.id %>/send-verification" style="display:inline;margin-left:6px;">
+                <button type="submit" style="background:#F59E0B;color:#1a2430;border:none;border-radius:5px;padding:3px 10px;font-size:0.75rem;font-weight:700;cursor:pointer;" onclick="return confirm('¿Enviar código de verificación a <%= u.email %>?')">✉ Enviar código</button>
+              </form>
+            <% } %>
+            <% if (verificationSent) { %><span style="color:#4ade80;font-size:0.78rem;font-weight:700;margin-left:8px;">✓ Código enviado</span><% } %>
+            <% if (verificationError) { %><span style="color:#f87171;font-size:0.78rem;font-weight:700;margin-left:8px;">✗ Error al enviar — revisá PM2 logs</span><% } %>
+            <% if (payment && payment.status === 'paid') { %><span class="badge-sm badge-paid">✓ Pagó</span><% } else if (payment && payment.status === 'pending_manual') { %><span class="badge-sm badge-pending">⏳ Pago pendiente</span><% } else { %><span class="badge-sm badge-pending">Sin pago</span><% } %>
+            <% if (u.referredByCode) { %><span class="badge-sm badge-ref">Referido</span><% } %>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;">
+          <a href="/admin/export/user/<%= u.id %>-retaux.xlsx" class="btn btn--sm" style="background:var(--ochre);color:var(--ink);border:none;font-weight:700;">📁 Informe RETAUX</a>
+          <% if (taxAgentSent) { %>
+            <span style="color:#4ade80;font-size:0.82rem;font-weight:700;">✓ Email enviado al tax agent</span>
+          <% } %>
+          <% if (daspRequest) { %>
+          <a href="/admin/user/<%= u.id %>/dasp-preview" class="btn btn--sm" style="background:#1D4ED8;color:#fff;border:none;font-weight:700;white-space:nowrap;">
+            🏦 Preparar informe DASP
+          </a>
+          <% } %>
+          <a href="/admin/user/<%= u.id %>/taxagent-preview" class="btn btn--sm" style="background:#16a34a;color:#fff;border:none;font-weight:700;white-space:nowrap;">
+            📧 Preparar envío al Tax Agent
+          </a>
+          <% if (u.taxAgentReportHtml) { %>
+          <form method="POST" action="/admin/user/<%= u.id %>/resend-taxagent" style="margin:0;">
+            <button type="submit" id="btn-resend-taxagent" class="btn btn--sm"
+              style="background:#1E40AF;color:#fff;border:none;font-weight:700;white-space:nowrap;"
+              title="Reenviar informe guardado a Hisham + hola@retaux.com · Ctrl+Enter">
+              📤 Reenviar a ambos <kbd style="font-size:0.68rem;opacity:0.75;font-weight:400;">Ctrl+↵</kbd>
+            </button>
+          </form>
+          <% } %>
+          <a href="/admin/user/<%= u.id %>/download-taa-docx" class="btn btn--sm"
+            style="background:#065f46;color:#fff;font-weight:700;white-space:nowrap;text-decoration:none;"
+            title="Descargar formulario TAA ENPRESA completado con datos del cliente">
+            📄 Descargar TAA DOCX
+          </a>
+          <form method="POST" action="/admin/user/<%= u.id %>/send-consent" style="margin:0;" id="consent-form">
+            <% var consentTitle = u.consentSignedAt ? 'Firmó el ' + new Date(u.consentSignedAt).toLocaleDateString('es-AR') + ' como ' + (u.consentSignedName || '') : 'Aún no firmó la autorización ATO'; %>
+            <button type="submit" class="btn btn--sm"
+              style="background:<%= u.consentSignedAt ? '#15803d' : '#b45309' %>;color:#fff;border:none;font-weight:700;white-space:nowrap;"
+              onclick="return confirm('¿Enviar solicitud de firma de autorización ATO a <%= u.email %>?')"
+              title="<%= consentTitle %>">
+              <%= u.consentSignedAt ? '✅ Re-enviar firma' : '✍️ Pedir firma ATO' %>
+            </button>
+          </form>
+          <% if (u.phone) { %>
+            <%
+              var _rawPhone = (u.phone || '').replace(/\D/g,'');
+              // Normalizar a formato internacional: si empieza con 0, reemplazar por 61 (Australia)
+              var _waPhone = _rawPhone.startsWith('0') ? '61' + _rawPhone.slice(1) : _rawPhone;
+            %>
+            <a href="https://wa.me/<%= _waPhone %>" target="_blank"
+               class="btn btn--sm"
+               style="background:#25D366;color:#fff;border:none;font-weight:700;white-space:nowrap;">
+              💬 WhatsApp
+            </a>
+          <% } %>
+          <form method="POST" action="/admin/user/<%= u.id %>/delete"
+            onsubmit="return confirm('¿Eliminar a <%= u.fullName %>? No se puede deshacer.')">
+            <button type="submit" class="btn btn--sm" style="background:transparent;border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.5);font-size:0.78rem;">
+              🗑 Eliminar usuario
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- ── Referral / quién lo refirió ───────────────────────────────── -->
+      <% if (u.referredByCode) { %>
+      <div class="ref-alert">
+        <span style="font-size:1.4rem;">🔗</span>
+        <div style="flex:1;">
+          <strong>Este cliente fue referido por código <%= u.referredByCode %></strong>
+          <% if (referredByUser) { %>
+            — Referidor: <strong><%= referredByUser.fullName %></strong> (<%= referredByUser.email %>)
+            <% if (payment) { %>
+              &nbsp;·&nbsp; Descuento en pago:
+              <% if (payment.discountApplied) { %>
+                <span class="badge-sm badge-disc">✓ AUD 20 aplicado</span>
+              <% } else { %>
+                <span class="badge-sm badge-pending">⚠ No se aplicó — pago a precio completo (AUD <%= (payment.amountCents/100).toFixed(2) %>)</span>
+              <% } %>
+            <% } %>
+          <% } else { %>
+            <span style="color:#a05800;">⚠ El referidor con código <%= u.referredByCode %> ya no existe en la base de datos.</span>
+          <% } %>
+          <div style="margin-top:10px;">
+            <form method="POST" action="/admin/user/<%= u.id %>/change-referrer" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <input type="text" name="referralCode" placeholder="Nuevo código (ej: RTX-CARLOS) o vacío para quitar"
+                style="padding:5px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:0.82rem;font-family:monospace;width:260px;">
+              <button type="submit" class="btn btn--sm btn--navy">Cambiar referidor</button>
+              <button type="submit" name="referralCode" value="" class="btn btn--sm" style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;">✕ Quitar referido</button>
+            </form>
+          </div>
+        </div>
+      </div>
+      <% } else { %>
+      <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <span style="font-size:0.85rem;color:#6B7280;">Sin referidor asignado</span>
+        <form method="POST" action="/admin/user/<%= u.id %>/change-referrer" style="display:flex;gap:8px;align-items:center;">
+          <input type="text" name="referralCode" placeholder="Asignar código referidor (ej: RTX-CARLOS)"
+            style="padding:5px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:0.82rem;font-family:monospace;width:260px;">
+          <button type="submit" class="btn btn--sm btn--navy">Asignar</button>
+        </form>
+      </div>
+      <% } %>
+
+      <!-- ── Precio especial ──────────────────────────────────────────────── -->
+      <div style="background:<%= u.customPrice ? '#FFF7ED' : '#F9FAFB' %>;border:1.5px solid <%= u.customPrice ? '#FCD34D' : '#E5E7EB' %>;border-radius:8px;padding:14px 18px;margin-bottom:16px;">
+        <div style="font-size:0.8rem;font-weight:700;color:#92400E;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;">
+          💛 Precio especial (Economy)
+        </div>
+        <% if (u.customPrice) { %>
+          <div style="font-size:0.9rem;color:#78350F;margin-bottom:8px;">
+            Precio asignado: <strong>AUD <%= u.customPrice %></strong>
+            <% if (u.customPriceReason) { %> — <em><%= u.customPriceReason %></em><% } %>
+          </div>
+        <% } else { %>
+          <div style="font-size:0.85rem;color:#6B7280;margin-bottom:8px;">Sin precio especial — el cliente paga el precio estándar.</div>
+        <% } %>
+        <form method="POST" action="/admin/user/<%= u.id %>/set-custom-price" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <label style="font-size:0.82rem;color:#374151;font-weight:600;">AUD</label>
+          <input type="number" name="customPrice" min="0" max="500" step="1"
+            value="<%= u.customPrice || '' %>" placeholder="ej: 70"
+            style="width:90px;padding:5px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:0.85rem;">
+          <input type="text" name="customPriceReason" value="<%= u.customPriceReason || '' %>"
+            placeholder="Motivo (ej: Plan economy, descuento promocional)"
+            style="width:280px;padding:5px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:0.82rem;">
+          <button type="submit" class="btn btn--sm btn--navy">Aplicar precio</button>
+          <% if (u.customPrice) { %>
+            <button type="submit" name="customPrice" value="" class="btn btn--sm" style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;">✕ Quitar precio especial</button>
+          <% } %>
+        </form>
+      </div>
+
+      <!-- ── 1. Datos individuales ───────────────────────────────────────── -->
+      <div class="section">
+        <div class="section-title">👤 1. Datos individuales</div>
+        <div class="section-body">
+          <table class="report-table">
+            <tr><th>TFN</th><td class="mono"><%- (u.profile && u.profile.tfn) || u.tfn || '<span class="missing">⚠ Falta completar</span>' %></td></tr>
+            <tr><th>Nombre completo</th><td><%= u.fullName %></td></tr>
+            <tr><th>Fecha de nacimiento</th><td><%- u.birthDate ? (function(d){ var p=d.split('-'); return p.length===3 ? p[2]+'/'+p[1]+'/'+p[0] : d; })(u.birthDate) : '<span class="missing">⚠ Falta completar</span>' %></td></tr>
+            <tr><th>Nacionalidad</th><td><%- u.nationality || '<span class="optional">No informado</span>' %></td></tr>
+            <tr><th>Residencia fiscal</th><td><%- u.taxResidencyCountry || '<span class="optional">No informado</span>' %></td></tr>
+            <tr><th>Subclase de visa</th><td><%- u.currentVisaSubclass || '<span class="missing">⚠ Falta completar</span>' %></td></tr>
+            <% if (u.visaChangedRecently === 'si') { %>
+            <tr><th>Visa anterior</th><td><%= u.previousVisaDetails || '—' %></td></tr>
+            <% } %>
+            <tr><th>Dirección actual</th><td><%- u.currentAddress || '<span class="missing">⚠ Falta completar</span>' %></td></tr>
+            <tr><th>Idioma preferido</th><td><%= u.lang || 'es' %></td></tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── 2. Contacto y datos bancarios ──────────────────────────────── -->
+      <div class="section">
+        <div class="section-title">📞 2. Contacto y cuenta bancaria</div>
+        <div class="section-body">
+          <table class="report-table">
+            <tr><th>E-mail</th><td><%= u.email %></td></tr>
+            <tr><th>Teléfono</th><td><%- u.phone || '<span class="optional">No informado</span>' %></td></tr>
+            <% if (u.abn) { %><tr><th>ABN</th><td class="mono"><%= u.abn %></td></tr><% } %>
+            <tr><th>Banco</th><td><%- u.bankInstitution || '<span class="optional">No detectado</span>' %></td></tr>
+            <tr><th>Nombre de cuenta</th><td><%- u.bankAccountName || '<span class="missing">⚠ Falta completar — necesario para transferir reembolso</span>' %></td></tr>
+            <tr><th>BSB</th><td class="mono"><%- u.bankBSB ? u.bankBSB.replace(/-/g,'') : '<span class="missing">⚠ Falta completar — necesario para transferir reembolso</span>' %></td></tr>
+            <tr><th>N° de cuenta</th><td class="mono"><%- u.bankAccount || '<span class="missing">⚠ Falta completar — necesario para transferir reembolso</span>' %></td></tr>
+            <%
+              var bsDoc = (documents || []).find(function(d){ return d.category === 'bank_statement'; });
+            %>
+            <tr>
+              <th>Bank Statement</th>
+              <td>
+                <% if (bsDoc) { %>
+                  <a href="/admin/user/<%= u.id %>/document/<%= bsDoc.id %>/view" target="_blank" style="color:var(--accent);font-size:0.88rem;">
+                    📄 <%= bsDoc.originalName %>
+                  </a>
+                  <span style="color:var(--muted);font-size:0.78rem;margin-left:8px;"><%= new Date(bsDoc.uploadedAt).toLocaleDateString('es-AR') %></span>
+                <% } else { %>
+                  <span style="color:#9CA3AF;font-size:0.88rem;">No subido</span>
+                <% } %>
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── 3 & 4. Ingresos y Deducciones (por año fiscal) ───────────────── -->
+      <%
+        var sortedProfiles = (taxYearProfiles || []).slice().sort(function(a,b){ return (a.taxYear||'').localeCompare(b.taxYear||''); });
+        var noProfiles = sortedProfiles.length === 0;
+      %>
+
+      <% if (noProfiles) { %>
+      <!-- No hay perfiles de año fiscal todavía -->
+      <div class="section">
+        <div class="section-title">💰 3. Ingresos</div>
+        <div class="section-body">
+          <% if (u.employers && u.employers.length) { %>
+            <div class="subsection-label">Salarios / Employment income</div>
+            <% u.employers.forEach(function(emp, i) { %>
+            <div class="employer-block">
+              <div class="employer-name">
+                Empleador <%= i+1 %>: <%= emp.employerName || '—' %>
+                <span class="badge-sm <%= emp.extractionStatus === 'auto' ? 'badge-auto' : 'badge-pending' %>">
+                  <%= emp.extractionStatus === 'auto' ? 'Extraído auto' : 'Revisión manual' %>
+                </span>
+              </div>
+              <table class="report-table" style="margin:0;">
+                <tr><th>ABN del empleador</th><td class="mono"><%= emp.employerABN || '—' %></td></tr>
+                <tr><th>Ingreso bruto (C/D/E...)</th><td class="mono">AUD <%= emp.grossIncome != null ? emp.grossIncome.toFixed(2) : '—' %></td></tr>
+                <tr><th>Tax withheld</th><td class="mono">AUD <%= emp.taxWithheld != null ? emp.taxWithheld.toFixed(2) : '—' %></td></tr>
+                <tr><th>Período</th><td><%= emp.startDate || '?' %> → <%= emp.endDate || '?' %></td></tr>
+                <tr><th>Días trabajados</th><td><%= emp.daysWorked != null ? emp.daysWorked : '—' %></td></tr>
+                <% if (emp.sourceFiles && emp.sourceFiles.length) { %>
+                <tr><th>Archivos fuente</th><td style="font-size:0.8rem;color:var(--muted);"><%= emp.sourceFiles.join(', ') %></td></tr>
+                <% } %>
+              </table>
+            </div>
+            <% }); %>
+          <% } else { %>
+            <div style="padding:14px 16px;color:var(--muted);font-size:0.88rem;">Sin empleadores registrados.</div>
+          <% } %>
+          <% if (u.bankInterest) { %>
+          <div class="subsection-label">Intereses bancarios (10. Gross interest)</div>
+          <table class="report-table">
+            <tr><th>Intereses brutos</th><td class="mono">AUD <%= u.bankInterest %></td></tr>
+          </table>
+          <% } %>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">📋 4. Deducciones declaradas</div>
+        <div class="section-body">
+          <div style="padding:14px 16px;color:var(--muted);font-size:0.88rem;">Sin deducciones declaradas.</div>
+        </div>
+      </div>
+
+      <% } else { %>
+      <!-- Tabs de año fiscal -->
+      <div style="margin-bottom:0;">
+        <div class="year-tab-bar">
+          <span style="font-size:0.72rem;font-weight:700;letter-spacing:0.07em;color:var(--muted);font-family:var(--font-mono);text-transform:uppercase;margin-right:4px;">AÑO FISCAL</span>
+          <div class="year-tabs" id="yearTabsBar">
+            <% sortedProfiles.forEach(function(fyp, idx) { %>
+            <div class="year-tab <%= idx === 0 ? 'active' : '' %>" data-year="<%= fyp.taxYear %>" onclick="switchYear('<%= fyp.taxYear %>')">
+              <%= fyp.taxYear %>
+            </div>
+            <% }); %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección de empleadores (nivel usuario, siempre visible) -->
+      <div class="section" style="border-top-left-radius:0;border-top-right-radius:0;margin-top:0;">
+        <div class="section-title">💰 3. Ingresos — Salarios / Employment income</div>
+        <div class="section-body">
+          <% if (u.employers && u.employers.length) { %>
+            <% u.employers.forEach(function(emp, i) { %>
+            <div class="employer-block">
+              <div class="employer-name">
+                Empleador <%= i+1 %>: <%= emp.employerName || '—' %>
+                <span class="badge-sm <%= emp.extractionStatus === 'auto' ? 'badge-auto' : 'badge-pending' %>">
+                  <%= emp.extractionStatus === 'auto' ? 'Extraído auto' : 'Revisión manual' %>
+                </span>
+              </div>
+              <table class="report-table" style="margin:0;">
+                <tr><th>ABN del empleador</th><td class="mono"><%= emp.employerABN || '—' %></td></tr>
+                <tr><th>Ingreso bruto (C/D/E...)</th><td class="mono">AUD <%= emp.grossIncome != null ? emp.grossIncome.toFixed(2) : '—' %></td></tr>
+                <tr><th>Tax withheld</th><td class="mono">AUD <%= emp.taxWithheld != null ? emp.taxWithheld.toFixed(2) : '—' %></td></tr>
+                <tr><th>Período</th><td><%= emp.startDate || '?' %> → <%= emp.endDate || '?' %></td></tr>
+                <tr><th>Días trabajados</th><td><%= emp.daysWorked != null ? emp.daysWorked : '—' %></td></tr>
+                <% if (emp.sourceFiles && emp.sourceFiles.length) { %>
+                <tr><th>Archivos fuente</th><td style="font-size:0.8rem;color:var(--muted);"><%= emp.sourceFiles.join(', ') %></td></tr>
+                <% } %>
+              </table>
+            </div>
+            <% }); %>
+          <% } else { %>
+            <div style="padding:14px 16px;color:var(--muted);font-size:0.88rem;">Sin empleadores registrados.</div>
+          <% } %>
+          <% if (u.bankInterest) { %>
+          <div class="subsection-label">Intereses bancarios (10. Gross interest)</div>
+          <table class="report-table">
+            <tr><th>Intereses brutos</th><td class="mono">AUD <%= u.bankInterest %></td></tr>
+          </table>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Paneles por año: Otros ingresos + Deducciones -->
+      <% sortedProfiles.forEach(function(fyp, idx) { %>
+      <%
+        var hasOtherIncome = fyp.rentalIncome || fyp.businessIncome || fyp.dividends;
+        var hasDed = fyp.ded_d1 || fyp.ded_d3 || fyp.ded_d4 || fyp.ded_d5 || fyp.ded_d6 || fyp.ded_d9 || fyp.ded_d10;
+      %>
+      <div class="year-panel <%= idx === 0 ? 'active' : '' %>" data-year-panel="<%= fyp.taxYear %>">
+
+        <% if (hasOtherIncome) { %>
+        <div class="section">
+          <div class="section-title" style="background:#1e3a5f;">📈 Otros ingresos — <%= fyp.taxYear %></div>
+          <div class="section-body">
+            <table class="report-table">
+              <% if (fyp.rentalIncome) { %><tr><th>Ingreso neto de alquileres</th><td class="mono">AUD <%= fyp.rentalIncome %></td></tr><% } %>
+              <% if (fyp.businessIncome) { %><tr><th>Ingreso neto de negocio</th><td class="mono">AUD <%= fyp.businessIncome %></td></tr><% } %>
+              <% if (fyp.dividends) { %><tr><th>Dividendos</th><td class="mono">AUD <%= fyp.dividends %></td></tr><% } %>
+            </table>
+          </div>
+        </div>
+        <% } %>
+
+        <div class="section">
+          <div class="section-title">📋 4. Deducciones declaradas — <%= fyp.taxYear %></div>
+          <div class="section-body">
+            <% if (hasDed) { %>
+            <table class="report-table">
+              <% if (fyp.ded_d1 != null) { %><tr><th>D1 — Gastos de auto (trabajo)</th><td class="mono">AUD <%= fyp.ded_d1.toFixed(2) %></td></tr><% } %>
+              <% if (fyp.ded_d3 != null) { %><tr><th>D3 — Ropa y uniformes de trabajo</th><td class="mono">AUD <%= fyp.ded_d3.toFixed(2) %></td></tr><% } %>
+              <% if (fyp.ded_d4 != null) { %><tr><th>D4 — Educación y capacitación</th><td class="mono">AUD <%= fyp.ded_d4.toFixed(2) %></td></tr><% } %>
+              <% if (fyp.ded_d5 != null) { %><tr><th>D5 — Otros gastos de trabajo (tecnología, certificaciones, etc.)</th><td class="mono">AUD <%= fyp.ded_d5.toFixed(2) %></td></tr><% } %>
+              <% if (fyp.ded_d6 != null) { %><tr><th>D6 — Home office / Working from home</th><td class="mono">AUD <%= fyp.ded_d6.toFixed(2) %></td></tr><% } %>
+              <% if (fyp.ded_d9 != null) { %><tr><th>D9 — Donaciones (tax-deductible)</th><td class="mono">AUD <%= fyp.ded_d9.toFixed(2) %></td></tr><% } %>
+              <% if (fyp.ded_d10 != null) { %><tr><th>D10 — Costo de gestionar la declaración</th><td class="mono">AUD <%= fyp.ded_d10.toFixed(2) %></td></tr><% } %>
+            </table>
+            <% } else { %>
+            <div style="padding:14px 16px;color:var(--muted);font-size:0.88rem;">Sin deducciones declaradas para <%= fyp.taxYear %>.</div>
+            <% } %>
+          </div>
+        </div>
+
+      </div>
+      <% }); %>
+
+      <% } %>
+
+      <!-- ── 5. Foto de documento de identidad ─────────────────────────── -->
+      <%
+        var allDocs = documents;
+        var selfieDoc = allDocs.find(d => d.category === 'selfie_id');
+      %>
+      <div class="section">
+        <div class="section-title">🪪 5. Foto de documento de identidad</div>
+        <div class="section-body" style="padding:16px;">
+          <% if (selfieDoc) { %>
+            <div style="display:flex;align-items:center;gap:14px;">
+              <span style="font-size:2rem;">✅</span>
+              <div>
+                <div style="font-weight:600;font-size:0.92rem;"><%= selfieDoc.originalName %></div>
+                <div style="font-size:0.78rem;color:var(--muted);">Subido el <%= new Date(selfieDoc.uploadedAt).toLocaleDateString('es-AR') %></div>
+              </div>
+              <div style="margin-left:auto;display:flex;gap:6px;">
+                <a href="/admin/user/<%= u.id %>/document/<%= selfieDoc.id %>/view" target="_blank" class="btn btn--sm" style="background:#1D4ED8;color:#fff;border:none;">👁 Ver</a>
+                <a href="/admin/user/<%= u.id %>/document/<%= selfieDoc.id %>/download" class="btn btn--sm btn--outline">↓ Descargar</a>
+              </div>
+            </div>
+          <% } else { %>
+            <span class="missing" style="display:inline-block;">⚠ Falta completar — el cliente aún no subió su foto de documento</span>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- ── 6. Documentos adjuntos ──────────────────────────────────────── -->
+      <% if (u.lastModifiedByClientAt) { %>
+      <div style="background:#FEF3C7;border:1.5px solid #FDE68A;border-radius:8px;padding:10px 16px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">
+        <span style="font-size:1.2rem;">📎</span>
+        <div>
+          <strong style="color:#92400E;font-size:0.85rem;">El cliente actualizó sus archivos</strong>
+          <span style="color:#92400E;font-size:0.82rem;margin-left:6px;"><%= new Date(u.lastModifiedByClientAt).toLocaleString('es-AR') %></span>
+          <div style="font-size:0.78rem;color:#78350F;margin-top:2px;">Revisá los documentos antes de enviar la preparación al tax agent.</div>
+        </div>
+      </div>
+      <% } %>
+      <% if (allDocs && allDocs.length) { %>
+      <div class="section">
+        <div class="section-title">📁 6. Documentos subidos</div>
+        <form method="POST" action="/admin/user/<%= u.id %>/document-notes">
+        <div class="section-body" style="padding:14px 16px;">
+
+          <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+            <button type="submit" class="btn" style="background:var(--navy);color:#fff;font-weight:700;padding:8px 24px;">
+              💾 Guardar notas de documentos
+            </button>
+          </div>
+
+          <%
+            var CAT_DED_MAP_VIEW = {
+              certifications:    'D5',
+              training:          'D4',
+              work_expenses:     'D3',
+              tech_purchases:    'D5',
+              home_office:       'D6',
+              donation_receipts: 'D9',
+              logbook:           'D1',
+              payslips:          '',
+              abn_income:        '',
+              investment_statements: ''
+            };
+            var DED_LABEL_MAP = {
+              'D1':'D1 — Work-related car expenses',
+              'D3':'D3 — Work-related clothing, laundry & dry-cleaning',
+              'D4':'D4 — Work-related self-education',
+              'D5':'D5 — Technology & other work-related',
+              'D6':'D6 — Home office expenses',
+              'D9':'D9 — Gifts or donations',
+              'D10':'D10 — Cost of managing tax affairs'
+            };
+          %>
+          <% categories.forEach(function(cat) {
+            var catDocs = allDocs
+              .filter(d => d.category === cat.id)
+              .sort((a,b) => new Date(a.uploadedAt||0) - new Date(b.uploadedAt||0));
+          %>
+          <div style="margin-bottom:20px;border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+
+            <!-- Cabecera de la categoría -->
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#F0F4F8;border-bottom:1px solid var(--border);">
+              <div style="font-size:0.78rem;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.06em;"><%= cat.label %></div>
+              <button type="button" onclick="toggleUpload('<%= cat.id %>')"
+                style="font-size:0.75rem;padding:3px 10px;background:var(--navy);color:#fff;border:none;border-radius:5px;cursor:pointer;font-weight:600;">
+                + Agregar archivo
+              </button>
+            </div>
+
+            <!-- Panel de upload — div, NO form (evita anidamiento HTML inválido) -->
+            <% var catCode = CAT_DED_MAP_VIEW[cat.id] || ''; %>
+            <div id="upload-<%= cat.id %>" style="display:none;padding:12px 14px;background:#FAFBFF;border-bottom:1px solid var(--border);"
+                 data-upload-action="/admin/user/<%= u.id %>/upload-doc"
+                 data-upload-category="<%= cat.id %>"
+                 data-upload-dedcode="<%= catCode %>">
+              <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+                <div style="display:flex;flex-direction:column;gap:3px;flex:2;min-width:200px;">
+                  <label style="font-size:0.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;">Archivo *</label>
+                  <input type="file" id="ufile-<%= cat.id %>" multiple
+                    style="padding:4px;border:1px solid var(--border);border-radius:6px;font-size:0.8rem;background:#fff;">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:3px;width:90px;">
+                  <label style="font-size:0.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;">Monto $</label>
+                  <input type="text" id="uamount-<%= cat.id %>" placeholder="0.00"
+                    style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:0.8rem;">
+                </div>
+                <% if (catCode) { %>
+                <div style="display:flex;flex-direction:column;gap:3px;justify-content:flex-end;">
+                  <span style="font-size:0.72rem;font-weight:700;background:#EBF4EE;color:#1a7a3c;border:1px solid #b6dfbf;padding:3px 10px;border-radius:6px;white-space:nowrap;"><%= DED_LABEL_MAP[catCode] || catCode %></span>
+                </div>
+                <% } %>
+                <div style="display:flex;flex-direction:column;gap:3px;flex:3;min-width:150px;">
+                  <label style="font-size:0.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;">Descripción</label>
+                  <input type="text" id="unotes-<%= cat.id %>" placeholder="Ej: Invoice trabajo mayo 2025"
+                    style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:0.8rem;">
+                </div>
+                <button type="button" onclick="submitUpload('<%= cat.id %>')"
+                  style="padding:5px 14px;background:#166534;color:#fff;border:none;border-radius:6px;font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;">
+                  ↑ Subir
+                </button>
+              </div>
+            </div>
+
+            <!-- Lista de documentos de esta categoría -->
+            <div style="padding:8px 10px;">
+            <% if (!catDocs.length) { %>
+              <div style="font-size:0.82rem;color:var(--muted);padding:8px 4px;font-style:italic;">Sin archivos en esta categoría.</div>
+            <% } %>
+            <% catDocs.forEach(function(d) {
+              var ext = (d.originalName || '').split('.').pop().toLowerCase();
+              var isViewable = ['pdf','jpg','jpeg','png','webp','heic','gif','docx'].indexOf(ext) !== -1;
+            %>
+            <div style="background:#F8FAFC;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;overflow:hidden;">
+              <div style="display:flex;align-items:center;gap:10px;padding:7px 10px;">
+                <span style="font-size:1rem;"><%= ext === 'pdf' ? '📄' : ['jpg','jpeg','png','webp','heic','gif'].indexOf(ext) !== -1 ? '🖼️' : '📎' %></span>
+                <span style="font-size:0.83rem;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;"><%= d.originalName %></span>
+                <% if (d.uploadedBy === 'admin') { %><span style="font-size:0.68rem;background:#FEF3C7;color:#92400E;padding:2px 6px;border-radius:10px;font-weight:700;">admin</span><% } %>
+                <% if (d.dateVerified === 'unverified') { %><span style="font-size:0.68rem;background:#FEF9C3;color:#854D0E;padding:2px 6px;border-radius:10px;font-weight:700;" title="No se pudo verificar la fecha del documento automáticamente">⚠ fecha?</span><% } %>
+                <span style="font-size:0.72rem;color:var(--muted);white-space:nowrap;"><%= d.uploadedAt ? new Date(d.uploadedAt).toLocaleDateString('es-AR') : '' %></span>
+                <% if (isViewable) { %>
+                  <a href="/admin/user/<%= u.id %>/document/<%= d.id %>/view" target="_blank"
+                     style="padding:3px 8px;background:#1D4ED8;color:#fff;border-radius:5px;font-size:0.72rem;font-weight:700;text-decoration:none;">👁 Ver</a>
+                <% } %>
+                <button type="button"
+                  onclick="extractDoc(this,'<%= u.id %>','<%= d.id %>')"
+                  style="padding:3px 8px;background:#7C3AED;color:#fff;border:none;border-radius:5px;font-size:0.72rem;font-weight:700;cursor:pointer;"
+                  title="Extraer monto, descripción y fecha automáticamente">🤖 Auto</button>
+                <a href="/admin/user/<%= u.id %>/document/<%= d.id %>/download"
+                   style="padding:3px 8px;background:#F0F4F8;color:var(--navy);border:1px solid var(--border);border-radius:5px;font-size:0.72rem;font-weight:700;text-decoration:none;">↓</a>
+                <button type="button" onclick="adminDeleteDoc('<%= u.id %>','<%= d.id %>',this)"
+                  style="padding:3px 8px;background:#FEE2E2;color:#DC2626;border:1px solid #FECACA;border-radius:5px;font-size:0.72rem;font-weight:700;cursor:pointer;line-height:1;">✕</button>
+              </div>
+              <div style="border-top:1px solid var(--border);padding:6px 10px;display:flex;gap:8px;align-items:center;background:#fff;flex-wrap:wrap;">
+                <input type="hidden" name="docId" value="<%= d.id %>">
+                <input type="text" name="amount_<%= d.id %>" placeholder="Monto $" value="<%= d.adminAmount || '' %>"
+                  style="width:90px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:0.8rem;box-sizing:border-box;">
+                <% var docCode = d.adminDedCode || CAT_DED_MAP_VIEW[d.category] || ''; %>
+                <input type="hidden" name="dedCode_<%= d.id %>" value="<%= docCode %>">
+                <% if (docCode) { %>
+                  <span style="font-size:0.75rem;font-weight:700;background:#EBF4EE;color:#1a7a3c;border:1px solid #b6dfbf;padding:3px 10px;border-radius:6px;white-space:nowrap;"><%= DED_LABEL_MAP[docCode] || docCode %></span>
+                <% } %>
+                <input type="text" name="receiptRef_<%= d.id %>" placeholder="Nro. comprobante" value="<%= d.adminReceiptRef || '' %>"
+                  style="flex:1;min-width:100px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:0.8rem;box-sizing:border-box;">
+                <input type="text" name="notes_<%= d.id %>" placeholder="Observaciones" value="<%= d.adminNotes || '' %>"
+                  style="flex:2;min-width:120px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:0.8rem;box-sizing:border-box;">
+              </div>
+            </div>
+            <% }); %>
+            </div>
+          </div>
+          <% }); %>
+
+          <!-- Resumen de sumatorias por categoría de documento -->
+          <% var catSumKeys = Object.keys(catSums || {}); %>
+          <% if (catSumKeys.length > 0) { %>
+          <div style="margin-top:16px;padding:14px 16px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;">
+            <div style="font-size:0.78rem;font-weight:700;color:#1D4ED8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">
+              📊 Sumatoria de montos por categoría
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;">
+              <% catSumKeys.forEach(function(cat) { var cs = catSums[cat]; var pending = cs.count - (cs.withAmount || 0); %>
+              <div style="background:#fff;border:1px solid <%- cs.withAmount > 0 ? '#BFDBFE' : '#FDE68A' %>;border-radius:8px;padding:8px 14px;min-width:180px;">
+                <div style="font-size:0.72rem;color:#1D4ED8;font-weight:700;text-transform:uppercase;margin-bottom:2px;"><%= cs.label %></div>
+                <div style="font-family:var(--font-mono);font-size:1.1rem;font-weight:700;color:<%- cs.total > 0 ? '#0A0E5C' : '#92400E' %>;">
+                  <%- cs.total > 0 ? 'AUD ' + cs.total.toFixed(2) : '— sin monto' %>
+                </div>
+                <div style="font-size:0.72rem;color:var(--muted);margin-top:2px;">
+                  <%= cs.count %> archivo<%= cs.count !== 1 ? 's' : '' %><% if (pending > 0) { %> · <span style="color:#B45309;font-weight:700;"><%= pending %> sin monto</span><% } %> · <span style="font-weight:700;"><%= cs.ato %></span>
+                </div>
+              </div>
+              <% }); %>
+            </div>
+            <div style="margin-top:10px;font-size:0.78rem;color:#1D4ED8;">
+              ✅ Estos totales se pre-cargan automáticamente en la preparación del tax agent.
+            </div>
+          </div>
+          <% } %>
+
+          <div style="display:flex;justify-content:flex-end;margin-top:12px;">
+            <button type="submit" class="btn" style="background:var(--navy);color:#fff;font-weight:700;padding:8px 24px;">
+              💾 Guardar notas de documentos
+            </button>
+          </div>
+
+        </div>
+        </form>
+      </div>
+      <% } %>
+
+      <!-- ── 6. Perfil del año fiscal ───────────────────────────────────── -->
+      <% var fyProfile = taxYearProfiles && taxYearProfiles.length ? taxYearProfiles[0] : null; %>
+      <% if (fyProfile) { %>
+      <div class="section">
+        <div class="section-title">📅 6. Perfil fiscal <%= fyProfile.taxYear || '' %></div>
+        <div class="section-body">
+          <table class="report-table">
+            <% if (fyProfile.jobsDescription) { %><tr><th>Trabajos / ocupación</th><td><%= fyProfile.jobsDescription %></td></tr><% } %>
+            <% if (fyProfile.workLocations) { %><tr><th>Ubicaciones de trabajo</th><td><%= fyProfile.workLocations %></td></tr><% } %>
+              <tr>
+                <th style="vertical-align:top;padding-top:10px;">Vehículos</th>
+                <td>
+                  <%
+                    // Normalizar: si no hay array vehicles, construirlo desde campos planos
+                    var udVehicles = fyProfile.vehicles && fyProfile.vehicles.length
+                      ? fyProfile.vehicles
+                      : (fyProfile.carBrand || fyProfile.carWorkKm
+                          ? [{ brand: fyProfile.carBrand||'', model: fyProfile.carModel||'', year: fyProfile.carYear||'', plate: fyProfile.carPlate||'', km: fyProfile.carWorkKm||'' }]
+                          : [{ brand:'', model:'', year:'', plate:'', km:'' }]);
+                  %>
+                  <form method="POST" action="/admin/user/<%= u.id %>/update-vehicles" id="ud-vehicles-form">
+                    <div id="ud-vehicles-list" style="display:flex;flex-direction:column;gap:10px;">
+                      <% udVehicles.forEach(function(v, i) { %>
+                      <div class="ud-vehicle-row" style="background:#F8FAFC;border:1px solid #E5E7EB;border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;">
+                          <span style="font-size:0.72rem;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.05em;">Vehículo <%= i+1 %></span>
+                          <% if (i > 0) { %>
+                          <button type="button" onclick="udRemoveVehicle(this)" style="background:none;border:none;color:#DC2626;font-size:0.8rem;cursor:pointer;padding:0;">✕ Quitar</button>
+                          <% } %>
+                        </div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                          <input type="text" name="v_brand_<%= i %>" value="<%= v.brand||'' %>" placeholder="Marca"
+                            style="width:100px;padding:4px 8px;border:1.5px solid #D1D5DB;border-radius:6px;font-size:0.85rem;">
+                          <input type="text" name="v_model_<%= i %>" value="<%= v.model||'' %>" placeholder="Modelo"
+                            style="width:110px;padding:4px 8px;border:1.5px solid #D1D5DB;border-radius:6px;font-size:0.85rem;">
+                          <input type="text" name="v_year_<%= i %>" value="<%= v.year||'' %>" placeholder="Año" maxlength="4"
+                            style="width:64px;padding:4px 8px;border:1.5px solid #D1D5DB;border-radius:6px;font-size:0.85rem;font-family:monospace;">
+                          <input type="text" name="v_plate_<%= i %>" value="<%= v.plate||'' %>" placeholder="Patente"
+                            style="width:90px;padding:4px 8px;border:1.5px solid #D1D5DB;border-radius:6px;font-size:0.85rem;font-family:monospace;text-transform:uppercase;">
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                          <input type="number" name="v_km_<%= i %>" value="<%= v.km||'' %>" min="0" step="1" placeholder="0"
+                            style="width:90px;padding:4px 8px;border:1.5px solid #BFDBFE;border-radius:6px;font-size:0.9rem;font-weight:700;font-family:monospace;color:#1D4ED8;"
+                            oninput="udKmCalcRow(this)">
+                          <span style="color:#9CA3AF;font-size:0.82rem;">km × $0.88 =</span>
+                          <span class="ud-km-result mono" style="color:#1D4ED8;font-weight:700;">AUD $<%= v.km ? (v.km*0.88).toFixed(2) : '0.00' %></span>
+                          <% if (v.km > 5000) { %><span style="background:#FEF3C7;color:#92400E;font-size:0.72rem;font-weight:700;padding:2px 7px;border-radius:8px;border:1px solid #FCD34D;">⚠ >5,000 km</span><% } %>
+                        </div>
+                      </div>
+                      <% }); %>
+                    </div>
+                    <div style="display:flex;gap:8px;margin-top:10px;align-items:center;">
+                      <button type="button" onclick="udAddVehicle()" style="background:#F0F9FF;color:#0369A1;border:1.5px dashed #BAE6FD;border-radius:6px;padding:5px 14px;font-size:0.82rem;font-weight:700;cursor:pointer;">+ Agregar vehículo</button>
+                      <button type="submit" style="background:#1D4ED8;color:#fff;border:none;border-radius:6px;padding:5px 16px;font-size:0.82rem;font-weight:700;cursor:pointer;">💾 Guardar todos</button>
+                    </div>
+                    <input type="hidden" name="vehicleCount" id="ud-vehicle-count" value="<%= udVehicles.length %>">
+                  </form>
+                </td>
+              </tr>
+              <tr>
+                <th style="vertical-align:top;padding-top:10px;">🏥 Seguro de salud</th>
+                <td>
+                  <form method="POST" action="/admin/user/<%= u.id %>/update-health">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                      <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;">
+                        <input type="checkbox" name="hasHealthInsurance" value="1" <%= fyProfile.hasHealthInsurance ? 'checked' : '' %>
+                          style="width:15px;height:15px;accent-color:#7C3AED;" onchange="udToggleHealth(this)">
+                        <span style="font-weight:600;">Tiene seguro médico</span>
+                      </label>
+                    </div>
+                    <div id="ud-health-fields" style="display:<%= fyProfile.hasHealthInsurance ? 'flex' : 'none' %>;flex-direction:column;gap:8px;background:#FAF5FF;border:1px solid #DDD6FE;border-radius:8px;padding:12px;">
+                      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <div style="display:flex;flex-direction:column;gap:3px;">
+                          <label style="font-size:0.72rem;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.05em;">Aseguradora</label>
+                          <input type="text" name="healthProvider" value="<%= fyProfile.healthProvider||'' %>" placeholder="Ej: Bupa, Medibank…"
+                            style="width:150px;padding:5px 9px;border:1.5px solid #DDD6FE;border-radius:6px;font-size:0.85rem;">
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:3px;">
+                          <label style="font-size:0.72rem;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.05em;">Nº de miembro</label>
+                          <input type="text" name="healthMemberNumber" value="<%= fyProfile.healthMemberNumber||'' %>" placeholder="Número"
+                            style="width:130px;padding:5px 9px;border:1.5px solid #DDD6FE;border-radius:6px;font-size:0.85rem;font-family:monospace;">
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:3px;">
+                          <label style="font-size:0.72rem;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.05em;">Tipo de plan</label>
+                          <input type="text" name="healthPlanType" value="<%= fyProfile.healthPlanType||'' %>" placeholder="Ej: Hospital, Extras…"
+                            style="width:130px;padding:5px 9px;border:1.5px solid #DDD6FE;border-radius:6px;font-size:0.85rem;">
+                        </div>
+                      </div>
+                      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <div style="display:flex;flex-direction:column;gap:3px;">
+                          <label style="font-size:0.72rem;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.05em;">Desde</label>
+                          <input type="text" name="healthStartDate" value="<%= fyProfile.healthStartDate||'' %>" placeholder="01/07/2025"
+                            style="width:120px;padding:5px 9px;border:1.5px solid #DDD6FE;border-radius:6px;font-size:0.85rem;font-family:monospace;">
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:3px;">
+                          <label style="font-size:0.72rem;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.05em;">Hasta</label>
+                          <input type="text" name="healthEndDate" value="<%= fyProfile.healthEndDate||'' %>" placeholder="30/06/2026"
+                            style="width:120px;padding:5px 9px;border:1.5px solid #DDD6FE;border-radius:6px;font-size:0.85rem;font-family:monospace;">
+                        </div>
+                      </div>
+                    </div>
+                    <div style="margin-top:10px;">
+                      <button type="submit" style="background:#7C3AED;color:#fff;border:none;border-radius:6px;padding:5px 16px;font-size:0.82rem;font-weight:700;cursor:pointer;">💾 Guardar seguro</button>
+                    </div>
+                  </form>
+                </td>
+              </tr>
+          </table>
+        </div>
+      </div>
+      <% } %>
+
+      <!-- ── 7. Perfil del año fiscal ───────────────────────────────────── -->
+      <!-- ── 8. Pago del servicio ───────────────────────────────────────── -->
+      <div class="section">
+        <div class="section-title">💳 7. Pago — Tax Return</div>
+        <div class="section-body">
+          <% if (payment) { %>
+          <div class="payment-box">
+            <div style="margin-bottom:12px;">
+              <% if (payment.courtesy) { %>
+                <div class="payment-amount" style="color:#7C3AED;">🎁 Cortesía</div>
+              <% } else { %>
+                <div class="payment-amount"><span class="currency">AUD</span><%= (payment.amountCents / 100).toFixed(2) %></div>
+              <% } %>
+              <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;">
+                <% if (payment.courtesy) { %>
+                  <span class="badge-sm" style="background:#EDE9FE;color:#5B21B6;border:1px solid #C4B5FD;">🎁 Servicio gratuito</span>
+                <% } else if (payment.status === 'paid') { %>
+                  <span class="badge-sm badge-paid">✓ Confirmado</span>
+                <% } else { %>
+                  <span class="badge-sm badge-pending">⏳ Pendiente</span>
+                <% } %>
+                <% if (!payment.courtesy) { %>
+                  <% if (payment.discountApplied) { %><span class="badge-sm badge-disc">Descuento AUD 30 aplicado</span><% } else { %><span class="badge-sm badge-full">Precio completo</span><% } %>
+                <% } %>
+              </div>
+            </div>
+            <table class="report-table">
+              <% if (payment.courtesyNote) { %><tr><th>Motivo</th><td style="color:#7C3AED;font-weight:600;"><%= payment.courtesyNote %></td></tr><% } %>
+              <% if (payment.paidAt) { %><tr><th>Fecha</th><td><%= new Date(payment.paidAt).toLocaleDateString('es-AR') %></td></tr><% } %>
+              <tr><th>Año fiscal</th><td><%= payment.taxYear || '—' %></td></tr>
+              <% if (!payment.courtesy) { %><tr><th>Método</th><td>Revolut (manual)</td></tr><% } %>
+            </table>
+          </div>
+          <% if (payment.status === 'paid') { %>
+          <div class="stage-form">
+            <form method="POST" action="/admin/user/<%= u.id %>/stage">
+
+              <!-- Agente asignado -->
+              <label style="margin-top:0;">Agente asignado</label>
+              <select name="assignedAgent" style="margin-bottom:10px;">
+                <option value="" <%= !u.assignedAgent ? 'selected':'' %>>— Sin asignar —</option>
+                <option value="estiguan" <%= u.assignedAgent==='estiguan' ? 'selected':'' %>>Estiguan Navas</option>
+                <option value="hisham_ghanda" <%= u.assignedAgent==='hisham_ghanda' ? 'selected':'' %>>Hisham & Ghanda</option>
+                <option value="otro" <%= u.assignedAgent==='otro' ? 'selected':'' %>>Otro</option>
+              </select>
+
+              <!-- Etapa del trámite -->
+              <label>Etapa del trámite</label>
+              <select name="taxReturnStage" style="margin-bottom:10px;">
+                <option value="processing"  <%= u.taxReturnStage === 'processing'  || !u.taxReturnStage ? 'selected' : '' %>>⚙️ En procesamiento</option>
+                <option value="with_agent"  <%= u.taxReturnStage === 'with_agent'  ? 'selected' : '' %>>🔎 Con el tax agent</option>
+                <option value="informal"    <%= u.taxReturnStage === 'informal'    ? 'selected' : '' %>>🤝 Informal</option>
+                <option value="issued"      <%= u.taxReturnStage === 'issued'      ? 'selected' : '' %>>🎉 Caso emitido</option>
+              </select>
+
+              <!-- Pagado al agente -->
+              <div style="background:<%= u.agentPaid ? '#F0FDF4' : '#FFFBEB' %>;border:1px solid <%= u.agentPaid ? '#BBF7D0':'#FDE68A' %>;border-radius:8px;padding:10px 12px;margin-bottom:8px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+                  <div>
+                    <div style="font-size:0.78rem;font-weight:700;color:<%= u.agentPaid ? '#15803D':'#92400E' %>;">
+                      <%= u.agentPaid ? '✅ Agente pagado' : '⏳ Agente sin pagar' %>
+                    </div>
+                    <% if (u.agentPaid && u.agentPaidAt) { %>
+                      <div style="font-size:0.7rem;color:#6B7280;margin-top:2px;">
+                        <%= new Date(u.agentPaidAt).toLocaleDateString('es-AR') %>
+                      </div>
+                    <% } %>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <input type="date" name="agentPaidAt" value="<%= u.agentPaidAt ? new Date(u.agentPaidAt).toISOString().slice(0,10) : new Date().toISOString().slice(0,10) %>"
+                      style="padding:4px 7px;border:1px solid #D1D5DB;border-radius:5px;font-size:0.8rem;">
+                    <label style="display:flex;align-items:center;gap:5px;font-size:0.82rem;font-weight:700;cursor:pointer;margin:0;">
+                      <input type="hidden" name="agentPaid" value="false">
+                      <input type="checkbox" name="agentPaid" value="true" <%= u.agentPaid ? 'checked' : '' %>
+                        style="width:16px;height:16px;cursor:pointer;">
+                      Pagado
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Reembolso devuelto al cliente -->
+              <div style="background:<%= u.refundReturned ? '#F0FDF4' : '#F8FAFC' %>;border:1px solid <%= u.refundReturned ? '#BBF7D0':'#E5E7EB' %>;border-radius:8px;padding:10px 12px;margin-bottom:12px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+                  <div>
+                    <div style="font-size:0.78rem;font-weight:700;color:<%= u.refundReturned ? '#15803D':'#374151' %>;">
+                      <%= u.refundReturned ? '✅ Reembolso enviado al cliente' : '⏳ Reembolso pendiente de envío' %>
+                    </div>
+                    <% if (u.refundReturned && u.refundReturnedAt) { %>
+                      <div style="font-size:0.7rem;color:#6B7280;margin-top:2px;">
+                        <%= new Date(u.refundReturnedAt).toLocaleDateString('es-AR') %>
+                      </div>
+                    <% } %>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <input type="date" name="refundReturnedAt" value="<%= u.refundReturnedAt ? new Date(u.refundReturnedAt).toISOString().slice(0,10) : new Date().toISOString().slice(0,10) %>"
+                      style="padding:4px 7px;border:1px solid #D1D5DB;border-radius:5px;font-size:0.8rem;">
+                    <label style="display:flex;align-items:center;gap:5px;font-size:0.82rem;font-weight:700;cursor:pointer;margin:0;">
+                      <input type="hidden" name="refundReturned" value="false">
+                      <input type="checkbox" name="refundReturned" value="true" <%= u.refundReturned ? 'checked' : '' %>
+                        style="width:16px;height:16px;cursor:pointer;">
+                      Devuelto
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn--sm btn--navy" style="width:100%;">💾 Guardar</button>
+            </form>
+
+            <!-- ── Tax Estimate (Income Tax Return Tax Estimate) ── -->
+            <% if (u.taxReturnStage === 'with_agent' || u.taxReturnStage === 'issued') { %>
+            <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:16px;">
+              <% if (u.taxEstimate) { %>
+                <% var teS = u.taxEstimate.status; %>
+                <div style="font-size:0.8rem;margin-bottom:8px;font-weight:600;color:<%= teS==='accepted'?'#16a34a':teS==='doubts'?'#92400E':'#1E40AF' %>;">
+                  <%= teS==='accepted'?'✅ Estimación aceptada por el cliente el '+new Date(u.taxEstimate.acceptedAt).toLocaleDateString('es-AR'):teS==='doubts'?'⚠ Cliente tiene dudas: "'+(u.taxEstimate.clientComment||'')+'\"':'⏳ Estimación cargada — esperando respuesta del cliente' %>
+                </div>
+              <% } %>
+              <button type="button" onclick="var f=document.getElementById('estimate-form-<%= u.id %>');f.style.display=f.style.display==='none'?'block':'none';this.textContent=f.style.display==='none'?'📊 Cargar Tax Estimate':'▲ Cerrar';"
+                class="btn btn--sm" style="background:#1E40AF;color:#fff;border:none;font-weight:700;width:100%;margin-bottom:0;">
+                📊 <%= u.taxEstimate ? 'Editar Tax Estimate' : 'Cargar Tax Estimate' %>
+              </button>
+              <div id="estimate-form-<%= u.id %>" style="display:none;margin-top:12px;">
+                <% var te2 = u.taxEstimate || {}; var teV2 = function(f){ return (te2[f] !== null && te2[f] !== undefined) ? te2[f] : ''; }; %>
+                <form method="POST" action="/admin/user/<%= u.id %>/tax-estimate">
+                  <% var iStyle = 'width:100%;box-sizing:border-box;padding:5px 8px;border:1px solid var(--border);border-radius:4px;font-size:0.9rem;font-family:var(--font-mono);'; %>
+                  <% var lStyle = 'font-size:0.72rem;color:var(--muted);display:block;margin-bottom:2px;'; %>
+
+                  <%# Fila: label + input %>
+                  <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);">
+                    <span style="font-size:0.8rem;color:var(--muted);">Taxable Income</span>
+                    <input type="number" step="0.01" name="taxableIncome" value="<%= teV2('taxableIncome') %>" style="width:110px;padding:4px 7px;border:1px solid var(--border);border-radius:4px;font-size:0.88rem;font-family:var(--font-mono);text-align:right;" placeholder="0.00">
+                  </div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);">
+                    <span style="font-size:0.8rem;font-weight:700;color:var(--ink);">Tax Payable on Taxable Income</span>
+                    <input type="number" step="0.01" name="taxPayableOnTaxableIncome" value="<%= teV2('taxPayableOnTaxableIncome') %>" style="width:110px;padding:4px 7px;border:1px solid var(--border);border-radius:4px;font-size:0.88rem;font-family:var(--font-mono);text-align:right;font-weight:700;" placeholder="0.00">
+                  </div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);">
+                    <span style="font-size:0.8rem;color:var(--muted);">Less — Low Income Offset</span>
+                    <input type="number" step="0.01" name="lowIncomeOffset" value="<%= teV2('lowIncomeOffset') %>" style="width:110px;padding:4px 7px;border:1px solid var(--border);border-radius:4px;font-size:0.88rem;font-family:var(--font-mono);text-align:right;" placeholder="0.00">
+                  </div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);">
+                    <span style="font-size:0.8rem;color:var(--muted);">Less — Tax withheld (salary)</span>
+                    <input type="number" step="0.01" name="taxWithheldSalary" value="<%= teV2('taxWithheldSalary') %>" style="width:110px;padding:4px 7px;border:1px solid var(--border);border-radius:4px;font-size:0.88rem;font-family:var(--font-mono);text-align:right;" placeholder="0.00">
+                  </div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;margin-top:4px;">
+                    <span style="font-size:0.88rem;font-weight:800;color:#065F46;">Estimated Tax Refund</span>
+                    <input type="number" step="0.01" name="estimatedRefund" value="<%= teV2('estimatedRefund') %>" style="width:110px;padding:5px 8px;border:2px solid #A7F3D0;border-radius:5px;font-size:0.95rem;font-family:var(--font-mono);font-weight:800;color:#065F46;text-align:right;background:#ECFDF5;" placeholder="0.00">
+                  </div>
+
+                  <button type="submit" class="btn btn--sm btn--navy" style="width:100%;font-weight:700;margin-top:8px;">
+                    💾 Guardar estimación
+                  </button>
+                </form>
+              </div>
+
+              <%# ── Barra de notificación al cliente ── %>
+              <% if (u.taxEstimate) { %>
+              <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:14px;">
+                <% if (u.estimateNotifiedAt) { %>
+                  <div style="font-size:0.78rem;color:#065F46;background:#ECFDF5;border-radius:5px;padding:7px 10px;margin-bottom:10px;">
+                    ✅ Último envío: <%= new Date(u.estimateNotifiedAt).toLocaleString('es-AR') %> → <strong><%= u.estimateNotifiedTo %></strong>
+                  </div>
+                <% } %>
+                <% if (locals.notified) { %>
+                  <div style="font-size:0.78rem;color:#065F46;background:#ECFDF5;border-radius:5px;padding:7px 10px;margin-bottom:10px;">
+                    📧 Notificación enviada correctamente.
+                  </div>
+                <% } %>
+                <% if (locals.errorMsg === 'no_recipient') { %>
+                  <div style="font-size:0.78rem;color:#991B1B;background:#FEE2E2;border-radius:5px;padding:7px 10px;margin-bottom:10px;">
+                    ⚠ Ingresá un destinatario antes de enviar.
+                  </div>
+                <% } %>
+                <% if (locals.errorMsg === 'send_failed') { %>
+                  <div style="font-size:0.78rem;color:#991B1B;background:#FEE2E2;border-radius:5px;padding:7px 10px;margin-bottom:10px;">
+                    ✕ Error al enviar. Revisá la dirección e intentá de nuevo.
+                  </div>
+                <% } %>
+                <form method="POST" action="/admin/user/<%= u.id %>/notify-estimate">
+                  <label style="font-size:0.72rem;color:var(--muted);display:block;margin-bottom:3px;">Notificar estimación al cliente</label>
+                  <div style="display:flex;gap:6px;align-items:center;">
+                    <input type="email" name="notifyTo" value="<%= u.email %>"
+                      placeholder="email@cliente.com" required
+                      style="flex:1;padding:6px 9px;border:1px solid var(--border);border-radius:5px;font-size:0.85rem;">
+                    <button type="submit" class="btn btn--sm" style="background:#16A34A;color:#fff;border:none;font-weight:700;white-space:nowrap;">
+                      📧 Enviar
+                    </button>
+                  </div>
+                  <div style="font-size:0.7rem;color:var(--muted);margin-top:4px;">Se incluye copia automática a hola@retaux.com · Link de acceso válido 48 h</div>
+                </form>
+              </div>
+              <% } %>
+
+            </div>
+            <% } %>
+
+            <!-- ── Informe de emisión ── -->
+            <% if (u.taxReturnStage === 'with_agent' || u.taxReturnStage === 'issued') { %>
+            <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:16px;">
+              <% if (u.emittedAt) { %>
+                <div style="font-size:0.8rem;color:#16a34a;margin-bottom:8px;font-weight:600;">
+                  🎉 Informe emitido el <%= new Date(u.emittedAt).toLocaleDateString('es-AR') %> · Refund: AUD <%= (u.emitRefund||0).toFixed(2) %> · Gross: AUD <%= (u.emitGross||0).toFixed(2) %>
+                </div>
+              <% } %>
+              <button type="button" onclick="document.getElementById('emit-form-<%= u.id %>').style.display='block';this.style.display='none';"
+                class="btn btn--sm" style="background:#F0C040;color:#060C14;border:none;font-weight:700;width:100%;">
+                <%= u.emittedAt ? '📄 Reenviar informe de emisión' : '📄 Preparar informe de emisión' %>
+              </button>
+              <div id="emit-form-<%= u.id %>" style="display:none;margin-top:12px;">
+                <form method="POST" action="/admin/user/<%= u.id %>/emit">
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+                    <div>
+                      <label style="font-size:0.78rem;color:var(--muted);display:block;margin-bottom:4px;">Gross Income (AUD)</label>
+                      <input type="number" name="grossIncome" step="0.01" min="0" value="<%= u.emitGross || '' %>"
+                        style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:0.88rem;" required>
+                    </div>
+                    <div>
+                      <label style="font-size:0.78rem;color:var(--muted);display:block;margin-bottom:4px;">Refund del tax agent (AUD)</label>
+                      <input type="number" name="refundAmount" step="0.01" min="0" value="<%= u.emitRefund || '' %>"
+                        style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:0.88rem;" required>
+                    </div>
+                  </div>
+                  <div style="margin-bottom:10px;">
+                    <label style="font-size:0.78rem;color:var(--muted);display:block;margin-bottom:4px;">ATO Reference (opcional)</label>
+                    <input type="text" name="atoRef" value="<%= u.emitAtoRef || '' %>"
+                      style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:0.88rem;">
+                  </div>
+                  <div style="margin-bottom:10px;">
+                    <label style="font-size:0.78rem;color:var(--muted);display:block;margin-bottom:4px;">Nota para el cliente (opcional)</label>
+                    <textarea name="adminNotes" rows="2"
+                      style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:0.88rem;resize:vertical;"></textarea>
+                  </div>
+                  <!-- Deducciones cargadas (solo lectura) -->
+                  <% var dedLabels = {D1:'D1 — Work-related car expenses',D3:'D3 — Work-related clothing, laundry & dry-cleaning',D4:'D4 — Work-related self-education',D5:'D5 — Technology & other work-related',D6:'D6 — Home office expenses',D9:'D9 — Gifts or donations',D10:'D10 — Cost of managing tax affairs'}; %>
+                  <% var hasDeds = false; Object.keys(dedLabels).forEach(function(c){ if(parseFloat(u['deduction'+c])>0) hasDeds=true; }); %>
+                  <% if (hasDeds) { %>
+                  <div style="background:#f8fafc;border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin-bottom:10px;font-size:0.8rem;">
+                    <div style="font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;font-size:0.72rem;letter-spacing:0.5px;">Deducciones incluidas</div>
+                    <% Object.entries(dedLabels).forEach(function(entry){ var code=entry[0],label=entry[1]; var val=parseFloat(u['deduction'+code])||0; if(val>0){ %>
+                      <div style="display:flex;justify-content:space-between;padding:2px 0;color:var(--ink);"><span><%= label %></span><span style="font-family:var(--font-mono);">AUD <%= val.toFixed(2) %></span></div>
+                    <% }}); %>
+                  </div>
+                  <% } %>
+                  <button type="submit" class="btn btn--sm btn--navy" style="width:100%;"
+                    onclick="return confirm('¿Enviar informe de emisión a <%= (u.fullName||u.email).split("'").join("") %>?')">
+                    Enviar informe →
+                  </button>
+                </form>
+              </div>
+            </div>
+            <% } %>
+          </div>
+          <% } else if (payment.status === 'pending_manual') { %>
+          <% if (payment.proofFilename) { %>
+          <div style="padding:10px 16px;background:#F0FDF4;border-bottom:1px solid #BBF7D0;display:flex;align-items:center;gap:10px;font-size:0.85rem;">
+            <span style="color:#166534;font-weight:700;">📎 Comprobante de pago:</span>
+            <a href="/admin/payment-proof/<%= payment.proofFilename %>" target="_blank" style="color:#166534;font-weight:600;text-decoration:underline;">Ver archivo</a>
+          </div>
+          <% } else { %>
+          <div style="padding:8px 16px;background:#FEF3C7;border-bottom:1px solid #FCD34D;font-size:0.82rem;color:#92400E;">
+            ⚠ Sin comprobante adjunto
+          </div>
+          <% } %>
+          <div class="action-bar">
+            <form method="POST" action="/admin/payment/<%= payment.id %>/confirm">
+              <button type="submit" class="btn btn--sm btn--navy" onclick="return confirm('¿Confirmar pago?')">✅ Confirmar pago</button>
+            </form>
+            <form method="POST" action="/admin/payment/<%= payment.id %>/reject">
+              <button type="submit" class="btn btn--sm" style="background:#C0392B;color:#fff;border:none;" onclick="return confirm('¿Rechazar pago?')">❌ Rechazar</button>
+            </form>
+            <form method="POST" action="/admin/user/<%= u.id %>/mark-courtesy" style="display:flex;align-items:center;gap:6px;" onsubmit="return confirm('¿Registrar como cortesía AUD $0? El usuario quedará habilitado sin cobrarle nada.')">
+              <input type="text" name="note" placeholder="Motivo (ej: influencer, colaborador)" style="font-size:0.8rem;padding:5px 8px;border:1px solid #D1D5DB;border-radius:5px;width:200px;">
+              <button type="submit" class="btn btn--sm" style="background:#7C3AED;color:#fff;border:none;white-space:nowrap;">🎁 Cortesía AUD $0</button>
+            </form>
+          </div>
+          <% } %>
+          <% } else { %>
+          <div style="padding:14px 16px;color:var(--muted);font-size:0.88rem;">
+            Sin pago registrado.
+            <form method="POST" action="/admin/user/<%= u.id %>/mark-courtesy" style="display:inline-flex;align-items:center;gap:6px;margin-top:10px;" onsubmit="return confirm('¿Registrar como cortesía AUD $0? El usuario quedará habilitado sin cobrarle nada.')">
+              <input type="text" name="note" placeholder="Motivo (ej: influencer, colaborador)" style="font-size:0.8rem;padding:5px 8px;border:1px solid #D1D5DB;border-radius:5px;width:200px;">
+              <button type="submit" class="btn btn--sm" style="background:#7C3AED;color:#fff;border:none;white-space:nowrap;">🎁 Cortesía AUD $0</button>
+            </form>
+          </div>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- ── DASP: solicitud del cliente ─────────────────────────────────── -->
+      <% if (daspRequest) { %>
+      <div class="section">
+        <div class="section-title" style="display:flex;align-items:center;justify-content:space-between;">
+          <span>🟡 Solicitud DASP</span>
+          <a href="/admin/user/<%= u.id %>/dasp-preview" class="btn btn--sm btn--navy" style="font-size:0.8rem;">📋 Preparar informe DASP</a>
+        </div>
+        <div class="section-body" style="padding:16px;">
+
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;">
+            <div><span style="font-size:0.75rem;color:var(--muted);font-weight:700;text-transform:uppercase;">Fecha de salida</span><br><strong><%= daspRequest.departureDate || '—' %></strong></div>
+            <div><span style="font-size:0.75rem;color:var(--muted);font-weight:700;text-transform:uppercase;">Visa</span><br><strong><%= daspRequest.visaSubclass || '—' %></strong></div>
+            <div><span style="font-size:0.75rem;color:var(--muted);font-weight:700;text-transform:uppercase;">Estado</span><br>
+              <% var ds = daspRequest.status; %>
+              <span style="background:<%= ds==='done'?'#dcfce7':ds==='processing'?'#dbeafe':'#fef9c3' %>;color:<%= ds==='done'?'#166534':ds==='processing'?'#1d4ed8':'#854d0e' %>;padding:2px 10px;border-radius:20px;font-size:0.78rem;font-weight:700;">
+                <%= ds==='done'?'✅ Listo':ds==='processing'?'⚙️ Procesando':'⏳ Pendiente' %>
+              </span>
+            </div>
+          </div>
+
+          <% if (daspRequest.lastAustralianAddress) { %>
+          <div style="margin-bottom:12px;"><span style="font-size:0.75rem;color:var(--muted);font-weight:700;text-transform:uppercase;">Última dirección en Australia</span><br><%= daspRequest.lastAustralianAddress %></div>
+          <% } %>
+
+          <!-- Fondos de super -->
+          <% if (daspRequest.funds && daspRequest.funds.length) { %>
+          <div style="margin-bottom:12px;">
+            <span style="font-size:0.75rem;color:var(--muted);font-weight:700;text-transform:uppercase;display:block;margin-bottom:6px;">Fondos de superannuation</span>
+            <% daspRequest.funds.forEach(function(f, i) { %>
+            <div style="background:#fefce8;border:1px solid #fde68a;border-radius:6px;padding:8px 12px;margin-bottom:6px;font-size:0.85rem;">
+              <strong><%= f.fundName %></strong>
+              <% if (f.fundABN) { %> · ABN: <span style="font-family:monospace"><%= f.fundABN %></span><% } %>
+              <% if (f.fundUSI) { %> · USI: <span style="font-family:monospace"><%= f.fundUSI %></span><% } %>
+              <% if (f.memberNumber) { %> · Miembro: <span style="font-family:monospace"><%= f.memberNumber %></span><% } %>
+            </div>
+            <% }); %>
+          </div>
+          <% } %>
+
+          <!-- Tickets de avión -->
+          <% if (daspRequest.flightTickets && daspRequest.flightTickets.length) { %>
+          <div style="margin-bottom:12px;">
+            <span style="font-size:0.75rem;color:var(--muted);font-weight:700;text-transform:uppercase;display:block;margin-bottom:6px;">Tickets de avión cargados (<%= daspRequest.flightTickets.length %>)</span>
+            <% daspRequest.flightTickets.forEach(function(t) { %>
+            <div style="font-size:0.83rem;color:#166534;">✅ <%= t.originalName %></div>
+            <% }); %>
+          </div>
+          <% } else { %>
+          <div style="font-size:0.83rem;color:var(--muted);">⚠️ Sin tickets de avión cargados.</div>
+          <% } %>
+
+          <!-- Banco receptor -->
+          <% if (daspRequest.bankAccount || daspRequest.bankSwift) { %>
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+            <span style="font-size:0.75rem;color:var(--muted);font-weight:700;text-transform:uppercase;display:block;margin-bottom:4px;">Banco receptor</span>
+            <span style="font-size:0.85rem;"><%= daspRequest.bankRecipientName || '' %> · <%= daspRequest.bankName || '' %> · <%= daspRequest.bankCountry || '' %> · <span style="font-family:monospace"><%= daspRequest.bankSwift || '' %> / <%= daspRequest.bankAccount || '' %></span></span>
+          </div>
+          <% } %>
+
+        </div>
+      </div>
+      <% } %>
+
+      <!-- ── 8. Superannuation DASP ─────────────────────────────────────── -->
+      <div class="section">
+        <div class="section-title">🏦 8. Pago — Superannuation (DASP)</div>
+        <div class="section-body">
+          <% if (superPayment && superPayment.status === 'paid') { %>
+          <div class="payment-box">
+            <div class="payment-amount"><span class="currency">AUD</span><%= (superPayment.amountCents / 100).toFixed(2) %></div>
+            <div style="margin-top:6px;"><span class="badge-sm badge-paid">✓ Confirmado <%= new Date(superPayment.paidAt).toLocaleDateString('es-AR') %></span></div>
+          </div>
+          <% } else if (pendingSuperPayment) { %>
+          <div style="padding:14px 16px;">
+            <span class="badge-sm badge-pending" style="display:block;margin-bottom:10px;">⏳ Pago pendiente — AUD <%= (pendingSuperPayment.amountCents/100).toFixed(2) %> · declarado <%= new Date(pendingSuperPayment.createdAt).toLocaleDateString('es-AR') %></span>
+          </div>
+          <div class="action-bar">
+            <form method="POST" action="/admin/super-payment/<%= pendingSuperPayment.id %>/confirm">
+              <button type="submit" class="btn btn--sm btn--navy" onclick="return confirm('¿Confirmar pago DASP?')">✅ Confirmar</button>
+            </form>
+            <form method="POST" action="/admin/super-payment/<%= pendingSuperPayment.id %>/reject">
+              <button type="submit" class="btn btn--sm" style="background:#C0392B;color:#fff;border:none;" onclick="return confirm('¿Rechazar?')">❌ Rechazar</button>
+            </form>
+          </div>
+          <% } else { %>
+          <div style="padding:14px 16px;color:var(--muted);font-size:0.88rem;">Sin pago DASP registrado.</div>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- ── 9. Referidos hechos por este cliente ───────────────────────── -->
+      <div class="section">
+        <div class="section-title">🤝 9. Referidos realizados por este cliente</div>
+        <div class="section-body">
+          <% if (!referralsMade.length) { %>
+          <div style="padding:14px 16px;color:var(--muted);font-size:0.88rem;">Sin referidos realizados.</div>
+          <% } else { %>
+          <table class="report-table">
+            <thead><tr>
+              <th>Referido</th>
+              <th>Fecha</th>
+              <th>Estado</th>
+              <th>Acción</th>
+            </tr></thead>
+            <tbody>
+            <% referralsMade.forEach(function(r) { %>
+            <tr>
+              <td><strong><%= r.referredName %></strong><br><span style="font-size:0.78rem;color:var(--muted);"><%= r.referredEmail %></span></td>
+              <td><%= new Date(r.createdAt).toLocaleDateString('es-AR') %></td>
+              <td>
+                <% if (r.status === 'paid') { %><span class="badge-sm badge-paid">✓ AUD 20 acreditado</span>
+                <% } else if (r.status === 'eligible') { %><span class="badge-sm badge-disc">Listo para acreditar</span>
+                <% } else { %><span class="badge-sm badge-pending">Pendiente</span><% } %>
+              </td>
+              <td>
+                <form method="POST" action="/admin/referral/<%= r.id %>/status" style="display:flex;gap:6px;align-items:center;">
+                  <input type="hidden" name="returnTo" value="/admin/user/<%= u.id %>?saved=1">
+                  <select name="status" style="font-size:0.8rem;padding:4px 6px;border:1px solid var(--border);border-radius:4px;">
+                    <option value="pending"  <%= r.status === 'pending'  ? 'selected' : '' %>>Pendiente</option>
+                    <option value="eligible" <%= r.status === 'eligible' ? 'selected' : '' %>>Listo para pago</option>
+                    <option value="paid"     <%= r.status === 'paid'     ? 'selected' : '' %>>Pagado</option>
+                  </select>
+                  <button type="submit" class="btn btn--sm btn--outline" style="padding:4px 10px;">OK</button>
+                </form>
+              </td>
+            </tr>
+            <% }); %>
+            </tbody>
+          </table>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- ── Editar datos del cliente ────────────────────────────────────── -->
+      <div class="section" style="margin-top:28px;">
+        <div class="section-title" style="cursor:pointer;user-select:none;" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';">
+          ✏️ Editar datos del cliente
+          <span style="margin-left:auto;font-size:0.75rem;opacity:0.7;">▼ expandir</span>
+        </div>
+        <div style="display:none;">
+          <form method="POST" action="/admin/user/<%= u.id %>/edit" style="padding:20px;">
+
+            <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+              <button type="submit" class="btn" style="background:var(--navy);color:#fff;font-weight:700;padding:8px 24px;">
+                💾 Guardar cambios
+              </button>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+
+              <div style="grid-column:1/-1;font-size:0.75rem;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.08em;padding-bottom:4px;border-bottom:2px solid var(--border);">Información personal</div>
+
+              <div class="form-group" style="margin:0;">
+                <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:4px;">Nombre completo</label>
+                <input type="text" name="fullName" value="<%= u.fullName || '' %>" class="form-control" style="width:100%;box-sizing:border-box;">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:4px;">Fecha de nacimiento</label>
+                <input type="date" name="birthDate" value="<%= u.birthDate || '' %>" class="form-control" style="width:100%;box-sizing:border-box;">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:4px;">TFN</label>
+                <input type="text" name="tfn" value="<%= (u.profile && u.profile.tfn) || u.tfn || '' %>" class="form-control" style="width:100%;box-sizing:border-box;" maxlength="9">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:4px;">Nacionalidad</label>
+                <input type="text" name="nationality" value="<%= u.nationality || '' %>" class="form-control" style="width:100%;box-sizing:border-box;">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:4px;">Teléfono</label>
+                <input type="text" name="phone" value="<%= u.phone || '' %>" class="form-control" style="width:100%;box-sizing:border-box;">
+              </div>
+              <div class="form-group" style="margin:0;grid-column:1/-1;">
+                <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:4px;">Dirección actual (Australia)</label>
+                <input type="text" name="currentAddress" value="<%= u.currentAddress || '' %>" class="form-control" style="width:100%;box-sizing:border-box;">
+              </div>
+
+              <div style="grid-column:1/-1;font-size:0.75rem;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.08em;padding-bottom:4px;border-bottom:2px solid var(--border);margin-top:8px;">Visa y residencia</div>
+
+              <div class="form-group" style="margin:0;">
+                <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:4px;">Subclase de visa</label>
+                <input type="text" name="currentVisaSubclass" value="<%= u.currentVisaSubclass || '' %>" class="form-control" style="width:100%;box-sizing:border-box;">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:4px;">Estado de residencia fiscal</label>
+                <select name="taxResidencyStatus" class="form-control" style="width:100%;box-sizing:border-box;">
+                  <option value="">— No especificado —</option>
+                  <option value="resident" <%=u.taxResidencyStatus==='resident'?'selected':''%>>Resident</option>
+                  <option value="foreign_resident" <%=u.taxResidencyStatus==='foreign_resident'?'selected':''%>>Foreign Resident</option>
+                  <option value="working_holiday" <%=u.taxResidencyStatus==='working_holiday'?'selected':''%>>Working Holiday Maker</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:4px;">Inicio de visa</label>
+                <input type="date" name="visaStartDate" value="<%= u.visaStartDate || '' %>" class="form-control" style="width:100%;box-sizing:border-box;">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:4px;">Fin de visa</label>
+                <input type="date" name="visaEndDate" value="<%= u.visaEndDate || '' %>" class="form-control" style="width:100%;box-sizing:border-box;">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:4px;">Fecha llegada a Australia</label>
+                <input type="date" name="dateArrived" value="<%= u.dateArrived || '' %>" class="form-control" style="width:100%;box-sizing:border-box;">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:4px;">¿Primer año como residente?</label>
+                <select name="firstYearResident" class="form-control" style="width:100%;box-sizing:border-box;">
+                  <option value="">— No especificado —</option>
+                  <option value="yes" <%=u.firstYearResident==='yes'?'selected':''%>>Sí</option>
+                  <option value="no"  <%=u.firstYearResident==='no'?'selected':''%>>No</option>
+                </select>
+              </div>
+
+              <div style="grid-column:1/-1;font-size:0.75rem;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.08em;padding-bottom:4px;border-bottom:2px solid var(--border);margin-top:8px;">Cuenta bancaria</div>
+
+              <div class="form-group" style="margin:0;">
+                <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:4px;">Nombre de cuenta</label>
+                <input type="text" name="bankAccountName" value="<%= u.bankAccountName || '' %>" class="form-control" style="width:100%;box-sizing:border-box;">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:4px;">BSB</label>
+                <input type="text" name="bankBSB" value="<%= u.bankBSB || '' %>" class="form-control" style="width:100%;box-sizing:border-box;" maxlength="7">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:4px;">Número de cuenta</label>
+                <input type="text" name="bankAccount" value="<%= u.bankAccount || '' %>" class="form-control" style="width:100%;box-sizing:border-box;">
+              </div>
+
+              <div style="grid-column:1/-1;font-size:0.75rem;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.08em;padding-bottom:4px;border-bottom:2px solid var(--border);margin-top:8px;">Ingresos y deducciones</div>
+
+              <div class="form-group" style="margin:0;">
+                <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:4px;">Intereses bancarios ($)</label>
+                <input type="number" name="bankInterest" value="<%= u.bankInterest || '' %>" class="form-control" style="width:100%;box-sizing:border-box;" step="0.01" min="0">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:4px;">Otros ingresos ($)</label>
+                <input type="number" name="otherIncome" value="<%= u.otherIncome || '' %>" class="form-control" style="width:100%;box-sizing:border-box;" step="0.01" min="0">
+              </div>
+              <%
+                var dedFields = [
+                  { name:'deductionD1',  key:'D1',  label:'D1 — Gastos de auto relacionados al trabajo', val: u.deductionD1  },
+                  { name:'deductionD3',  key:'D3',  label:'D3 — Ropa, uniforme y lavandería',            val: u.deductionD3  },
+                  { name:'deductionD4',  key:'D4',  label:'D4 — Educación y capacitación',               val: u.deductionD4  },
+                  { name:'deductionD5',  key:'D5',  label:'D5 — Otros gastos de trabajo (tecnología, certificaciones, etc.)',   val: u.deductionD5  },
+                  { name:'deductionD6',  key:'D6',  label:'D6 — Home office',                            val: u.deductionD6  },
+                  { name:'deductionD9',  key:'D9',  label:'D9 — Donaciones',                             val: u.deductionD9  },
+                  { name:'deductionD10', key:'D10', label:'D10 — Honorarios de contador',                val: u.deductionD10 },
+                ];
+              %>
+              <% dedFields.forEach(function(f) {
+                var sum = dedSums && dedSums[f.key];
+              %>
+              <div class="form-group" style="margin:0;">
+                <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:4px;">
+                  <%= f.label %>
+                  <% if (sum) { %>
+                    <span style="font-weight:400;color:#166534;font-size:0.78rem;margin-left:6px;">
+                      📄 docs: AUD <%= sum.total.toFixed(2) %>
+                      <button type="button" onclick="toggleDedDetail('<%= f.key %>')"
+                        style="background:none;border:none;color:#166534;cursor:pointer;font-size:0.75rem;text-decoration:underline;padding:0;margin-left:4px;">ver detalle</button>
+                    </span>
+                  <% } %>
+                </label>
+                <input type="number" name="<%= f.name %>" value="<%= f.val || (sum ? sum.total : '') %>"
+                  class="form-control" style="width:100%;box-sizing:border-box;" step="0.01" min="0"
+                  placeholder="<%= sum ? 'Calculado: ' + sum.total.toFixed(2) : '' %>">
+                <% if (sum) { %>
+                <div id="ded-detail-<%= f.key %>" style="display:none;margin-top:6px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:8px 10px;font-size:0.78rem;">
+                  <% sum.docs.forEach(function(d) { %>
+                  <div style="display:flex;gap:8px;padding:3px 0;border-bottom:1px solid #dcfce7;">
+                    <span style="flex:1;color:var(--navy);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="<%= d.name %>"><%= d.name %></span>
+                    <% if (d.receiptRef) { %><span style="color:var(--muted);">#<%= d.receiptRef %></span><% } %>
+                    <span style="font-weight:700;color:#166534;white-space:nowrap;">AUD <%= d.amount.toFixed(2) %></span>
+                  </div>
+                  <% }); %>
+                  <div style="text-align:right;padding-top:4px;font-weight:700;color:#166534;">Total: AUD <%= sum.total.toFixed(2) %></div>
+                </div>
+                <% } %>
+              </div>
+              <% }); %>
+
+            </div>
+
+            <button type="submit" class="btn" style="background:var(--navy);color:#fff;font-weight:700;padding:10px 28px;">
+              💾 Guardar cambios
+            </button>
+          </form>
+        </div>
+      </div>
+
+    </div><!-- /report -->
+  </main>
+</div>
+<script>
+function submitUpload(catId) {
+  var panel = document.getElementById('upload-' + catId);
+  var fileInput = document.getElementById('ufile-' + catId);
+  if (!fileInput || !fileInput.files.length) {
+    alert('Seleccioná un archivo antes de subir.');
+    return;
+  }
+  var action   = panel.getAttribute('data-upload-action');
+  var category = panel.getAttribute('data-upload-category');
+  var dedCode  = panel.getAttribute('data-upload-dedcode');
+  var amount   = (document.getElementById('uamount-' + catId) || {}).value || '';
+  var notes    = (document.getElementById('unotes-'  + catId) || {}).value || '';
+
+  var fd = new FormData();
+  fd.append('category', category);
+  fd.append('dedCode',  dedCode);
+  fd.append('amount',   amount);
+  fd.append('notes',    notes);
+  for (var i = 0; i < fileInput.files.length; i++) {
+    fd.append('adminFile', fileInput.files[i]);
+  }
+
+  var btn = panel.querySelector('button');
+  btn.disabled = true;
+  btn.textContent = 'Subiendo ' + fileInput.files.length + ' archivo' + (fileInput.files.length > 1 ? 's' : '') + '...';
+
+  fetch(action, { method: 'POST', body: fd })
+    .then(function(r) {
+      if (r.ok || r.redirected) {
+        // Auto-guardar notas existentes antes de recargar para no perder datos sin guardar
+        var notesForm = document.querySelector('form[action*="document-notes"]');
+        if (notesForm) {
+          fetch(notesForm.action, { method: 'POST', body: new FormData(notesForm) })
+            .finally(function() { window.location.reload(); });
+        } else {
+          window.location.reload();
+        }
+      } else {
+        alert('Error al subir. Intentá de nuevo.');
+        btn.disabled = false;
+        btn.textContent = '↑ Subir';
+      }
+    })
+    .catch(function() { alert('Error de red. Intentá de nuevo.'); btn.disabled = false; btn.textContent = '↑ Subir'; });
+}
+
+function adminDeleteDoc(userId, docId, btn) {
+  if (!confirm('¿Eliminar este archivo? No se puede deshacer.')) return;
+  btn.disabled = true;
+  btn.textContent = '...';
+  fetch('/admin/user/' + userId + '/document/' + docId + '/delete', { method: 'POST' })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.ok) {
+        var row = btn.closest('[style*="background:#F8FAFC"]');
+        if (row) { row.style.opacity = '0'; row.style.transition = 'opacity 0.2s'; setTimeout(function(){ row.remove(); }, 200); }
+      } else { alert('Error al eliminar.'); btn.disabled = false; btn.textContent = '✕'; }
+    })
+    .catch(function() { alert('Error de red.'); btn.disabled = false; btn.textContent = '✕'; });
+}
+
+function toggleUpload(catId) {
+  var el = document.getElementById('upload-' + catId);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+function toggleDedDetail(key) {
+  var el = document.getElementById('ded-detail-' + key);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function switchYear(year) {
+  document.querySelectorAll('.year-tab').forEach(function(t) {
+    t.classList.toggle('active', t.dataset.year === year);
+  });
+  document.querySelectorAll('.year-panel').forEach(function(p) {
+    p.classList.toggle('active', p.dataset.yearPanel === year);
+  });
+}
+
+// Ctrl+Enter → reenviar al tax agent si el botón existe
+document.addEventListener('keydown', function(e) {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    var btn = document.getElementById('btn-resend-taxagent');
+    if (btn) { e.preventDefault(); btn.click(); }
+  }
+});
+
+function udKmCalcRow(input) {
+  var row = input.closest('.ud-vehicle-row');
+  if (!row) return;
+  var el = row.querySelector('.ud-km-result');
+  if (el) el.textContent = 'AUD $' + ((parseFloat(input.value) || 0) * 0.88).toFixed(2);
+}
+
+function udAddVehicle() {
+  var list  = document.getElementById('ud-vehicles-list');
+  var count = list.querySelectorAll('.ud-vehicle-row').length;
+  var idx   = count;
+  var div   = document.createElement('div');
+  div.className = 'ud-vehicle-row';
+  div.style.cssText = 'background:#F8FAFC;border:1px solid #E5E7EB;border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;';
+  div.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-size:0.72rem;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.05em;">Vehículo ${idx+1}</span>
+      <button type="button" onclick="udRemoveVehicle(this)" style="background:none;border:none;color:#DC2626;font-size:0.8rem;cursor:pointer;padding:0;">✕ Quitar</button>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <input type="text" name="v_brand_${idx}" placeholder="Marca" style="width:100px;padding:4px 8px;border:1.5px solid #D1D5DB;border-radius:6px;font-size:0.85rem;">
+      <input type="text" name="v_model_${idx}" placeholder="Modelo" style="width:110px;padding:4px 8px;border:1.5px solid #D1D5DB;border-radius:6px;font-size:0.85rem;">
+      <input type="text" name="v_year_${idx}"  placeholder="Año" maxlength="4" style="width:64px;padding:4px 8px;border:1.5px solid #D1D5DB;border-radius:6px;font-size:0.85rem;font-family:monospace;">
+      <input type="text" name="v_plate_${idx}" placeholder="Patente" style="width:90px;padding:4px 8px;border:1.5px solid #D1D5DB;border-radius:6px;font-size:0.85rem;font-family:monospace;text-transform:uppercase;">
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <input type="number" name="v_km_${idx}" min="0" step="1" placeholder="0"
+        style="width:90px;padding:4px 8px;border:1.5px solid #BFDBFE;border-radius:6px;font-size:0.9rem;font-weight:700;font-family:monospace;color:#1D4ED8;"
+        oninput="udKmCalcRow(this)">
+      <span style="color:#9CA3AF;font-size:0.82rem;">km × $0.88 =</span>
+      <span class="ud-km-result mono" style="color:#1D4ED8;font-weight:700;">AUD $0.00</span>
+    </div>`;
+  list.appendChild(div);
+  document.getElementById('ud-vehicle-count').value = idx + 1;
+}
+
+function udToggleHealth(cb) {
+  document.getElementById('ud-health-fields').style.display = cb.checked ? 'flex' : 'none';
+}
+
+function udRemoveVehicle(btn) {
+  btn.closest('.ud-vehicle-row').remove();
+  // Renumerar índices
+  var rows = document.querySelectorAll('#ud-vehicles-list .ud-vehicle-row');
+  rows.forEach(function(row, i) {
+    row.querySelector('span').textContent = 'Vehículo ' + (i+1);
+    ['brand','model','year','plate','km'].forEach(function(f) {
+      var inp = row.querySelector('[name^="v_'+f+'_"]');
+      if (inp) inp.name = 'v_' + f + '_' + i;
+    });
+  });
+  document.getElementById('ud-vehicle-count').value = rows.length;
+}
+
+async function extractDoc(btn, userId, docId) {
+  // El card externo tiene overflow:hidden; dentro hay 2 divs hijos: fila de botones y fila de inputs
+  const card = btn.closest('div[style*="overflow:hidden"]');
+  if (!card) { alert('No se encontró el contenedor del documento'); return; }
+  const amountInput  = card.querySelector(`input[name="amount_${docId}"]`);
+  const receiptInput = card.querySelector(`input[name="receiptRef_${docId}"]`);
+  const notesInput   = card.querySelector(`input[name="notes_${docId}"]`) || card.querySelector(`textarea[name="notes_${docId}"]`);
+
+  const orig = btn.textContent;
+  btn.textContent = '⏳';
+  btn.disabled = true;
+
+  try {
+    const resp = await fetch(`/admin/user/${userId}/document/${docId}/extract`, { method: 'POST' });
+    const data = await resp.json();
+    if (data.error) { alert('Error: ' + data.error); btn.textContent = orig; btn.disabled = false; return; }
+
+    let filled = 0;
+    if (amountInput  && data.monto)       { amountInput.value  = data.monto;       filled++; }
+    if (receiptInput && data.fecha)        { receiptInput.value = data.fecha;        filled++; }
+    if (notesInput   && data.descripcion)  { notesInput.value   = data.descripcion;  filled++; }
+
+    if (data._warning === 'sin_api_key') {
+      btn.textContent = '⚠️';
+      btn.title = 'Sin clave de IA — solo funciona para PDFs con texto. Configurar ANTHROPIC_API_KEY para imágenes.';
+      btn.style.background = '#D97706';
+    } else if (filled === 0) {
+      btn.textContent = '❓';
+      btn.title = 'No se pudo extraer información del archivo';
+      btn.style.background = '#6B7280';
+    } else {
+      btn.textContent = '✅';
+      btn.style.background = '#15803d';
+    }
+    setTimeout(() => { btn.textContent = orig; btn.style.background = '#7C3AED'; btn.title = 'Extraer monto, descripción y fecha automáticamente'; btn.disabled = false; }, 3000);
+  } catch (e) {
+    alert('Error de conexión');
+    btn.textContent = orig;
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('partials/head') %>
+  <title>DASP — Superannuation — RETAUX</title>
+  <style>
+    .dasp-hero { background: var(--navy); color: #fff; padding: 48px 0 36px; text-align: center; }
+    .dasp-hero h1 { color: #fff; font-size: 2rem; margin-bottom: 8px; }
+    .dasp-hero .tag { display: inline-block; background: #FFC107; color: #060920; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; padding: 4px 12px; border-radius: 4px; margin-bottom: 16px; }
+    .dasp-hero p { color: rgba(255,255,255,0.65); max-width: 560px; margin: 0 auto; font-size: 1rem; }
+
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .info-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+    .info-card .icon { font-size: 1.6rem; margin-bottom: 8px; }
+    .info-card h4 { color: var(--text-navy); margin-bottom: 4px; font-size: 0.95rem; }
+    .info-card p { font-size: 0.85rem; margin: 0; color: var(--muted); line-height: 1.5; }
+    .info-card .highlight { color: var(--navy); font-weight: 700; font-size: 1.1rem; }
+
+    .tax-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin: 12px 0; }
+    .tax-table th { background: var(--navy); color: #fff; padding: 10px 14px; text-align: left; font-size: 0.8rem; }
+    .tax-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+    .tax-table tr:nth-child(even) td { background: var(--bg-page); }
+    .rate-whm { color: #C1392B; font-weight: 700; }
+    .rate-std { color: #2D6A4F; font-weight: 700; }
+
+    .fund-block { background: var(--bg-page); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 12px; position: relative; }
+    .fund-block h4 { margin: 0 0 14px; font-size: 0.95rem; color: var(--text-navy); }
+    .fund-num { display: inline-block; background: var(--gold); color: var(--text-navy); font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; margin-right: 8px; }
+    .btn-remove-fund { position: absolute; top: 16px; right: 16px; background: none; border: 1px solid var(--border); border-radius: 4px; color: var(--muted); font-size: 0.8rem; cursor: pointer; padding: 4px 10px; }
+    .btn-remove-fund:hover { border-color: var(--red); color: var(--red); }
+    .btn-add-fund { background: none; border: 2px dashed var(--border); border-radius: var(--radius); color: var(--muted); font-size: 0.9rem; font-weight: 600; padding: 14px; width: 100%; cursor: pointer; transition: all 0.15s; margin-bottom: 20px; }
+    .btn-add-fund:hover { border-color: var(--navy); color: var(--navy); }
+
+    .section-title { font-size: 1rem; font-weight: 700; color: var(--text-navy); font-family: var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; margin: 28px 0 14px; padding-bottom: 8px; border-bottom: 2px solid var(--gold); }
+
+    .req-list { list-style: none; padding: 0; margin: 0 0 20px; display: grid; gap: 8px; }
+    .req-list li { display: flex; gap: 10px; align-items: flex-start; font-size: 0.9rem; color: var(--muted); }
+    .req-list li::before { content: '✓'; color: var(--green); font-weight: 700; margin-top: 1px; flex-shrink: 0; }
+
+    .warning-box { background: #FFF8E1; border: 1px solid #FFE082; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px; font-size: 0.88rem; color: #7B5800; }
+    .warning-box strong { color: #5F4000; }
+
+    @media (max-width: 640px) {
+      .dasp-hero { padding: 32px 20px 24px; }
+      .dasp-hero h1 { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <%- include('partials/nav', { active: 'dasp', user: user }) %>
+
+  <div class="dasp-hero">
+    <div class="container">
+      <span class="tag"><%- __('dasp.badge') %></span>
+      <h1><%- __('dasp.hero_title') %></h1>
+      <p><%- __('dasp.hero_sub') %></p>
+    </div>
+  </div>
+
+  <section class="section">
+    <div class="container">
+
+      <% if (saved) { %>
+        <div class="alert alert--success" style="margin-bottom:24px;">
+          ✅ <%- __('dasp.saved_ok') %> <strong><%= user.email %></strong>.
+        </div>
+      <% } %>
+      <% if (error) { %>
+        <div class="alert alert--error" style="margin-bottom:24px;"><%= error %></div>
+      <% } %>
+
+      <!-- Info cards -->
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="icon">💰</div>
+          <h4><%- __('dasp.info1_title') %></h4>
+          <p><%- __('dasp.info1_desc') %></p>
+        </div>
+        <div class="info-card">
+          <div class="icon">✈️</div>
+          <h4><%- __('dasp.info2_title') %></h4>
+          <p><%- __('dasp.info2_desc') %></p>
+        </div>
+        <div class="info-card">
+          <div class="icon">⏱️</div>
+          <h4><%- __('dasp.info3_title') %></h4>
+          <p><%- __('dasp.info3_desc') %></p>
+        </div>
+        <div class="info-card">
+          <div class="icon">🌍</div>
+          <h4><%- __('dasp.info4_title') %></h4>
+          <p><%- __('dasp.info4_desc') %></p>
+        </div>
+      </div>
+
+      <!-- Tax rates -->
+      <div class="card" style="margin-bottom:24px;">
+        <h3 style="margin-bottom:4px;"><%- __('dasp.tax_title') %></h3>
+        <p class="muted" style="font-size:0.88rem;margin-bottom:12px;"><%- __('dasp.tax_sub') %></p>
+        <table class="tax-table">
+          <thead>
+            <tr>
+              <th><%- __('dasp.tax_col_visa') %></th>
+              <th><%- __('dasp.tax_col_rate') %></th>
+              <th><%- __('dasp.tax_col_example') %></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Working Holiday 417 / 462</strong></td>
+              <td class="rate-whm">65%</td>
+              <td><%- __('dasp.tax_row_whm') %></td>
+            </tr>
+            <tr>
+              <td>Student 500 / Graduate 485 / <%- __('dasp.tax_other') %></td>
+              <td class="rate-std">35%</td>
+              <td><%- __('dasp.tax_row_std') %></td>
+            </tr>
+          </tbody>
+        </table>
+        <p style="font-size:0.8rem;color:var(--muted);margin:8px 0 0;">⚠️ <%- __('dasp.tax_warning') %></p>
+      </div>
+
+      <!-- Requisitos -->
+      <div class="card" style="margin-bottom:24px;">
+        <h3><%- __('dasp.req_title') %></h3>
+        <ul class="req-list">
+          <li><%- __('dasp.req1') %></li>
+          <li><%- __('dasp.req2') %></li>
+          <li><%- __('dasp.req3') %></li>
+          <li><%- __('dasp.req4') %></li>
+          <li><%- __('dasp.req5') %></li>
+          <li><%- __('dasp.req6') %></li>
+        </ul>
+        <div class="warning-box">
+          <strong><%- __('dasp.nz_title') %></strong> <%- __('dasp.nz_body') %>
+        </div>
+      </div>
+
+      <!-- Formulario -->
+      <div class="card">
+        <h2 style="margin-bottom:4px;"><%- __('dasp.form_title') %></h2>
+        <p class="muted" style="font-size:0.88rem;margin-bottom:24px;"><%- __('dasp.form_sub') %></p>
+
+        <form method="POST" action="/dasp" enctype="multipart/form-data">
+
+          <!-- Datos personales -->
+          <div class="section-title">01 · <%- __('dasp.sec_personal') %></div>
+          <div class="form-group">
+            <label><%- __('dasp.full_name') %> *</label>
+            <input type="text" name="fullName" required placeholder="Juan García"
+              value="<%= existing && existing.fullName ? existing.fullName : (user.fullName || '') %>">
+          </div>
+          <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div class="form-group">
+              <label><%- __('dasp.dob') %> *</label>
+              <input type="date" name="dateOfBirth" required
+                value="<%= existing ? existing.dateOfBirth : (user.birthDate || '') %>">
+            </div>
+            <div class="form-group">
+              <label><%- __('dasp.phone') %></label>
+              <input type="tel" name="phone" placeholder="+54 9 11 1234 5678"
+                value="<%= existing && existing.phone ? existing.phone : (user.phone || '') %>">
+            </div>
+          </div>
+          <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div class="form-group">
+              <label><%- __('dasp.passport_number') %> *</label>
+              <input type="text" name="passportNumber" required placeholder="AB123456" value="<%= existing ? existing.passportNumber : '' %>">
+            </div>
+            <div class="form-group">
+              <label><%- __('dasp.passport_country') %> *</label>
+              <input type="text" name="passportCountry" required placeholder="Argentina" value="<%= existing ? existing.passportCountry : (user.nationality || '') %>">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>TFN (Tax File Number)</label>
+            <input type="text" name="tfn" placeholder="123 456 789" class="mono-input" value="<%= existing ? existing.tfn : (user.tfn || '') %>">
+            <p class="form-hint"><%- __('dasp.tfn_hint') %></p>
+          </div>
+
+          <!-- Visa y salida -->
+          <div class="section-title">02 · <%- __('dasp.sec_visa') %></div>
+          <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+            <div class="form-group">
+              <label><%- __('dasp.visa_subclass') %></label>
+              <%
+                var _vs = existing ? existing.visaSubclass : '';
+                var _uv = user.currentVisaSubclass || '';
+                function _selVisa(code) {
+                  return (_vs === code) || (!_vs && (_uv === code || _uv.includes(code))) ? 'selected' : '';
+                }
+              %>
+              <select name="visaSubclass">
+                <option value=""><%- __('dasp.visa_select') %>...</option>
+                <option value="417" <%= _selVisa('417') %>>417 — Working Holiday</option>
+                <option value="462" <%= _selVisa('462') %>>462 — Work and Holiday</option>
+                <option value="500" <%= _selVisa('500') %>>500 — Student</option>
+                <option value="485" <%= _selVisa('485') %>>485 — Graduate</option>
+                <option value="482" <%= _selVisa('482') %>>482 — Skilled Nominated</option>
+                <option value="457" <%= _selVisa('457') %>>457 (anterior)</option>
+                <option value="otra" <%= (_vs === 'otra') ? 'selected' : '' %>>Otra</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label><%- __('dasp.visa_expiry') %></label>
+              <input type="date" name="visaExpiryDate" value="<%= existing ? existing.visaExpiryDate : (user.visaEndDate || '') %>">
+            </div>
+            <div class="form-group">
+              <label><%- __('dasp.departure_date') %> *</label>
+              <input type="date" name="departureDate" required value="<%= existing ? existing.departureDate : '' %>">
+            </div>
+          </div>
+          <div class="form-group">
+            <label><%- __('dasp.last_address') %></label>
+            <input type="text" name="lastAustralianAddress" placeholder="123 Main St, Sydney NSW 2000" value="<%= existing ? existing.lastAustralianAddress : (user.currentAddress || '') %>">
+          </div>
+
+          <!-- Tickets de avión -->
+          <div class="section-title">03 · ✈️ Tickets de avión / Boarding passes</div>
+          <p class="muted" style="font-size:0.88rem;margin-bottom:16px;">Subí tus tickets de avión o boarding passes que confirmen tu salida de Australia. Podés subir más de un archivo (PDF, imagen).</p>
+
+          <% if (existing && existing.flightTickets && existing.flightTickets.length) { %>
+          <div style="margin-bottom:12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 16px;">
+            <p style="margin:0 0 8px;font-size:0.85rem;font-weight:700;color:#166534;">Archivos cargados:</p>
+            <% existing.flightTickets.forEach(function(t) { %>
+            <div style="font-size:0.83rem;color:#166534;">✅ <%= t.originalName %></div>
+            <% }); %>
+          </div>
+          <% } %>
+
+          <div class="form-group">
+            <label>Agregar tickets / boarding passes</label>
+            <input type="file" name="flightTickets" multiple accept=".pdf,.jpg,.jpeg,.png,.webp"
+              style="border:2px dashed var(--border);border-radius:8px;padding:12px;width:100%;box-sizing:border-box;background:#fafafa;cursor:pointer;">
+            <p class="form-hint">PDF, JPG o PNG · máx. 10 MB por archivo</p>
+          </div>
+
+          <!-- Fondos de super -->
+          <div class="section-title">04 · <%- __('dasp.sec_funds') %></div>
+          <p class="muted" style="font-size:0.88rem;margin-bottom:16px;"><%- __('dasp.funds_hint') %></p>
+
+          <div id="funds-container">
+            <% var funds = existing && existing.funds && existing.funds.length ? existing.funds : [{}]; %>
+            <% funds.forEach(function(fund, i) { %>
+            <div class="fund-block" id="fund-<%= i %>">
+              <h4><span class="fund-num"><%- __('dasp.fund_label') %> <%= String(i+1).padStart(2,'0') %></span></h4>
+              <% if (i > 0) { %><button type="button" class="btn-remove-fund" onclick="removeFund(<%= i %>)"><%- __('dasp.fund_remove') %></button><% } %>
+              <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                <div class="form-group">
+                  <label><%- __('dasp.fund_name') %> *</label>
+                  <input type="text" name="fundName[]" placeholder="Ej: Hostplus" value="<%= fund.fundName || '' %>">
+                </div>
+                <div class="form-group">
+                  <label><%- __('dasp.fund_abn') %></label>
+                  <input type="text" name="fundABN[]" placeholder="Ej: 68 657 495 890" class="mono-input" value="<%= fund.fundABN || '' %>">
+                </div>
+              </div>
+              <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                <div class="form-group">
+                  <label>USI (Unique Super Identifier)</label>
+                  <input type="text" name="fundUSI[]" placeholder="Ej: HOS0100AU" class="mono-input" value="<%= fund.fundUSI || '' %>">
+                </div>
+                <div class="form-group">
+                  <label><%- __('dasp.fund_member') %></label>
+                  <input type="text" name="memberNumber[]" placeholder="Ej: 12345678" class="mono-input" value="<%= fund.memberNumber || '' %>">
+                </div>
+              </div>
+            </div>
+            <% }) %>
+          </div>
+
+          <button type="button" class="btn-add-fund" onclick="addFund()">+ <%- __('dasp.add_fund') %></button>
+
+          <!-- Banco receptor -->
+          <div class="section-title">05 · <%- __('dasp.sec_bank') %></div>
+          <p class="muted" style="font-size:0.88rem;margin-bottom:16px;"><%- __('dasp.bank_hint') %></p>
+          <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div class="form-group">
+              <label><%- __('dasp.bank_recipient') %></label>
+              <input type="text" name="bankRecipientName" placeholder="Juan García" value="<%= existing ? existing.bankRecipientName : user.fullName %>">
+            </div>
+            <div class="form-group">
+              <label><%- __('dasp.bank_name') %></label>
+              <input type="text" name="bankName" placeholder="Banco Galicia" value="<%= existing ? existing.bankName : '' %>">
+            </div>
+          </div>
+          <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+            <div class="form-group">
+              <label><%- __('dasp.bank_country') %></label>
+              <input type="text" name="bankCountry" placeholder="Argentina" value="<%= existing ? existing.bankCountry : '' %>">
+            </div>
+            <div class="form-group">
+              <label><%- __('dasp.bank_swift') %></label>
+              <input type="text" name="bankSwift" placeholder="GALVARBAXXX" class="mono-input" value="<%= existing ? existing.bankSwift : '' %>">
+            </div>
+            <div class="form-group">
+              <label><%- __('dasp.bank_account') %></label>
+              <input type="text" name="bankAccount" placeholder="CBU o IBAN" class="mono-input" value="<%= existing ? existing.bankAccount : '' %>">
+            </div>
+          </div>
+
+          <!-- Notas -->
+          <div class="section-title">06 · <%- __('dasp.sec_notes') %></div>
+          <div class="form-group">
+            <label><%- __('dasp.notes_label') %></label>
+            <textarea name="notes" rows="3" placeholder="<%- __('dasp.notes_placeholder') %>"><%= existing ? existing.notes : '' %></textarea>
+          </div>
+
+          <!-- Estado si ya existe -->
+          <% if (existing) { %>
+          <div class="alert alert--info" style="margin-bottom:16px;">
+            📋 <%- __('dasp.existing_info') %> <%= new Date(existing.updatedAt).toLocaleDateString('es-AR') %>.
+            <%- __('dasp.existing_modify') %>
+          </div>
+          <% } %>
+
+          <button type="submit" class="btn btn--primary btn--full" style="font-size:1rem;">
+            <%= existing ? '💾 ' + __('dasp.btn_update') : '🚀 ' + __('dasp.btn_submit') %>
+          </button>
+        </form>
+
+        <!-- ── Pago del servicio DASP ─────────────────────────────────── -->
+        <% if (existing) { %>
+        <div style="margin-top:28px; background:#EFF6FF; border:2px solid #3B82F6; border-radius:12px; padding:24px;">
+          <h3 style="margin:0 0 8px; font-size:1.1rem; color:#1D4ED8;">🏦 <%- __('super.title') %></h3>
+          <p style="margin:0 0 16px; font-size:0.9rem; color:#1e40af;"><%- __('dasp.pay_box_desc') %></p>
+          <% if (!superPayment || superPayment.status === 'rejected') { %>
+            <a href="/super" class="btn btn--full" style="background:#1D4ED8; border-color:#1D4ED8; color:#fff; font-size:1rem; text-align:center; display:block;">
+              💳 <%- __('dashboard.super_pay_cta') %>
+            </a>
+          <% } else if (superPayment.status === 'pending_manual') { %>
+            <div style="text-align:center; padding:12px; background:#fff; border-radius:8px; border:1px solid #93C5FD;">
+              ⏳ <strong><%- __('dashboard.super_pay_pending') %></strong>
+              <p style="margin:6px 0 0; font-size:0.82rem; color:#64748b;"><%- __('dasp.pay_pending_note') %></p>
+            </div>
+          <% } else if (superPayment.status === 'paid') { %>
+            <div style="text-align:center; padding:12px; background:#f0fdf4; border-radius:8px; border:1px solid #86efac;">
+              ✅ <strong style="color:#166534;"><%- __('dashboard.super_pay_done') %></strong>
+            </div>
+          <% } %>
+        </div>
+        <% } %>
+
+      </div>
+
+    </div>
+  </section>
+
+  <%- include('partials/footer') %>
+
+  <script>
+  var fundCount = <%= existing && existing.funds ? existing.funds.length : 1 %>;
+
+  function addFund() {
+    fundCount++;
+    var idx = fundCount - 1;
+    var html = '<div class="fund-block" id="fund-' + idx + '">' +
+      '<h4><span class="fund-num">FONDO ' + String(fundCount).padStart(2,'0') + '</span></h4>' +
+      '<button type="button" class="btn-remove-fund" onclick="removeFund(' + idx + ')">Eliminar</button>' +
+      '<div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">' +
+        '<div class="form-group"><label>Nombre del fondo *</label><input type="text" name="fundName[]" placeholder="Ej: Hostplus"></div>' +
+        '<div class="form-group"><label>ABN del fondo</label><input type="text" name="fundABN[]" placeholder="Ej: 68 657 495 890" class="mono-input"></div>' +
+      '</div>' +
+      '<div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">' +
+        '<div class="form-group"><label>USI (Unique Super Identifier)</label><input type="text" name="fundUSI[]" placeholder="Ej: HOS0100AU" class="mono-input"></div>' +
+        '<div class="form-group"><label>Número de miembro / cuenta</label><input type="text" name="memberNumber[]" placeholder="Ej: 12345678" class="mono-input"></div>' +
+      '</div>' +
+    '</div>';
+    document.getElementById('funds-container').insertAdjacentHTML('beforeend', html);
+  }
+
+  function removeFund(idx) {
+    var el = document.getElementById('fund-' + idx);
+    if (el) el.remove();
+  }
+  </script>
+</body>
+</html>

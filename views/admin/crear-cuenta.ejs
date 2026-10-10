@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+  <title>Crear Admin — RETAUX</title>
+</head>
+<body style="background:var(--ink)">
+<section style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:40px 24px;">
+  <div style="width:100%; max-width:460px;">
+    <div style="text-align:center; margin-bottom:28px;">
+      <span style="font-family:var(--font-display); font-size:1.8rem; font-weight:700; color:var(--paper); letter-spacing:-0.01em;">
+        RE<span style="color:var(--ochre);">TAUX</span>
+      </span>
+      <p style="color:rgba(247,242,231,.5); font-size:0.85rem; margin:4px 0 0;">Crear cuenta de administrador</p>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-bottom:6px; font-size:1.2rem;">Nueva cuenta de admin</h2>
+      <p class="muted" style="font-size:0.88rem; margin-bottom:20px;">Se necesita la clave de creación para activar nuevas cuentas.</p>
+
+      <% if (error) { %>
+        <div class="alert alert-error"><%= error %></div>
+      <% } %>
+      <% if (success) { %>
+        <div class="alert alert-success"><%= success %></div>
+      <% } %>
+
+      <form method="POST" action="/admin/crear-cuenta">
+        <div class="form-group">
+          <label>Clave de creación</label>
+          <input type="password" name="creationKey" required placeholder="Clave ADMIN_CREATION_KEY" class="mono">
+          <p class="field-hint">La clave especial configurada en el servidor (.env).</p>
+        </div>
+        <div class="form-group">
+          <label>E-mail del nuevo admin</label>
+          <input type="email" name="email" required placeholder="nuevo-admin@retaux.com">
+        </div>
+        <div class="form-group">
+          <label>Clave de acceso (8 dígitos numéricos)</label>
+          <input type="password" name="pin" required pattern="\d{8}" maxlength="8"
+            inputmode="numeric" placeholder="••••••••" class="mono">
+        </div>
+        <div class="form-group">
+          <label>Repetir clave</label>
+          <input type="password" name="pinConfirm" required maxlength="8"
+            inputmode="numeric" placeholder="••••••••" class="mono">
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Crear cuenta</button>
+      </form>
+
+      <p style="text-align:center; margin-top:20px; font-size:0.85rem;">
+        <a href="/admin/login">← Volver al login</a>
+      </p>
+    </div>
+  </div>
+</section>
+</body>
+</html>

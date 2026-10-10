@@ -1,0 +1,115 @@
+<%- include('../layout/header', { title: __('profile.title') || 'Mi perfil', currentUser: user }) %>
+
+<div class="container-narrow" style="padding:40px 24px 60px">
+  <a href="/dashboard" style="font-size:14px;color:var(--muted)"><%- __('profile.back') %></a>
+
+  <h1 style="margin:16px 0 8px"><%- __('profile.title') %></h1>
+  <p class="muted" style="margin-bottom:28px"><%- __('profile.subtitle') %></p>
+
+  <% if (typeof success !== 'undefined' && success) { %><div class="alert alert-success"><%= success %></div><% } %>
+  <% if (typeof error !== 'undefined' && error) { %><div class="alert alert-error"><%= error %></div><% } %>
+
+  <form method="POST" action="/onboarding/personal">
+    <div class="card" style="margin-bottom:20px">
+      <h3 style="margin-bottom:16px"><%- __('profile.contact_section') %></h3>
+      <div class="form-group">
+        <label><%- __('profile.email') %></label>
+        <input type="text" value="<%= user.email %>" readonly style="background:var(--bg-page)">
+      </div>
+      <div class="form-group">
+        <label><%- __('profile.full_name') %></label>
+        <input type="text" name="fullName" required value="<%= user.fullName || '' %>">
+      </div>
+      <div class="form-group">
+        <label><%- __('profile.phone') %></label>
+        <input type="tel" name="phone" placeholder="<%- __('profile.phone_placeholder') %>" value="<%= user.phone || '' %>">
+      </div>
+      <div class="form-group">
+        <label><%- __('profile.address') %></label>
+        <input type="text" name="currentAddress" placeholder="<%- __('profile.address_placeholder') %>" value="<%= user.currentAddress || '' %>">
+      </div>
+      <div class="form-group">
+        <label><%- __('profile.nationality') %></label>
+        <input type="text" name="nationality" value="<%= user.nationality || '' %>">
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px">
+      <h3 style="margin-bottom:16px"><%- __('profile.visa_section') %></h3>
+      <div class="form-group">
+        <label><%- __('profile.visa_subclass') %></label>
+        <input type="text" name="currentVisaSubclass" placeholder="417, 462, 500..." value="<%= user.currentVisaSubclass || '' %>">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label><%- __('profile.visa_start') %></label>
+          <input type="date" name="visaStartDate" value="<%= user.visaStartDate || '' %>">
+        </div>
+        <div class="form-group">
+          <label><%- __('profile.visa_end') %></label>
+          <input type="date" name="visaEndDate" value="<%= user.visaEndDate || '' %>">
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px">
+      <h3 style="margin-bottom:16px"><%- __('profile.bank_section') %></h3>
+      <p class="muted" style="font-size:0.88rem;margin-bottom:12px"><%- __('profile.bank_hint') %></p>
+      <div class="form-group">
+        <label><%- __('profile.account_name') %></label>
+        <input type="text" name="bankAccountName" value="<%= user.bankAccountName || '' %>">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label><%- __('profile.bsb') %></label>
+          <input type="text" name="bsb" placeholder="062-000" class="mono" value="<%= user.bsb || '' %>">
+        </div>
+        <div class="form-group">
+          <label><%- __('profile.account_number') %></label>
+          <input type="text" name="accountNumber" placeholder="12345678" class="mono" value="<%= user.accountNumber || '' %>">
+        </div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn--primary btn--full"><%- __('profile.save_btn') %></button>
+  </form>
+
+  <!-- Cambio de clave -->
+  <div class="card" style="margin-top:20px">
+    <h3 style="margin-bottom:4px"><%- __('pin_change.title') %></h3>
+    <p class="muted" style="margin-bottom:16px;font-size:0.88rem"><%- __('pin_change.subtitle') %></p>
+
+    <% if (typeof pinSuccess !== 'undefined' && pinSuccess) { %>
+      <div class="alert alert-success"><%- __('pin_change.success') %></div>
+    <% } %>
+    <% if (typeof pinErrorMsg !== 'undefined' && pinErrorMsg) { %>
+      <div class="alert alert-error"><%= pinErrorMsg %></div>
+    <% } %>
+
+    <% if (typeof pinStep === 'undefined' || pinStep !== 'verify') { %>
+      <!-- Paso 1: pedir nueva clave -->
+      <form method="POST" action="/profile/request-pin-change">
+        <div class="form-group">
+          <label><%- __('pin_change.new_pin') %></label>
+          <input type="password" name="newPin" maxlength="8" placeholder="••••••••" class="mono" inputmode="numeric" pattern="\d{8}" required style="max-width:200px">
+        </div>
+        <button type="submit" class="btn btn--outline"><%- __('pin_change.send_code') %></button>
+      </form>
+    <% } else { %>
+      <!-- Paso 2: ingresar código -->
+      <div class="alert alert-success" style="margin-bottom:16px"><%- __('pin_change.code_sent').replace('%s', user.email) %></div>
+      <form method="POST" action="/profile/confirm-pin-change">
+        <div class="form-group">
+          <label><%- __('pin_change.enter_code') %></label>
+          <input type="text" name="code" maxlength="6" placeholder="123456" class="mono" inputmode="numeric" required style="max-width:160px">
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <button type="submit" class="btn btn--primary"><%- __('pin_change.confirm') %></button>
+          <a href="/onboarding/personal" class="btn btn--outline"><%- __('profile.cancel') %></a>
+        </div>
+      </form>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../layout/footer') %>

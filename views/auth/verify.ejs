@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+  <title>Verificar cuenta — RETAUX</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { min-height: 100vh; background: #060920; font-family: 'Source Sans 3','Segoe UI',Arial,sans-serif; overflow-x: hidden; }
+    .bg { position: fixed; inset: 0; z-index: 0;
+      background: radial-gradient(ellipse at 20% 50%, #0d1a7a 0%, transparent 60%),
+                  radial-gradient(ellipse at 80% 20%, #0a4a7a 0%, transparent 55%),
+                  #060920;
+    }
+    .bg-orb { position: absolute; border-radius: 50%; filter: blur(80px); animation: float 8s ease-in-out infinite; }
+    .bg-orb-1 { width: 500px; height: 500px; background: radial-gradient(circle, rgba(79,195,247,0.3) 0%, transparent 70%); top: -100px; left: -100px; }
+    .bg-orb-2 { width: 400px; height: 400px; background: radial-gradient(circle, rgba(255,193,7,0.2) 0%, transparent 70%); bottom: -80px; right: -80px; animation-delay: -3s; }
+    @keyframes float { 0%,100% { transform: translate(0,0); } 50% { transform: translate(20px,-20px); } }
+    .page { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
+    .top-nav { display: flex; align-items: center; justify-content: space-between; padding: 20px 40px; }
+    .top-nav-logo { font-family: 'Fraunces',Georgia,serif; font-size: 1.3rem; font-weight: 700; color: #4FC3F7; text-decoration: none; letter-spacing: -0.02em; }
+    .top-nav-logo em { color: #FFC107; font-style: normal; }
+    #lang-selector { position: relative; }
+    .lang-btn { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); color: #fff; font-family: 'Source Sans 3',sans-serif; font-size: 0.85rem; font-weight: 600; padding: 6px 12px; border-radius: 6px; cursor: pointer; white-space: nowrap; transition: background 0.15s; }
+    .lang-btn:hover { background: rgba(255,255,255,0.2); }
+    .lang-dropdown { display: none; position: absolute; right: 0; top: calc(100% + 6px); background: #0d1340; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; min-width: 110px; z-index: 200; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+    .lang-dropdown.open { display: block; }
+    .lang-option { display: block; width: 100%; text-align: left; padding: 10px 16px; background: none; border: none; font-family: 'Source Sans 3',sans-serif; font-size: 0.88rem; color: rgba(255,255,255,0.75); cursor: pointer; transition: background 0.1s; }
+    .lang-option:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .lang-option--active { font-weight: 700; color: #4FC3F7; }
+    .center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px 24px 60px; gap: 16px; }
+    .hero-wordmark { text-align: center; line-height: 1; }
+    .hero-wordmark .re { font-family: 'Fraunces',Georgia,serif; font-size: clamp(56px,12vw,110px); font-weight: 700; color: #4FC3F7; letter-spacing: -0.03em; text-shadow: 0 0 60px rgba(79,195,247,0.6); display: inline-block; }
+    .hero-wordmark .taux { font-family: 'Fraunces',Georgia,serif; font-size: clamp(56px,12vw,110px); font-weight: 700; color: #FFC107; letter-spacing: -0.03em; text-shadow: 0 0 60px rgba(255,193,7,0.5); display: inline-block; }
+    .glass-card { background: rgba(255,255,255,0.06); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 40px 44px; width: 100%; max-width: 400px; box-shadow: 0 32px 64px rgba(0,0,0,0.4); }
+    .card-title { font-family: 'Fraunces',Georgia,serif; font-size: 1.4rem; font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .card-subtitle { font-size: 0.88rem; color: rgba(255,255,255,0.45); margin-bottom: 28px; }
+    .card-subtitle strong { color: rgba(255,255,255,0.8); }
+    .glass-card label { display: block; font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.55); margin-bottom: 6px; letter-spacing: 0.06em; text-transform: uppercase; }
+    .glass-card input { width: 100%; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 14px; font-size: 2rem; color: #fff; font-family: 'IBM Plex Mono',monospace; letter-spacing: 0.4em; text-align: center; outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+    .glass-card input::placeholder { color: rgba(255,255,255,0.2); font-size: 1.5rem; }
+    .glass-card input:focus { border-color: #4FC3F7; box-shadow: 0 0 0 3px rgba(79,195,247,0.15); }
+    .form-group { margin-bottom: 20px; }
+    .btn-submit { width: 100%; padding: 14px; background: linear-gradient(135deg,#FFC107,#FFD54F); color: #060920; font-family: inherit; font-size: 1rem; font-weight: 700; border: none; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 24px rgba(255,193,7,0.4); transition: transform 0.1s, box-shadow 0.2s; }
+    .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(255,193,7,0.55); }
+    .alert-dark { background: rgba(193,57,43,0.18); border: 1px solid rgba(193,57,43,0.35); color: #ff8a80; border-radius: 8px; padding: 10px 14px; font-size: 0.88rem; margin-bottom: 16px; }
+    .alert-ok { background: rgba(45,106,79,0.25); border: 1px solid rgba(45,106,79,0.4); color: #69f0ae; border-radius: 8px; padding: 10px 14px; font-size: 0.88rem; margin-bottom: 16px; }
+    .resend-row { text-align: center; margin-top: 18px; font-size: 0.88rem; color: rgba(255,255,255,0.4); }
+    .resend-btn { background: none; border: none; color: #4FC3F7; font-size: 0.88rem; cursor: pointer; text-decoration: underline; font-family: inherit; }
+    .page-footer { text-align: center; padding: 16px; font-size: 11px; color: rgba(255,255,255,0.18); }
+    .page-footer a { color: rgba(255,193,7,0.4); text-decoration: none; }
+    @media (max-width: 480px) { .top-nav { padding: 14px 20px; } .glass-card { padding: 30px 22px; } }
+  </style>
+</head>
+<body>
+<div class="bg">
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
+</div>
+<div class="page">
+  <nav class="top-nav">
+    <a href="/" class="top-nav-logo">RE<em>TAUX</em></a>
+    <div id="lang-selector"></div>
+  </nav>
+
+  <div class="center">
+    <div class="hero-wordmark">
+      <span class="re">RE</span><span class="taux">TAUX</span>
+    </div>
+
+    <div class="glass-card">
+      <p class="card-title">Verificá tu cuenta</p>
+      <p class="card-subtitle">Te enviamos un código de 6 dígitos a<br><strong><%= email %></strong></p>
+
+      <% if (error) { %><div class="alert-dark"><%= error %></div><% } %>
+      <% if (success) { %><div class="alert-ok"><%= success %></div><% } %>
+
+      <form method="POST" action="/verify">
+        <div class="form-group">
+          <label>Código de verificación</label>
+          <input type="text" name="code" required maxlength="6" minlength="6" inputmode="numeric" placeholder="······" autocomplete="one-time-code">
+        </div>
+        <button type="submit" class="btn-submit">Verificar cuenta →</button>
+      </form>
+
+      <div class="resend-row">
+        ¿No recibiste el código?
+        <form method="POST" action="/verify/resend" style="display:inline">
+          <button type="submit" class="resend-btn">Reenviar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <footer class="page-footer">
+    RETAUX © <%= new Date().getFullYear() %> &nbsp;·&nbsp;
+    <a href="mailto:hola@retaux.com">hola@retaux.com</a>
+  </footer>
+</div>
+<script src="/js/i18n.js"></script>
+</body>
+</html>

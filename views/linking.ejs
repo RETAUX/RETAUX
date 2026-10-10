@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="<%= lang || 'es' %>">
+<head>
+  <%- include('partials/head') %>
+  <title><%- __('linking.page_title') %> — RETAUX</title>
+</head>
+<body>
+  <%- include('partials/nav', { active: 'linking', user: user }) %>
+
+  <section class="section">
+    <div class="container-narrow">
+      <h1 style="font-size:1.8rem;"><%- __('linking.title') %></h1>
+      <p class="muted"><%- __('linking.subtitle') %></p>
+
+      <% if (saved) { %>
+        <div class="alert alert-success"><%- __('linking.saved_ok') %></div>
+      <% } %>
+
+      <div class="card">
+        <h3><%- __('linking.status_title') %></h3>
+        <% if (user.linkingStatus === 'linked') { %>
+          <div class="alert alert-success mb-0">✅ <%- __('linking.status_linked') %></div>
+        <% } else if (user.linkingStatus === 'submitted') { %>
+          <div class="alert alert-info mb-0">
+            📨 <%- __('linking.status_submitted_prefix') %> <%= new Date(user.linkingSubmittedAt).toLocaleDateString('es-AR') %>.
+            <%- __('linking.status_submitted_suffix') %>
+          </div>
+        <% } else { %>
+          <div class="alert alert-info mb-0"><%- __('linking.status_none') %></div>
+        <% } %>
+      </div>
+
+      <div class="card">
+        <h3><%- __('linking.how_title') %></h3>
+        <ol style="color:var(--ink-soft); padding-left:20px;">
+          <li style="margin-bottom:10px;"><%- __('linking.step1') %></li>
+          <li style="margin-bottom:10px;"><%- __('linking.step2') %></li>
+          <li style="margin-bottom:10px;"><%- __('linking.step3') %></li>
+          <li style="margin-bottom:10px;"><%- __('linking.step4') %></li>
+          <li style="margin-bottom:0;"><%- __('linking.step5') %></li>
+        </ol>
+      </div>
+
+      <div class="card">
+        <h3><%- __('linking.form_title') %></h3>
+        <form method="POST" action="/linking">
+          <div class="form-group">
+            <label for="linkingCode"><%- __('linking.code_label') %></label>
+            <input type="text" id="linkingCode" name="linkingCode" class="mono" placeholder="<%- __('linking.code_placeholder') %>" value="<%= user.linkingCode %>" required>
+            <p class="field-hint"><%- __('linking.code_hint') %></p>
+          </div>
+          <button type="submit" class="btn btn-primary"><%- __('linking.submit_btn') %></button>
+        </form>
+      </div>
+
+      <div class="alert alert-info">
+        <strong><%- __('linking.why_title') %></strong> <%- __('linking.why_body') %>
+      </div>
+    </div>
+  </section>
+
+  <%- include('partials/footer') %>
+</body>
+</html>

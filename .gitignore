@@ -1,0 +1,57 @@
+# ── Dependencias ──────────────────────────────────────────────────────────────
+node_modules/
+
+# ── Variables de entorno y secretos ───────────────────────────────────────────
+.env
+# .env.example SÍ va al repo (sin valores)
+
+# ── Base de datos (datos reales de clientes) ──────────────────────────────────
+db/db.json
+db/*.json
+db.json
+
+# ── Archivos subidos por clientes ─────────────────────────────────────────────
+uploads/*
+!uploads/.gitkeep
+
+# ── Declaraciones y contratos de clientes (datos fiscales reales) ─────────────
+TaxResidencyDeclarations/
+EngagementLetters/
+
+# ── Llave de cuenta de servicio de Google Drive ───────────────────────────────
+# Vive en /home/deploy/retaux-drive-key.json en el servidor
+# NUNCA sube al repositorio
+retaux-drive-key.json
+*-drive-key.json
+*service-account*.json
+
+# ── Logs y archivos temporales ────────────────────────────────────────────────
+emails-dev.log
+*.log
+.DS_Store
+*.tmp
+files.zip
+
+# ── Scripts de utilidad con rutas hardcodeadas del servidor ──────────────────
+# Estos scripts son utilidades de mantenimiento, no parte del deploy normal
+upload_drive.js
+upload_drive2.js
+upload_drive3.js
+dedup_drive.js
+
+# ── Archivos de contexto interno (contienen o contuvieron claves) ─────────────
+CLAUDE_PROGRAMACION.md
+CLAUDE_PROGRAMACION_DRIVE.md
+CLAUDE_ERRORES.md
+
+# ── Formularios TAA completados (datos reales de clientes) ───────────────────
+taa-forms/
+
+# ── admin.js raíz (versión vieja sin uso, no referenciada por PM2) ────────────
+admin.js
+
+# ── Archivos de tarea internos de Claude Code ─────────────────────────────────
+.claude/
+
+# ── Carpeta de datos excluidos (si quedara alguna referencia local) ───────────
+RETAUX-datos-excluidos/

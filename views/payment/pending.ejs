@@ -1,0 +1,27 @@
+<%- include('../layout/header', { title: __('payment.pending_title'), currentUser: user }) %>
+
+<div class="container" style="max-width:560px;padding:60px 24px;text-align:center">
+  <div style="font-size:4rem;margin-bottom:16px">✅</div>
+  <h1 style="font-size:1.8rem;margin-bottom:12px"><%- __('payment.pending_h1') %></h1>
+  <p class="muted" style="font-size:1rem;max-width:420px;margin:0 auto 32px;line-height:1.7">
+    <%- __('payment.pending_sub') %> <strong><%= user.email %></strong>.
+  </p>
+
+  <div style="background:var(--bg-page);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:28px;text-align:left">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <span style="font-size:1.4rem">📧</span>
+      <strong><%- __('payment.pending_next') %></strong>
+    </div>
+    <ol style="padding-left:20px;color:var(--muted);font-size:0.92rem;line-height:2">
+      <li><%- __('payment.pending_step1') %></li>
+      <li><%- __('payment.pending_step2') %></li>
+      <li><%- __('payment.pending_step3') %></li>
+    </ol>
+  </div>
+
+  <a href="/dashboard" class="btn btn--primary" style="font-size:1rem"><%- __('payment.pending_cta') %></a>
+  <br><br>
+  <a href="mailto:hola@retaux.com" style="font-size:0.88rem;color:var(--muted)"><%- __('payment.pending_doubts') %></a>
+</div>
+
+<%- include('../layout/footer') %>

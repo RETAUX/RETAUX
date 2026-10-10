@@ -1,0 +1,71 @@
+<%- include('../layout/header', { title: 'Inicio', currentUser: typeof user !== 'undefined' ? user : null }) %>
+
+<section class="hero">
+  <div class="container">
+    <h1>Tu devolución de impuestos<br>en Australia, <span>sin vueltas</span></h1>
+    <p>Gestionamos tu tax return en Australia de forma simple y segura. Especialistas en visas Working Holiday, Student y residentes.</p>
+    <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
+      <a href="/register" class="btn btn--primary">Empezar mi trámite</a>
+      <a href="/tax-info" class="btn btn--outline">Ver tasas de impuestos</a>
+    </div>
+    <p style="margin-top:24px;font-size:13px;color:var(--text-muted)">Servicio: <strong>AUD 150</strong> por declaración · Referidos: <strong>AUD 30</strong> por cada amigo</p>
+  </div>
+</section>
+
+<section class="features">
+  <div class="container" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:24px">
+    <div class="feature-card card">
+      <div class="feature-card__icon">📄</div>
+      <h3>Simple y digital</h3>
+      <p>Subís tus documentos desde el celular. Sin papeles, sin filas, sin turnos presenciales.</p>
+    </div>
+    <div class="feature-card card">
+      <div class="feature-card__icon">🦘</div>
+      <h3>Especialistas en Australia</h3>
+      <p>Working Holiday (417/462), Student visa, residentes fiscales. Sabemos exactamente qué se puede deducir.</p>
+    </div>
+    <div class="feature-card card">
+      <div class="feature-card__icon">🔒</div>
+      <h3>Seguro y confiable</h3>
+      <p>Nunca pedimos tu contraseña de myGov. Tu información está protegida en todo momento.</p>
+    </div>
+    <div class="feature-card card">
+      <div class="feature-card__icon">💸</div>
+      <h3>Referí y ganás</h3>
+      <p>Cada amigo que uses tu código y pague el servicio te genera AUD 30. Sin límite de referidos.</p>
+    </div>
+  </div>
+</section>
+
+<section style="background:var(--navy);color:var(--cream);padding:60px 24px;text-align:center">
+  <div class="container">
+    <h2 style="font-family:'Fraunces',serif;color:var(--cream);margin-bottom:16px">¿Cómo funciona?</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:24px;margin-top:36px;text-align:left">
+      <div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:1.5rem;color:var(--ocre);font-weight:700;margin-bottom:8px">01</div>
+        <h4 style="color:var(--cream);margin-bottom:6px">Registrate</h4>
+        <p style="font-size:14px;color:rgba(247,242,231,.7)">Creá tu cuenta con tu e-mail y una clave de 8 dígitos.</p>
+      </div>
+      <div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:1.5rem;color:var(--ocre);font-weight:700;margin-bottom:8px">02</div>
+        <h4 style="color:var(--cream);margin-bottom:6px">Completá tus datos</h4>
+        <p style="font-size:14px;color:rgba(247,242,231,.7)">Ingresá tu información de visa, TFN y datos bancarios.</p>
+      </div>
+      <div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:1.5rem;color:var(--ocre);font-weight:700;margin-bottom:8px">03</div>
+        <h4 style="color:var(--cream);margin-bottom:6px">Subí documentos</h4>
+        <p style="font-size:14px;color:rgba(247,242,231,.7)">Payslips, ingresos ABN, certificaciones y gastos deducibles.</p>
+      </div>
+      <div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:1.5rem;color:var(--ocre);font-weight:700;margin-bottom:8px">04</div>
+        <h4 style="color:var(--cream);margin-bottom:6px">Pagá y listo</h4>
+        <p style="font-size:14px;color:rgba(247,242,231,.7)">AUD 150 y te asignamos turno automáticamente. Nosotros hacemos el resto.</p>
+      </div>
+    </div>
+    <div style="margin-top:40px">
+      <a href="/register" class="btn btn--primary">Empezar ahora</a>
+    </div>
+  </div>
+</section>
+
+<%- include('../layout/footer') %>

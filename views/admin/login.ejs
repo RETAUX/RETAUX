@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+  <title>Admin Login — RETAUX</title>
+</head>
+<body style="background:var(--ink)">
+<section style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:40px 24px;">
+  <div style="width:100%; max-width:420px;">
+    <div style="text-align:center; margin-bottom:28px;">
+      <span style="font-family:var(--font-display); font-size:1.8rem; font-weight:700; color:var(--paper); letter-spacing:-0.01em;">
+        RE<span style="color:var(--ochre);">TAUX</span>
+      </span>
+      <p style="color:rgba(247,242,231,.5); font-size:0.85rem; margin:4px 0 0;">Panel de administración</p>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-bottom:20px; font-size:1.2rem;">Ingresar</h2>
+
+      <% if (error) { %>
+        <div class="alert alert-error"><%= error %></div>
+      <% } %>
+
+      <form method="POST" action="/admin/login">
+        <div class="form-group">
+          <label>E-mail</label>
+          <input type="email" name="email" required placeholder="admin@retaux.com" autofocus>
+        </div>
+        <div class="form-group">
+          <label>Clave</label>
+          <input type="password" name="pin" required placeholder="••••••••" class="mono">
+        </div>
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top:8px;">
+          Ingresar al panel
+        </button>
+      </form>
+
+      <p style="text-align:center; margin-top:20px; font-size:0.85rem; color:var(--muted);">
+        <a href="/admin/crear-cuenta" style="color:var(--muted);">Crear cuenta de admin</a>
+      </p>
+    </div>
+  </div>
+</section>
+</body>
+</html>

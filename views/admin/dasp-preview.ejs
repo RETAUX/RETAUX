@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('../partials/head') %>
+  <title>DASP Report — <%= u.fullName %> — RETAUX Admin</title>
+  <style>
+    body { background: var(--bg-page); }
+    .pw { max-width: 900px; margin: 32px auto; padding: 0 20px 60px; }
+
+    /* Page header */
+    .ph { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+    .ph h1 { font-size:1.25rem; color:var(--navy); margin:0 0 4px; }
+    .ph p  { margin:0; font-size:0.83rem; color:var(--muted); }
+
+    /* Eligibility checklist */
+    .elig { background:#F0FDF4; border:2px solid #86EFAC; border-radius:10px; padding:16px 20px; margin-bottom:20px; }
+    .elig h3 { margin:0 0 12px; font-size:0.85rem; color:#166534; text-transform:uppercase; letter-spacing:0.06em; }
+    .elig-row { display:flex; align-items:center; gap:10px; padding:5px 0; border-bottom:1px solid #BBF7D0; font-size:0.88rem; color:#14532D; }
+    .elig-row:last-child { border:none; }
+    .elig-row .tick { font-size:1rem; width:20px; flex-shrink:0; }
+    .elig-warn { background:#FEF3C7; border:2px solid #FCD34D; border-radius:10px; padding:14px 20px; margin-bottom:20px; }
+    .elig-warn h3 { margin:0 0 10px; font-size:0.85rem; color:#92400E; text-transform:uppercase; letter-spacing:0.06em; }
+    .warn-item { display:flex; align-items:center; gap:8px; padding:4px 0; font-size:0.85rem; color:#78350F; }
+
+    /* Section cards */
+    .card { background:#fff; border:1px solid var(--border); border-radius:10px; margin-bottom:16px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,0.05); }
+    .card-hd { background:var(--navy); color:var(--gold); font-size:0.75rem; font-weight:800; letter-spacing:0.1em; text-transform:uppercase; padding:9px 18px; display:flex; justify-content:space-between; align-items:center; }
+    .card-hd .step { background:var(--gold); color:var(--navy); font-size:0.7rem; font-weight:900; padding:2px 8px; border-radius:10px; letter-spacing:0; }
+    .card-bd { padding:16px 20px; }
+
+    /* Data table */
+    .dt { width:100%; border-collapse:collapse; font-size:0.88rem; }
+    .dt tr { border-bottom:1px solid #F3F4F6; }
+    .dt tr:last-child { border:none; }
+    .dt td:first-child { color:#6B7280; font-size:0.78rem; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; padding:8px 12px 8px 0; width:40%; vertical-align:top; }
+    .dt td:last-child { color:#111827; font-weight:600; padding:8px 0; font-family:var(--font-mono); font-size:0.9rem; }
+    .dt .missing { color:#DC2626; font-family:inherit; font-size:0.82rem; }
+
+    /* Fund block */
+    .fund { background:#FFFBEB; border:1px solid #FDE68A; border-radius:8px; padding:14px 16px; margin-bottom:12px; }
+    .fund:last-child { margin-bottom:0; }
+    .fund-name { font-size:0.78rem; font-weight:800; color:#92400E; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:10px; }
+
+    /* Attachments */
+    .att-item { display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid #F3F4F6; font-size:0.85rem; color:#374151; }
+    .att-item:last-child { border:none; }
+
+    /* Step instructions */
+    .steps { counter-reset: step; }
+    .step-item { display:flex; gap:12px; padding:10px 0; border-bottom:1px solid #F3F4F6; align-items:flex-start; font-size:0.88rem; }
+    .step-item:last-child { border:none; }
+    .step-num { background:var(--navy); color:var(--gold); font-size:0.75rem; font-weight:800; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
+    .step-text { color:#374151; line-height:1.5; }
+    .step-text strong { color:#111827; }
+    .step-text a { color:#1D4ED8; }
+
+    /* Status panel */
+    .status-form { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+
+    @media print {
+      nav, .ph .actions, .card:last-child { display:none !important; }
+      .pw { margin:0; padding:10px; }
+      .card { break-inside:avoid; box-shadow:none; }
+      .elig, .elig-warn { break-inside:avoid; }
+    }
+  </style>
+</head>
+<body>
+<%- include('../partials/nav', { active: 'admin', user: { role: 'admin' } }) %>
+
+<%
+  var ds = daspRequest.status || 'pending_review';
+  var tfnVal = tfn || '';
+  var missing = [];
+  if (!daspRequest.fullName && !u.fullName) missing.push('Full name');
+  if (!tfnVal)                          missing.push('TFN');
+  if (!daspRequest.passportNumber)      missing.push('Passport number');
+  if (!daspRequest.passportCountry)     missing.push('Passport country');
+  if (!daspRequest.visaSubclass)        missing.push('Visa subclass');
+  if (!daspRequest.departureDate)       missing.push('Departure date from Australia');
+  if (!daspRequest.lastAustralianAddress) missing.push('Last Australian address');
+  if (!daspRequest.funds || !daspRequest.funds.length) missing.push('Super fund details');
+  if (!daspRequest.bankAccount)         missing.push('Overseas bank account');
+  if (!daspRequest.bankSwift)           missing.push('SWIFT / BIC code');
+  var fundsIncomplete = (daspRequest.funds || []).filter(function(f){ return !f.fundName || !f.fundABN || !f.memberNumber; });
+%>
+
+<div class="pw">
+
+  <!-- Page header -->
+  <div class="ph">
+    <div>
+      <h1>DASP Claim — <%= daspRequest.fullName || u.fullName %></h1>
+      <p>Prepared by RETAUX · <%= new Date().toLocaleDateString('en-AU', {day:'2-digit',month:'long',year:'numeric'}) %> · Ready for ATO DASP Online System</p>
+    </div>
+    <div class="actions" style="display:flex;gap:10px;">
+      <a href="/admin/user/<%= u.id %>" class="btn btn-ghost btn-sm">← Back</a>
+      <button onclick="window.print()" class="btn btn--navy btn-sm">🖨️ Print / PDF</button>
+    </div>
+  </div>
+
+  <!-- Missing fields warning -->
+  <% if (missing.length > 0) { %>
+  <div class="elig-warn">
+    <h3>⚠ Missing information — contact client before lodging</h3>
+    <% missing.forEach(function(m){ %>
+    <div class="warn-item">⛔ <strong><%= m %></strong> is missing or not provided</div>
+    <% }); %>
+  </div>
+  <% } %>
+
+  <!-- Eligibility checklist -->
+  <div class="elig">
+    <h3>✅ Eligibility checklist (ATO requirements)</h3>
+    <div class="elig-row"><span class="tick"><%= daspRequest.visaSubclass ? '✅' : '⬜' %></span> Held a temporary resident visa (subclass <%= daspRequest.visaSubclass || '—' %>)</div>
+    <div class="elig-row"><span class="tick"><%= daspRequest.departureDate ? '✅' : '⬜' %></span> Has left Australia — departure date: <strong><%= daspRequest.departureDate || '⚠ not provided' %></strong></div>
+    <div class="elig-row"><span class="tick">✅</span> Not an Australian/NZ citizen or permanent resident (temporary visa holder)</div>
+    <div class="elig-row"><span class="tick"><%= daspRequest.visaExpiryDate ? '✅' : '⬜' %></span> Visa has ceased — expiry: <strong><%= daspRequest.visaExpiryDate || '⚠ not provided' %></strong></div>
+    <div class="elig-row"><span class="tick"><%= tfnVal ? '✅' : '⚠' %></span> TFN provided — <strong class="<%= tfnVal ? '' : 'missing' %>"><%= tfnVal || 'MISSING — withholding tax will apply' %></strong></div>
+  </div>
+
+  <!-- Step-by-step instructions for tax agent -->
+  <div class="card">
+    <div class="card-hd">How to lodge — ATO DASP Online System <span class="step">Tax Agent Steps</span></div>
+    <div class="card-bd steps">
+      <div class="step-item"><span class="step-num">1</span><div class="step-text">Log in to the <strong>ATO DASP Online Intermediary System</strong> using myID (Standard strength) linked to RAM. URL: <strong>ato.gov.au → Tax professionals → DASP Online System</strong></div></div>
+      <div class="step-item"><span class="step-num">2</span><div class="step-text">Select <strong>"Claim on behalf of a client"</strong>. Search the client using TFN: <strong style="font-family:monospace;"><%= tfnVal || '⚠ MISSING' %></strong> and passport: <strong style="font-family:monospace;"><%= daspRequest.passportNumber || '⚠ MISSING' %></strong></div></div>
+      <div class="step-item"><span class="step-num">3</span><div class="step-text">Confirm eligibility via the Department of Home Affairs check — use the visa subclass and departure date below.</div></div>
+      <div class="step-item"><span class="step-num">4</span><div class="step-text">Locate the client's super accounts. The system may find ATO-held super automatically. For fund-held super, enter each fund's <strong>ABN + member number</strong> from Section 3 below.</div></div>
+      <div class="step-item"><span class="step-num">5</span><div class="step-text">Enter the overseas bank account details from Section 4. The fund will transfer directly — <strong>SWIFT/BIC is required for international transfers</strong>.</div></div>
+      <div class="step-item"><span class="step-num">6</span><div class="step-text">Submit the electronic claim. Each super fund receives a separate claim. Processing time: <strong>up to 28 days</strong> per fund.</div></div>
+    </div>
+  </div>
+
+  <!-- 1. Personal information -->
+  <div class="card">
+    <div class="card-hd">1. Personal Information <span class="step">Enter in DASP system</span></div>
+    <div class="card-bd">
+      <table class="dt">
+        <tr><td>Full Name</td><td><%= daspRequest.fullName || u.fullName || '<span class="missing">⚠ Missing</span>' %></td></tr>
+        <tr><td>Date of Birth</td><td><%= daspRequest.dateOfBirth || u.birthDate || '<span class="missing">⚠ Missing</span>' %></td></tr>
+        <tr><td>Phone</td><td><%= daspRequest.phone || u.phone || '<span class="missing">⚠ Missing</span>' %></td></tr>
+        <tr><td>Tax File Number (TFN)</td><td><%= tfnVal || '<span class="missing">⚠ Missing — mandatory</span>' %></td></tr>
+        <tr><td>Passport Number</td><td><%= daspRequest.passportNumber || '<span class="missing">⚠ Missing</span>' %></td></tr>
+        <tr><td>Passport Country</td><td><%= daspRequest.passportCountry || u.nationality || '<span class="missing">⚠ Missing</span>' %></td></tr>
+        <tr><td>Email</td><td><%= u.email || '—' %></td></tr>
+        <tr><td>Last Australian Address</td><td><%= daspRequest.lastAustralianAddress || u.currentAddress || '<span class="missing">⚠ Missing</span>' %></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- 2. Visa & departure -->
+  <div class="card">
+    <div class="card-hd">2. Visa & Departure from Australia <span class="step">Verify eligibility</span></div>
+    <div class="card-bd">
+      <table class="dt">
+        <tr><td>Visa Subclass</td><td><%= daspRequest.visaSubclass || u.currentVisaSubclass || '<span class="missing">⚠ Missing</span>' %></td></tr>
+        <tr><td>Visa Expiry / Ceased Date</td><td><%= daspRequest.visaExpiryDate || u.visaEndDate || '<span class="missing">⚠ Missing</span>' %></td></tr>
+        <tr><td>Departure Date from Australia</td><td style="font-weight:800;color:#0B1A30;font-size:1rem;"><%= daspRequest.departureDate || '<span class="missing" style="font-size:0.85rem;">⚠ Missing</span>' %></td></tr>
+      </table>
+
+      <% if (daspRequest.flightTickets && daspRequest.flightTickets.length) { %>
+      <div style="margin-top:14px;">
+        <div style="font-size:0.75rem;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Flight tickets / Boarding passes</div>
+        <% daspRequest.flightTickets.forEach(function(t){ %>
+        <div class="att-item">🎫 <%= t.originalName %> <span style="margin-left:auto;font-size:0.75rem;color:var(--muted);"><%= t.uploadedAt ? new Date(t.uploadedAt).toLocaleDateString('en-AU') : '' %></span></div>
+        <% }); %>
+      </div>
+      <% } else { %>
+      <div style="margin-top:12px;padding:10px 14px;background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;font-size:0.83rem;color:#991B1B;">
+        ⚠ No flight tickets uploaded. Ask the client for a boarding pass or flight confirmation email.
+      </div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- 3. Super funds -->
+  <div class="card">
+    <div class="card-hd">3. Superannuation Funds <span class="step">One claim per fund</span></div>
+    <div class="card-bd">
+      <% if (daspRequest.funds && daspRequest.funds.length) { %>
+        <% daspRequest.funds.forEach(function(f, i){ %>
+        <div class="fund">
+          <div class="fund-name">Fund <%= String(i+1).padStart(2,'0') %><%= f.fundName ? ' — ' + f.fundName : '' %></div>
+          <table class="dt">
+            <tr><td>Fund Name</td><td><%= f.fundName || '<span class="missing">⚠ Missing</span>' %></td></tr>
+            <tr><td>ABN</td><td><%= f.fundABN || '<span class="missing">⚠ Missing</span>' %></td></tr>
+            <tr><td>USI (Unique Super Identifier)</td><td><%= f.fundUSI || '<span style="color:#6B7280;font-family:inherit;font-size:0.82rem;">Not provided — optional but recommended</span>' %></td></tr>
+            <tr><td>Member Number</td><td><%= f.memberNumber || '<span class="missing">⚠ Missing</span>' %></td></tr>
+          </table>
+        </div>
+        <% }); %>
+        <% if (fundsIncomplete.length > 0) { %>
+        <div style="padding:10px 14px;background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;font-size:0.83rem;color:#991B1B;margin-top:8px;">
+          ⚠ <%= fundsIncomplete.length %> fund(s) have incomplete details (ABN or member number missing). Contact client before lodging.
+        </div>
+        <% } %>
+      <% } else { %>
+      <div style="padding:14px;background:#FEF2F2;border:1px solid #FECACA;border-radius:6px;font-size:0.85rem;color:#991B1B;">
+        ⚠ No super fund details registered. The ATO system may find ATO-held super automatically using the TFN, but client must provide fund details for fund-managed accounts.
+      </div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- 4. Overseas bank account -->
+  <div class="card">
+    <div class="card-hd">4. Overseas Bank Account — Payment Destination <span class="step">Required for transfer</span></div>
+    <div class="card-bd">
+      <table class="dt">
+        <tr><td>Account Holder</td><td><%= daspRequest.bankRecipientName || u.fullName || '<span class="missing">⚠ Missing</span>' %></td></tr>
+        <tr><td>Bank Name</td><td><%= daspRequest.bankName || '<span class="missing">⚠ Missing</span>' %></td></tr>
+        <tr><td>Country</td><td><%= daspRequest.bankCountry || '<span class="missing">⚠ Missing</span>' %></td></tr>
+        <tr><td>SWIFT / BIC Code</td><td><%= daspRequest.bankSwift || '<span class="missing">⚠ Required for international transfer</span>' %></td></tr>
+        <tr><td>Account Number / CBU / IBAN</td><td><%= daspRequest.bankAccount || '<span class="missing">⚠ Missing</span>' %></td></tr>
+      </table>
+      <% if (!daspRequest.bankSwift || !daspRequest.bankAccount) { %>
+      <div style="margin-top:12px;padding:10px 14px;background:#FEF3C7;border:1px solid #FCD34D;border-radius:6px;font-size:0.83rem;color:#92400E;">
+        ⚠ SWIFT/BIC and account number are mandatory for international bank transfers. The fund cannot release payment without these.
+      </div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- 5. Notes -->
+  <% if (daspRequest.notes) { %>
+  <div class="card">
+    <div class="card-hd">5. Client Notes</div>
+    <div class="card-bd">
+      <p style="margin:0;font-size:0.88rem;color:#374151;line-height:1.6;white-space:pre-wrap;"><%= daspRequest.notes %></p>
+    </div>
+  </div>
+  <% } %>
+
+  <!-- Send to agent -->
+  <% if (req.query.sent === '1') { %>
+  <div style="background:#F0FDF4;border:2px solid #86EFAC;border-radius:10px;padding:14px 20px;margin-bottom:16px;">
+    ✅ <strong style="color:#166534;">DASP claim sent to agent</strong>
+    <% if (daspRequest.agentSentTo) { %> — <%= daspRequest.agentSentTo %><% } %>
+  </div>
+  <% } %>
+  <% if (req.query.error) { %>
+  <div style="background:#FEF2F2;border:2px solid #FECACA;border-radius:10px;padding:14px 20px;margin-bottom:16px;">
+    ⚠ Error: <%= req.query.error %>
+  </div>
+  <% } %>
+
+  <div class="card">
+    <div class="card-hd">Send to Tax Agent <span class="step">DASP Lodgement</span></div>
+    <div class="card-bd">
+      <% if (daspRequest.agentSentAt) { %>
+      <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:8px 14px;margin-bottom:14px;font-size:0.85rem;color:#92400E;">
+        📨 Previously sent to <strong><%= daspRequest.agentSentTo || '—' %></strong>
+        on <%= new Date(daspRequest.agentSentAt).toLocaleDateString('en-AU', {day:'2-digit',month:'short',year:'numeric'}) %>
+      </div>
+      <% } %>
+      <form method="POST" action="/admin/user/<%= u.id %>/send-dasp-agent">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+          <div>
+            <label style="font-size:0.8rem;font-weight:700;color:#374151;display:block;margin-bottom:4px;">Send To (Tax Agent) *</label>
+            <input type="email" name="sendTo" required
+              value="<%= daspRequest.agentSentTo || u.taxAgentEmail || '' %>"
+              placeholder="agent@example.com"
+              style="width:100%;padding:8px 10px;border:1px solid #D1D5DB;border-radius:6px;font-size:0.88rem;box-sizing:border-box;">
+          </div>
+          <div>
+            <label style="font-size:0.8rem;font-weight:700;color:#374151;display:block;margin-bottom:4px;">CC (optional)</label>
+            <input type="email" name="sendCc"
+              placeholder="cc@example.com"
+              style="width:100%;padding:8px 10px;border:1px solid #D1D5DB;border-radius:6px;font-size:0.88rem;box-sizing:border-box;">
+          </div>
+        </div>
+        <button type="submit" class="btn btn--navy" style="font-size:0.9rem;">
+          📧 Send DASP Claim to Agent
+          <% if (daspRequest.flightTickets && daspRequest.flightTickets.length) { %>
+            (+ <%= daspRequest.flightTickets.length %> ticket<%= daspRequest.flightTickets.length !== 1 ? 's' : '' %>)
+          <% } %>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Status management (admin only, hidden on print) -->
+  <div class="card">
+    <div class="card-hd">Claim Status — Internal</div>
+    <div class="card-bd">
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
+        <span style="font-size:0.85rem;font-weight:700;color:var(--muted);">Current status:</span>
+        <span style="display:inline-block;padding:4px 14px;border-radius:20px;font-size:0.82rem;font-weight:700;
+          background:<%= ds==='done'?'#DCFCE7':ds==='processing'?'#DBEAFE':'#FEF9C3' %>;
+          color:<%= ds==='done'?'#166534':ds==='processing'?'#1D4ED8':'#854D0E' %>;">
+          <%= ds==='done'?'✅ Done':ds==='processing'?'⚙️ Processing':'⏳ Pending review' %>
+        </span>
+        <% if (daspRequest.updatedAt) { %>
+        <span style="font-size:0.78rem;color:var(--muted);">Updated <%= new Date(daspRequest.updatedAt).toLocaleDateString('en-AU', {day:'2-digit',month:'short',year:'numeric'}) %></span>
+        <% } %>
+      </div>
+      <form method="POST" action="/admin/dasp/<%= daspRequest.id %>/status" class="status-form">
+        <label style="font-size:0.85rem;font-weight:700;">Change status:</label>
+        <select name="status" style="padding:7px 12px;border:1px solid var(--border);border-radius:6px;font-size:0.88rem;">
+          <option value="pending_review" <%= (ds)==='pending_review'?'selected':'' %>>⏳ Pending review</option>
+          <option value="processing"     <%= ds==='processing'?'selected':'' %>>⚙️ Processing</option>
+          <option value="done"           <%= ds==='done'?'selected':'' %>>✅ Done</option>
+        </select>
+        <button type="submit" class="btn btn--sm btn--navy">Save</button>
+      </form>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

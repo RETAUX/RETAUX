@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+  <title>Preparar envío — <%= u.fullName %> — Admin RETAUX</title>
+  <style>
+    .admin-wrap { display:flex; min-height:100vh; }
+    .sidebar { width:210px; background:var(--ink); flex-shrink:0; padding:0; position:sticky; top:0; height:100vh; overflow-y:auto; }
+    .sidebar-logo { padding:24px 20px 20px; font-family:var(--font-display); font-size:1.2rem; color:var(--paper); border-bottom:1px solid rgba(255,255,255,.1); }
+    .sidebar-logo span { color:var(--ochre); }
+    .sidebar nav a { display:block; padding:10px 20px; color:rgba(247,242,231,.65); font-size:0.9rem; text-decoration:none; }
+    .sidebar nav a:hover { color:var(--paper); background:rgba(255,255,255,.07); }
+    .sidebar-divider { border:none; border-top:1px solid rgba(255,255,255,.08); margin:8px 0; }
+    .admin-main { flex:1; background:#F3F4F6; overflow-y:auto; }
+
+    /* ── Sticky send bar ── */
+    .send-bar {
+      position:sticky; top:0; z-index:50;
+      background:#0A0E5C; color:#fff;
+      box-shadow:0 2px 12px rgba(10,14,92,0.18);
+    }
+    .send-bar-top {
+      padding:12px 28px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    }
+    .send-bar .client-name { font-weight:700; font-size:1rem; flex:1; }
+    .send-bar .doc-count   { font-size:0.82rem; color:rgba(255,255,255,0.55); }
+    .btn-send { background:#16a34a; color:#fff; border:none; border-radius:8px; font-size:0.95rem; font-weight:700; padding:9px 22px; cursor:pointer; }
+    .btn-send:hover { background:#15803d; }
+    .btn-preview { background:rgba(255,255,255,0.12); color:#fff; border:1px solid rgba(255,255,255,0.25); border-radius:8px; font-size:0.82rem; font-weight:600; padding:8px 16px; text-decoration:none; }
+    .btn-back { font-size:0.78rem; color:rgba(255,255,255,0.5); text-decoration:none; }
+
+    /* ── Email compose bar ── */
+    .compose-bar {
+      border-top:1px solid rgba(255,255,255,0.12);
+      padding:10px 28px 14px;
+      display:grid;
+      grid-template-columns: 60px 1fr;
+      gap:6px 12px;
+      align-items:center;
+      font-size:0.84rem;
+    }
+    .compose-bar label { color:rgba(255,255,255,0.55); font-weight:600; text-align:right; font-size:0.78rem; letter-spacing:.04em; text-transform:uppercase; }
+    .compose-bar input[type=text] {
+      background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); border-radius:6px;
+      color:#fff; font-size:0.84rem; padding:5px 10px; width:100%; box-sizing:border-box;
+    }
+    .compose-bar input[type=text]:focus { outline:none; border-color:#38BDF8; background:rgba(255,255,255,0.15); }
+    .compose-cc-row { display:flex; align-items:center; gap:8px; }
+    .cc-fixed-chip {
+      background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.25);
+      border-radius:20px; padding:3px 10px; font-size:0.78rem; color:#93C5FD;
+      white-space:nowrap; display:flex; align-items:center; gap:4px;
+    }
+    .cc-fixed-chip span { color:rgba(255,255,255,0.4); font-size:0.68rem; }
+
+    /* ── Email envelope wrapper ── */
+    .email-wrap { max-width:780px; margin:24px auto 60px; background:#fff; border-radius:10px; overflow:hidden; border:1px solid #E5E7EB; box-shadow:0 2px 12px rgba(0,0,0,0.07); }
+
+    /* ── Email header (identical al email real) ── */
+    .email-header { background:#0A0E5C; padding:24px 28px; }
+    .email-header .brand { font-size:1.1rem; font-weight:700; color:#FFC107; letter-spacing:0.08em; margin-bottom:4px; }
+    .email-header h1 { margin:0 0 4px; font-size:1.2rem; font-weight:700; color:#fff; }
+    .email-header .sub { font-size:0.82rem; color:rgba(255,255,255,0.55); }
+
+    /* ── Sections ── */
+    .sec { border-bottom:1px solid #E5E7EB; }
+    .sec-head {
+      background:#0A0E5C; color:#fff;
+      padding:9px 20px; font-size:0.78rem; font-weight:700;
+      letter-spacing:0.07em; text-transform:uppercase;
+    }
+    .sec-body { padding:14px 20px; }
+
+    /* ── Data rows (read-only) ── */
+    .data-row { display:grid; grid-template-columns:220px 60px 1fr; gap:0; border-bottom:1px solid #F0F4F8; }
+    .data-row:last-child { border-bottom:none; }
+    .data-row .lbl { padding:7px 14px; font-weight:600; color:#374151; font-size:0.88rem; }
+    .data-row .ato { padding:7px 8px; color:#6B7280; font-size:0.75rem; font-family:monospace; }
+    .data-row .val { padding:7px 14px; font-size:0.88rem; color:#111827; }
+    .data-row .val.missing { color:#DC2626; font-weight:600; }
+
+    /* ── Edit fields (inline) ── */
+    .edit-field { padding:4px 14px 10px; }
+    .edit-field label { display:block; font-size:0.72rem; font-weight:700; color:#6B7280; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:3px; }
+    .edit-field input, .edit-field select {
+      width:100%; box-sizing:border-box;
+      padding:6px 10px; border:1px solid #D1D5DB; border-radius:6px;
+      font-size:0.88rem; color:#111827; background:#fff;
+    }
+    .edit-field input.miss, .edit-field select.miss { border-color:#FCA5A5; background:#FFF5F5; }
+    .edit-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:10px 14px; }
+    .edit-row.cols-1 { grid-template-columns:1fr; }
+    .edit-row.cols-3 { grid-template-columns:1fr 1fr 1fr; }
+
+    /* ── Deduction group ── */
+    .ded-group { border:1px solid #E5E7EB; border-radius:8px; margin-bottom:12px; overflow:hidden; }
+    .ded-group-head {
+      background:#EFF6FF; padding:9px 14px;
+      display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px;
+    }
+    .ded-code-label { font-size:0.82rem; font-weight:700; color:#0A0E5C; }
+    .ded-sum-badge  { font-size:0.82rem; font-weight:700; color:#166534; background:#F0FDF4; border:1px solid #BBF7D0; border-radius:20px; padding:2px 10px; }
+    .ded-pending    { font-size:0.75rem; font-weight:600; color:#B45309; background:#FEF3C7; border:1px solid #FCD34D; border-radius:20px; padding:2px 10px; }
+    .ded-files { padding:0; list-style:none; margin:0; }
+    .ded-files li { display:flex; align-items:center; gap:10px; padding:7px 14px; border-bottom:1px solid #F0F4F8; font-size:0.84rem; }
+    .ded-files li:last-child { border-bottom:none; }
+    .ded-files .fname { flex:1; color:#1e293b; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .ded-files .fref  { font-size:0.75rem; color:#6B7280; }
+    .ded-files .famt  { font-weight:700; color:#166534; white-space:nowrap; font-family:monospace; }
+    .ded-input-row { padding:8px 14px; background:#F8FAFC; border-top:1px solid #E5E7EB; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .ded-input-row label { font-size:0.75rem; font-weight:700; color:#374151; text-transform:uppercase; white-space:nowrap; }
+    .ded-input-row input { width:130px; padding:5px 9px; border:1px solid #D1D5DB; border-radius:6px; font-size:0.9rem; font-weight:700; font-family:monospace; color:#0A0E5C; }
+    .ded-input-row .hint { font-size:0.75rem; color:#6B7280; }
+
+    /* ── Employer block ── */
+    .emp-block { background:#F8FAFC; border:1px solid #E5E7EB; border-radius:8px; margin-bottom:10px; overflow:hidden; }
+    .emp-head { padding:8px 14px; background:#E0E7FF; font-size:0.82rem; font-weight:700; color:#1e40af; }
+
+    /* ── Doc list ── */
+    .doc-list { list-style:none; margin:0; padding:0; }
+    .doc-list li { display:flex; align-items:center; gap:8px; padding:7px 0; border-bottom:1px solid #F0F4F8; font-size:0.85rem; }
+    .doc-list li:last-child { border-bottom:none; }
+    .cat-tag { font-size:0.72rem; font-weight:700; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:20px; white-space:nowrap; }
+    .cat-tag.err { background:#FEF2F2; color:#DC2626; }
+
+    /* ── Extra files ── */
+    .extra-drop { display:block; width:100%; padding:12px; border:2px dashed #D1D5DB; border-radius:8px; font-size:0.88rem; cursor:pointer; box-sizing:border-box; }
+
+    /* ── Footer ── */
+    .email-footer { padding:14px 28px; background:#F9FAFB; border-top:1px solid #E5E7EB; font-size:0.75rem; color:#9CA3AF; }
+
+    @media(max-width:900px){
+      .admin-wrap { flex-direction:column; }
+      .sidebar { width:100%; height:auto; position:static; }
+      .edit-row { grid-template-columns:1fr; }
+      .edit-row.cols-3 { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="admin-wrap">
+  <aside class="sidebar">
+    <div class="sidebar-logo">RE<span>TAUX</span></div>
+    <nav>
+      <a href="/admin">← Panel principal</a>
+      <a href="/admin/user/<%= u.id %>">← Volver al cliente</a>
+      <hr class="sidebar-divider">
+      <a href="/admin/logout" style="color:rgba(247,242,231,.35);font-size:0.82rem;">Cerrar sesión</a>
+    </nav>
+  </aside>
+
+  <main class="admin-main">
+
+    <form method="POST" action="/admin/user/<%= u.id %>/send-taxagent" enctype="multipart/form-data">
+      <!-- ── Sticky bar ── -->
+      <div class="send-bar">
+        <div class="send-bar-top">
+          <div class="client-name">📋 <%= u.fullName %></div>
+          <div class="doc-count">
+            <%= docsFound.length %> archivo<%= docsFound.length!==1?'s':'' %>
+            <% if (docsNotFound.length) { %> · <span style="color:#FCA5A5;"><%= docsNotFound.length %> no encontrado<%= docsNotFound.length!==1?'s':'' %></span><% } %>
+          </div>
+          <a href="/admin/user/<%= u.id %>/taxagent-email-preview" target="_blank" class="btn-preview">👁 Vista previa</a>
+          <button type="submit" id="btn-send-main" class="btn-send" title="Ctrl+Enter">
+            📧 Enviar <kbd style="font-size:0.7rem;opacity:0.7;font-weight:400;margin-left:4px;">Ctrl+↵</kbd>
+          </button>
+          <a href="/admin/user/<%= u.id %>" class="btn-back">Cancelar</a>
+        </div>
+
+        <!-- ── Barra de composición ── -->
+        <div class="compose-bar">
+          <label for="compose-to">Para</label>
+          <input type="text" id="compose-to" name="sendTo"
+            value=""
+            placeholder="email1@ejemplo.com, email2@ejemplo.com"
+            title="Destinatarios principales — separar con comas"
+            required>
+
+          <label>CC</label>
+          <div class="compose-cc-row">
+            <div class="cc-fixed-chip">🔒 hola@retaux.com <span>siempre</span></div>
+            <input type="text" name="sendCc"
+              placeholder="cc adicional (opcional)"
+              title="CC adicional además de hola@retaux.com">
+            <input type="hidden" name="sendCcFixed" value="hola@retaux.com">
+          </div>
+
+          <label for="compose-subject">Asunto</label>
+          <input type="text" id="compose-subject" name="sendSubject"
+            value="Individual Tax Return — <%= u.fullName %>"
+            title="Asunto del email">
+
+          <!-- Agente asignado -->
+          <label style="margin-top:8px;">Agente que procesa el caso</label>
+          <select name="assignedAgent" style="background:#1a2340;color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:7px 10px;font-size:0.88rem;width:100%;">
+            <option value="" <%= !u.assignedAgent ? 'selected':'' %>>— Sin asignar —</option>
+            <option value="estiguan" <%= u.assignedAgent==='estiguan' ? 'selected':'' %>>Estiguan Navas</option>
+            <option value="hisham_ghanda" <%= u.assignedAgent==='hisham_ghanda' ? 'selected':'' %>>Hisham & Ghanda</option>
+            <option value="otro" <%= u.assignedAgent==='otro' ? 'selected':'' %>>Otro</option>
+          </select>
+
+          <!-- Opciones de envío -->
+          <div style="grid-column:1/-1;display:flex;gap:20px;flex-wrap:wrap;padding:10px 0 2px;border-top:1px solid rgba(255,255,255,0.15);margin-top:6px;">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.85rem;color:#fff;">
+              <input type="checkbox" name="includeClientData" value="1" checked
+                style="width:16px;height:16px;accent-color:#FFC107;">
+              <span>📋 Datos del cliente <span style="opacity:0.65;font-size:0.78rem;">(HTML de preparación + archivos adjuntos)</span></span>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.85rem;color:#fff;">
+              <input type="checkbox" name="includeEnpresa" value="1" <%= u.taxAgentEmail ? 'checked' : '' %>
+                style="width:16px;height:16px;accent-color:#FFC107;">
+              <span>📄 Formularios ENPRESA <span style="opacity:0.65;font-size:0.78rem;">(TAA Client Details Form + Engagement Letter)</span></span>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.85rem;color:#fff;">
+              <input type="checkbox" name="includeTaxResidency" value="1"
+                style="width:16px;height:16px;accent-color:#FFC107;">
+              <span>🏠 Tax Residency Declaration <span style="opacity:0.65;font-size:0.78rem;">(Declaración de residencia fiscal australiana)</span></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Aviso DASP si el cliente también tiene solicitud DASP ── -->
+      <% if (typeof daspRequest !== 'undefined' && daspRequest) { %>
+      <div style="max-width:780px;margin:16px auto 0;background:#EFF6FF;border:2px solid #3B82F6;border-radius:8px;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;">
+        <div>
+          <strong style="color:#1D4ED8;">🏦 Este cliente también tiene una solicitud DASP</strong>
+          <span style="font-size:0.85rem;color:#374151;display:block;margin-top:2px;">El informe que estás viendo es para el <strong>Individual Tax Return</strong>. El DASP tiene su propio informe.</span>
+        </div>
+        <a href="/admin/user/<%= u.id %>/dasp-preview" style="background:#1D4ED8;color:#fff;padding:8px 16px;border-radius:6px;text-decoration:none;font-weight:700;font-size:0.85rem;white-space:nowrap;">
+          Ver informe DASP →
+        </a>
+      </div>
+      <% } %>
+
+      <!-- ── Email envelope ── -->
+      <div class="email-wrap">
+
+        <!-- Header (idéntico al email real) -->
+        <div class="email-header">
+          <div class="brand">RETAUX</div>
+          <h1>Individual Tax Return — Client File</h1>
+          <div class="sub">Preparado para revisión del tax agent · <%= new Date().toLocaleDateString('en-AU',{day:'2-digit',month:'long',year:'numeric'}) %></div>
+        </div>
+
+        <!-- ── 1. Información personal ── -->
+        <div class="sec">
+          <div class="sec-head">1. Personal Information</div>
+          <div class="edit-row">
+            <div class="edit-field">
+              <label>Nombre completo *</label>
+              <input type="text" name="fullName" value="<%= u.fullName || '' %>" class="<%= !u.fullName ? 'miss' : '' %>">
+            </div>
+            <div class="edit-field">
+              <label>Fecha de nacimiento *</label>
+              <input type="date" name="birthDate" value="<%= u.birthDate || '' %>" class="<%= !u.birthDate ? 'miss' : '' %>">
+            </div>
+            <div class="edit-field">
+              <label>TFN *</label>
+              <input type="text" name="tfn" value="<%= tfn || '' %>" class="<%= !tfn ? 'miss' : '' %>" maxlength="9">
+            </div>
+            <div class="edit-field">
+              <label>Nacionalidad *</label>
+              <input type="text" name="nationality" value="<%= u.nationality || '' %>" class="<%= !u.nationality ? 'miss' : '' %>">
+            </div>
+            <div class="edit-field" style="grid-column:1/-1">
+              <label>Dirección (Australia) *</label>
+              <input type="text" name="currentAddress" value="<%= u.currentAddress || '' %>" class="<%= !u.currentAddress ? 'miss' : '' %>">
+            </div>
+            <div class="edit-field">
+              <label>Teléfono</label>
+              <input type="text" name="phone" value="<%= u.phone || '' %>">
+            </div>
+            <div class="edit-field">
+              <label>Ocupación *</label>
+              <input type="text" name="occupation" value="<%= u.occupation || '' %>" class="<%= !u.occupation ? 'miss' : '' %>">
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 2. Visa y residencia ── -->
+        <div class="sec">
+          <div class="sec-head">2. Visa & Tax Residency</div>
+          <div class="edit-row cols-3">
+            <div class="edit-field">
+              <label>Subclase de visa *</label>
+              <input type="text" name="currentVisaSubclass" value="<%= u.currentVisaSubclass || '' %>" class="<%= !u.currentVisaSubclass ? 'miss' : '' %>">
+            </div>
+            <div class="edit-field">
+              <label>Estado de residencia fiscal *</label>
+              <select name="taxResidencyStatus" class="<%= !u.taxResidencyStatus ? 'miss' : '' %>">
+                <option value="">— No especificado —</option>
+                <option value="resident"         <%=u.taxResidencyStatus==='resident'?'selected':''%>>Resident</option>
+                <option value="foreign_resident"  <%=u.taxResidencyStatus==='foreign_resident'?'selected':''%>>Foreign Resident</option>
+                <option value="working_holiday"   <%=u.taxResidencyStatus==='working_holiday'?'selected':''%>>Working Holiday Maker</option>
+              </select>
+            </div>
+            <div class="edit-field">
+              <label>¿Primer año como residente?</label>
+              <select name="firstYearResident">
+                <option value="">— —</option>
+                <option value="yes" <%=u.firstYearResident==='yes'?'selected':''%>>Sí</option>
+                <option value="no"  <%=u.firstYearResident==='no'?'selected':''%>>No</option>
+              </select>
+            </div>
+            <div class="edit-field">
+              <label>Inicio de visa</label>
+              <input type="date" name="visaStartDate" value="<%= u.visaStartDate || '' %>">
+            </div>
+            <div class="edit-field">
+              <label>Fin de visa</label>
+              <input type="date" name="visaEndDate" value="<%= u.visaEndDate || '' %>">
+            </div>
+            <div class="edit-field">
+              <label>Fecha llegada a Australia</label>
+              <input type="date" name="dateArrived" value="<%= u.dateArrived || '' %>">
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 3. Empleadores e ingresos ── -->
+        <div class="sec">
+          <div class="sec-head">3. Employment Income</div>
+          <div style="padding:12px 14px;">
+            <% if (!employers || employers.length === 0) { %>
+              <p style="color:#DC2626;font-size:0.88rem;margin:0;">⚠ Sin empleadores registrados — el cliente debe completar esta sección.</p>
+            <% } else { %>
+              <% employers.forEach(function(emp, i) { %>
+              <div class="emp-block">
+                <div class="emp-head">Empleador <%= i+1 %>: <%= emp.name || '—' %></div>
+                <div class="edit-row cols-3">
+                  <div class="edit-field">
+                    <label>Nombre</label>
+                    <input type="text" name="emp_name_<%= i %>" value="<%= emp.name || '' %>">
+                  </div>
+                  <div class="edit-field">
+                    <label>ABN *</label>
+                    <input type="text" name="emp_abn_<%= i %>" value="<%= emp.abn || '' %>" class="<%= !emp.abn ? 'miss' : '' %>">
+                  </div>
+                  <div class="edit-field"><!-- spacer --></div>
+                  <div class="edit-field">
+                    <label>Gross Income ($) *</label>
+                    <input type="number" name="emp_gross_<%= i %>" value="<%= emp.grossIncome || '' %>" step="0.01" min="0" class="<%= !emp.grossIncome ? 'miss' : '' %>">
+                  </div>
+                  <div class="edit-field">
+                    <label>Tax Withheld ($) *</label>
+                    <input type="number" name="emp_withheld_<%= i %>" value="<%= emp.taxWithheld || '' %>" step="0.01" min="0" class="<%= !emp.taxWithheld ? 'miss' : '' %>">
+                  </div>
+                  <div class="edit-field"><!-- spacer --></div>
+                  <div class="edit-field">
+                    <label>Período desde</label>
+                    <input type="date" name="emp_from_<%= i %>" value="<%= emp.periodFrom || '' %>">
+                  </div>
+                  <div class="edit-field">
+                    <label>Período hasta</label>
+                    <input type="date" name="emp_to_<%= i %>" value="<%= emp.periodTo || '' %>">
+                  </div>
+                </div>
+              </div>
+              <% }); %>
+            <% } %>
+            <div class="edit-row" style="padding-top:8px;border-top:1px solid #E5E7EB;margin-top:8px;">
+              <div class="edit-field">
+                <label>Intereses bancarios ($)</label>
+                <input type="number" name="bankInterest" value="<%= u.bankInterest || '' %>" step="0.01" min="0">
+              </div>
+              <div class="edit-field">
+                <label>Otros ingresos ($)</label>
+                <input type="number" name="otherIncome" value="<%= u.otherIncome || (abnIncomeTotal > 0 ? abnIncomeTotal : '') %>" step="0.01" min="0">
+                <% if (abnIncomeTotal > 0) { %>
+                <div style="margin-top:6px;padding:8px 12px;background:#FFF8E1;border:1px solid #FDE68A;border-radius:8px;font-size:0.82rem;color:#92400E;">
+                  <strong>🧾 ABN Income detectado:</strong> AUD $<%= abnIncomeTotal.toFixed(2) %>
+                  <% if (abnNumber) { %><span style="margin-left:8px;background:#FEF3C7;padding:2px 7px;border-radius:4px;font-family:monospace;">ABN <%= abnNumber %></span><% } %>
+                  <% if (abnIncomeDocs.length > 0) { %>
+                  <div style="margin-top:4px;color:#78350F;">
+                    <% abnIncomeDocs.forEach(function(doc) { %>
+                    <div>• <%= doc.name %><% if (doc.amount > 0) { %> — $<%= doc.amount.toFixed(2) %><% } %></div>
+                    <% }); %>
+                  </div>
+                  <% } %>
+                </div>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 4. Deducciones ── (desglose real por código) -->
+        <div class="sec">
+          <div class="sec-head">4. Deductions</div>
+          <div style="padding:14px;">
+            <%
+              var DED_META = [
+                { key:'D1',  name:'deductionD1',  label:'D1 — Gastos de auto relacionados al trabajo' },
+                { key:'D2',  name:'deductionD2',  label:'D2 — Gastos de viaje de trabajo (no auto)' },
+                { key:'D3',  name:'deductionD3',  label:'D3 — Ropa, uniforme y lavandería' },
+                { key:'D4',  name:'deductionD4',  label:'D4 — Educación y capacitación relacionada al trabajo' },
+                { key:'D5',  name:'deductionD5',  label:'D5 — Otros gastos de trabajo (tecnología, certificaciones, etc.)' },
+                { key:'D6',  name:'deductionD6',  label:'D6 — Home office' },
+                { key:'D9',  name:'deductionD9',  label:'D9 — Donaciones' },
+                { key:'D10', name:'deductionD10', label:'D10 — Honorarios de contador' },
+              ];
+            %>
+            <% DED_META.forEach(function(dm) {
+              var sum     = dedSums     && dedSums[dm.key];
+              var pending = dedPending  && dedPending[dm.key];
+              var cats    = catSumsEmail ? Object.values(catSumsEmail).filter(function(cs){ return cs.ato === dm.key; }) : [];
+              var curVal  = dm.key === 'D1' ? (u[dm.name] || '') : (sum ? sum.total : (u[dm.name] || ''));
+            %>
+            <div class="ded-group">
+              <div class="ded-group-head">
+                <span class="ded-code-label"><%= dm.label %></span>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                  <% if (sum) { %><span class="ded-sum-badge">AUD <%= sum.total.toFixed(2) %></span><% } %>
+                  <% if (pending) { %><span class="ded-pending">⚠ <%= pending %> sin monto</span><% } %>
+                  <% if (!sum && !pending) { %><span style="font-size:0.75rem;color:#9CA3AF;">Sin archivos con monto</span><% } %>
+                </div>
+              </div>
+
+              <%# Archivos de cada categoría que mapea a este D-code %>
+              <% if (cats.length > 0) { %>
+              <ul class="ded-files">
+                <% cats.forEach(function(cs) { %>
+                  <li style="background:#F0FDF4;border-bottom:1px solid #DCFCE7;">
+                    <span style="font-size:0.72rem;font-weight:700;color:#166534;background:#D1FAE5;padding:2px 8px;border-radius:20px;white-space:nowrap;"><%= cs.label %></span>
+                    <span class="fname" style="font-weight:700;color:#15803d;"><%= cs.count %> archivo<%= cs.count!==1?'s':'' %> · AUD <%= cs.total.toFixed(2) %></span>
+                  </li>
+                  <% cs.docs.forEach(function(d) { %>
+                  <li>
+                    <span style="color:#6B7280;font-size:0.9rem;">📎</span>
+                    <span class="fname"><%= d.name %></span>
+                    <% if (d.receiptRef) { %><span class="fref">#<%= d.receiptRef %></span><% } %>
+                    <span class="famt">AUD $<%= d.amount.toFixed(2) %></span>
+                  </li>
+                  <% }); %>
+                <% }); %>
+              </ul>
+              <% } %>
+
+              <%# D1: múltiples vehículos editables ──────────────────────────── %>
+              <% if (dm.key === 'D1') { %>
+              <%
+                var taVehicles = (fyProfile && fyProfile.vehicles && fyProfile.vehicles.length)
+                  ? fyProfile.vehicles
+                  : (fyProfile && (fyProfile.carBrand || fyProfile.carWorkKm)
+                      ? [{ brand: fyProfile.carBrand||'', model: fyProfile.carModel||'', year: fyProfile.carYear||'', plate: fyProfile.carPlate||'', km: fyProfile.carWorkKm||'' }]
+                      : [{ brand:'', model:'', year:'', plate:'', km:'' }]);
+              %>
+              <div style="padding:12px 14px;background:#EFF6FF;border-top:1px solid #BFDBFE;">
+                <div id="ta-vehicles-list" style="display:flex;flex-direction:column;gap:10px;">
+                  <% taVehicles.forEach(function(v, i) { %>
+                  <div class="ta-vehicle-row" style="background:#fff;border:1px solid #BFDBFE;border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;">
+                      <span style="font-size:0.72rem;font-weight:700;color:#3B82F6;text-transform:uppercase;letter-spacing:.05em;">🚗 Vehículo <%= i+1 %></span>
+                      <% if (i > 0) { %>
+                      <button type="button" onclick="taRemoveVehicle(this)" style="background:none;border:none;color:#DC2626;font-size:0.8rem;cursor:pointer;padding:0;">✕ Quitar</button>
+                      <% } %>
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;">
+                      <div><label style="font-size:0.68rem;font-weight:700;color:#3B82F6;display:block;margin-bottom:2px;text-transform:uppercase;">Marca</label>
+                        <input type="text" name="v_brand_<%= i %>" value="<%= v.brand||'' %>" placeholder="Toyota" style="width:100%;padding:5px 8px;border:1.5px solid #BFDBFE;border-radius:6px;font-size:0.85rem;"></div>
+                      <div><label style="font-size:0.68rem;font-weight:700;color:#3B82F6;display:block;margin-bottom:2px;text-transform:uppercase;">Modelo</label>
+                        <input type="text" name="v_model_<%= i %>" value="<%= v.model||'' %>" placeholder="Corolla" style="width:100%;padding:5px 8px;border:1.5px solid #BFDBFE;border-radius:6px;font-size:0.85rem;"></div>
+                      <div><label style="font-size:0.68rem;font-weight:700;color:#3B82F6;display:block;margin-bottom:2px;text-transform:uppercase;">Año</label>
+                        <input type="text" name="v_year_<%= i %>" value="<%= v.year||'' %>" placeholder="2019" maxlength="4" style="width:100%;padding:5px 8px;border:1.5px solid #BFDBFE;border-radius:6px;font-size:0.85rem;font-family:monospace;"></div>
+                      <div><label style="font-size:0.68rem;font-weight:700;color:#3B82F6;display:block;margin-bottom:2px;text-transform:uppercase;">Patente</label>
+                        <input type="text" name="v_plate_<%= i %>" value="<%= v.plate||'' %>" placeholder="ABC123" style="width:100%;padding:5px 8px;border:1.5px solid #BFDBFE;border-radius:6px;font-size:0.85rem;font-family:monospace;"></div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                      <input type="number" name="v_km_<%= i %>" value="<%= v.km||'' %>" min="0" step="1" placeholder="0"
+                        style="width:90px;padding:4px 8px;border:1.5px solid #BFDBFE;border-radius:6px;font-size:0.9rem;font-weight:700;font-family:monospace;color:#1D4ED8;"
+                        oninput="taKmCalcRow(this)">
+                      <span style="font-size:0.82rem;color:#1D4ED8;">km × $0.88 =</span>
+                      <span class="ta-km-result" style="font-size:0.95rem;font-weight:800;color:#1D4ED8;font-family:monospace;">AUD $<%= v.km ? (Number(v.km)*0.88).toFixed(2) : '0.00' %></span>
+                      <% if (v.km > 5000) { %><span style="color:#B45309;font-size:0.78rem;">⚠ supera 5,000 km</span><% } %>
+                    </div>
+                  </div>
+                  <% }); %>
+                </div>
+                <div style="margin-top:10px;">
+                  <button type="button" onclick="taAddVehicle()" style="background:#EFF6FF;color:#1D4ED8;border:1.5px dashed #BFDBFE;border-radius:6px;padding:5px 14px;font-size:0.82rem;font-weight:700;cursor:pointer;">+ Agregar vehículo</button>
+                </div>
+                <input type="hidden" name="vehicleCount" id="ta-vehicle-count" value="<%= taVehicles.length %>">
+                <div style="margin-top:10px;padding:8px 12px;background:#DBEAFE;border-radius:6px;font-size:0.83rem;font-weight:700;color:#1D4ED8;">
+                  📊 Total D1: <span id="ta-d1-km-total">
+                    <%= taVehicles.reduce(function(s,v){return s+(Number(v.km)||0);},0) %> km × $0.88 = AUD $<%= (taVehicles.reduce(function(s,v){return s+(Number(v.km)||0);},0)*0.88).toFixed(2) %>
+                  </span>
+                </div>
+              </div>
+              <% } %>
+
+              <div class="ded-input-row">
+                <label>Monto a declarar:</label>
+                <input type="number" name="<%= dm.name %>" value="<%= curVal %>" step="0.01" min="0" placeholder="0.00">
+                <% if (sum && dm.key !== 'D1') { %>
+                  <span class="hint">Sumatoria de facturas: AUD $<%= sum.total.toFixed(2) %> — editá si necesitás ajustar</span>
+                <% } else if (!sum && !pending && dm.key !== 'D1') { %>
+                  <span class="hint" style="color:#DC2626;">Sin facturas cargadas — ingresá manualmente si aplica</span>
+                <% } %>
+              </div>
+            </div>
+            <% }); %>
+          </div>
+        </div>
+
+        <!-- ── 4b. Seguro de salud ── -->
+        <div class="sec">
+          <div class="sec-head">4b. Private Health Insurance</div>
+          <div style="padding:14px;">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+              <label style="font-size:0.85rem;font-weight:600;color:#374151;">¿Tiene seguro privado de salud?</label>
+              <select name="hasHealthInsurance" style="padding:5px 10px;border:1px solid #D1D5DB;border-radius:6px;font-size:0.85rem;background:#fff;">
+                <option value="1" <%=(fyProfile&&fyProfile.hasHealthInsurance)?'selected':''%>>Sí</option>
+                <option value=""  <%=(fyProfile&&!fyProfile.hasHealthInsurance)?'selected':''%>>No</option>
+              </select>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;">
+              <div class="edit-field">
+                <label>Proveedor</label>
+                <input type="text" name="healthProvider" value="<%= (fyProfile&&fyProfile.healthProvider)||'' %>" placeholder="BUPA, Medibank...">
+              </div>
+              <div class="edit-field">
+                <label>Número de miembro</label>
+                <input type="text" name="healthMemberNumber" value="<%= (fyProfile&&fyProfile.healthMemberNumber)||'' %>" placeholder="00000000" style="font-family:monospace;">
+              </div>
+              <div class="edit-field">
+                <label>Tipo de plan</label>
+                <input type="text" name="healthPlanType" value="<%= (fyProfile&&fyProfile.healthPlanType)||'' %>" placeholder="Hospital, Extras...">
+              </div>
+              <div class="edit-field">
+                <label>Inicio de cobertura</label>
+                <input type="date" name="healthStartDate" value="<%= (fyProfile&&fyProfile.healthStartDate)||'' %>">
+              </div>
+              <div class="edit-field">
+                <label>Fin de cobertura</label>
+                <input type="date" name="healthEndDate" value="<%= (fyProfile&&fyProfile.healthEndDate)||'' %>">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 5. Documentos adjuntos ── -->
+        <div class="sec">
+          <div class="sec-head">5. Documents Attached (<%= docsFound.length %> file<%= docsFound.length!==1?'s':'' %>)</div>
+          <div style="padding:14px;">
+            <% if (docsFound.length === 0 && docsNotFound.length === 0) { %>
+              <p style="color:#6B7280;font-size:0.88rem;margin:0;">Sin documentos subidos.</p>
+            <% } %>
+            <% if (docsFound.length > 0) { %>
+              <ul class="doc-list">
+                <% docsFound.forEach(function(d){ %>
+                <li>
+                  <span>📄</span>
+                  <span class="cat-tag"><%= d.catLabel %></span>
+                  <span><%= d.originalName %></span>
+                </li>
+                <% }); %>
+              </ul>
+            <% } %>
+            <% if (docsNotFound.length > 0) { %>
+              <p style="color:#DC2626;font-weight:700;font-size:0.82rem;margin:10px 0 6px;">✗ <%= docsNotFound.length %> archivo<%= docsNotFound.length!==1?'s':'' %> no encontrado<%= docsNotFound.length!==1?'s':'' %> en servidor:</p>
+              <ul class="doc-list">
+                <% docsNotFound.forEach(function(d){ %>
+                <li>
+                  <span>⚠️</span>
+                  <span class="cat-tag err"><%= d.catLabel %></span>
+                  <span style="color:#DC2626;font-style:italic;"><%= d.originalName %></span>
+                </li>
+                <% }); %>
+              </ul>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- ── 6. Archivos adicionales ── -->
+        <div class="sec">
+          <div class="sec-head">6. Archivos adicionales (opcional)</div>
+          <div style="padding:14px;">
+            <p style="margin:0 0 10px;font-size:0.85rem;color:#6B7280;">Adjuntar al email junto con los documentos del cliente. PDF, imágenes, Word, Excel — máx. 10 MB.</p>
+            <input type="file" name="extraFiles" multiple accept=".pdf,.jpg,.jpeg,.png,.heic,.doc,.docx,.xls,.xlsx,.csv" class="extra-drop">
+          </div>
+        </div>
+
+        <!-- Footer (idéntico al email real) -->
+        <div class="email-footer">
+          This file was prepared by RETAUX (www.retaux.com) on behalf of the client and is intended solely for the named tax agent. For queries contact hola@retaux.com
+        </div>
+
+      </div><!-- /email-wrap -->
+
+      <% if (u.taxAgentSentAt) { %>
+      <div style="text-align:center;padding:8px;font-size:0.78rem;color:#6B7280;">
+        📬 Último envío: <%= new Date(u.taxAgentSentAt).toLocaleDateString('es-AR') %> a las <%= new Date(u.taxAgentSentAt).toLocaleTimeString('es-AR', {hour:'2-digit',minute:'2-digit'}) %>
+      </div>
+      <% } %>
+
+    </form>
+  </main>
+</div>
+<script>
+function taKmCalcRow(input) {
+  var row = input.closest('.ta-vehicle-row');
+  if (!row) return;
+  var el = row.querySelector('.ta-km-result');
+  if (el) el.textContent = 'AUD $' + ((parseFloat(input.value)||0)*0.88).toFixed(2);
+  taKmUpdateD1();
+}
+
+function taKmUpdateD1() {
+  var kmInputs = document.querySelectorAll('#ta-vehicles-list input[name^="v_km_"]');
+  var totalKm = 0;
+  kmInputs.forEach(function(inp) { totalKm += parseFloat(inp.value) || 0; });
+  var totalAUD = Math.round(totalKm * 0.88 * 100) / 100;
+  var d1Input = document.querySelector('input[name="deductionD1"]');
+  if (d1Input) {
+    d1Input.value = totalAUD.toFixed(2);
+    d1Input.style.background = '#EFF6FF';
+  }
+  var d1Total = document.getElementById('ta-d1-km-total');
+  if (d1Total) d1Total.textContent = totalKm + ' km × $0.88 = AUD $' + totalAUD.toFixed(2);
+}
+
+function taAddVehicle() {
+  var list  = document.getElementById('ta-vehicles-list');
+  var idx   = list.querySelectorAll('.ta-vehicle-row').length;
+  var div   = document.createElement('div');
+  div.className = 'ta-vehicle-row';
+  div.style.cssText = 'background:#fff;border:1px solid #BFDBFE;border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;';
+  div.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-size:0.72rem;font-weight:700;color:#3B82F6;text-transform:uppercase;letter-spacing:.05em;">🚗 Vehículo ${idx+1}</span>
+      <button type="button" onclick="taRemoveVehicle(this)" style="background:none;border:none;color:#DC2626;font-size:0.8rem;cursor:pointer;padding:0;">✕ Quitar</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;">
+      <div><label style="font-size:0.68rem;font-weight:700;color:#3B82F6;display:block;margin-bottom:2px;text-transform:uppercase;">Marca</label><input type="text" name="v_brand_${idx}" placeholder="Toyota" style="width:100%;padding:5px 8px;border:1.5px solid #BFDBFE;border-radius:6px;font-size:0.85rem;"></div>
+      <div><label style="font-size:0.68rem;font-weight:700;color:#3B82F6;display:block;margin-bottom:2px;text-transform:uppercase;">Modelo</label><input type="text" name="v_model_${idx}" placeholder="Corolla" style="width:100%;padding:5px 8px;border:1.5px solid #BFDBFE;border-radius:6px;font-size:0.85rem;"></div>
+      <div><label style="font-size:0.68rem;font-weight:700;color:#3B82F6;display:block;margin-bottom:2px;text-transform:uppercase;">Año</label><input type="text" name="v_year_${idx}" placeholder="2019" maxlength="4" style="width:100%;padding:5px 8px;border:1.5px solid #BFDBFE;border-radius:6px;font-size:0.85rem;font-family:monospace;"></div>
+      <div><label style="font-size:0.68rem;font-weight:700;color:#3B82F6;display:block;margin-bottom:2px;text-transform:uppercase;">Patente</label><input type="text" name="v_plate_${idx}" placeholder="ABC123" style="width:100%;padding:5px 8px;border:1.5px solid #BFDBFE;border-radius:6px;font-size:0.85rem;font-family:monospace;"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <input type="number" name="v_km_${idx}" min="0" step="1" placeholder="0"
+        style="width:90px;padding:4px 8px;border:1.5px solid #BFDBFE;border-radius:6px;font-size:0.9rem;font-weight:700;font-family:monospace;color:#1D4ED8;"
+        oninput="taKmCalcRow(this)">
+      <span style="font-size:0.82rem;color:#1D4ED8;">km × $0.88 =</span>
+      <span class="ta-km-result" style="font-size:0.95rem;font-weight:800;color:#1D4ED8;font-family:monospace;">AUD $0.00</span>
+    </div>`;
+  list.appendChild(div);
+  document.getElementById('ta-vehicle-count').value = idx + 1;
+}
+
+function taRemoveVehicle(btn) {
+  btn.closest('.ta-vehicle-row').remove();
+  taKmUpdateD1();
+  var rows = document.querySelectorAll('#ta-vehicles-list .ta-vehicle-row');
+  rows.forEach(function(row, i) {
+    row.querySelector('span').textContent = '🚗 Vehículo ' + (i+1);
+    ['brand','model','year','plate','km'].forEach(function(f) {
+      var inp = row.querySelector('[name^="v_'+f+'_"]');
+      if (inp) inp.name = 'v_' + f + '_' + i;
+    });
+  });
+  document.getElementById('ta-vehicle-count').value = rows.length;
+}
+
+document.addEventListener('keydown', function(e) {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    e.preventDefault();
+    var btn = document.getElementById('btn-send-main');
+    if (btn) { btn.click(); }
+  }
+});
+
+// Al cargar: sincronizar deductionD1 con los km guardados
+taKmUpdateD1();
+</script>
+</body>
+</html>

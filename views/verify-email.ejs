@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="<%= lang || 'es' %>">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Confirmá tu cuenta — RETAUX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { min-height: 100vh; background: #060920; font-family: 'Source Sans 3','Segoe UI',Arial,sans-serif; overflow-x: hidden; color: #fff; }
+    .bg { position: fixed; inset: 0; z-index: 0;
+      background: radial-gradient(ellipse at 20% 50%, #0d1a7a 0%, transparent 60%),
+                  radial-gradient(ellipse at 80% 20%, #0a4a7a 0%, transparent 55%),
+                  radial-gradient(ellipse at 60% 80%, #1a0a5c 0%, transparent 50%),
+                  #060920;
+    }
+    .bg-orb { position: absolute; border-radius: 50%; filter: blur(80px); animation: float 8s ease-in-out infinite; }
+    .bg-orb-1 { width: 500px; height: 500px; background: radial-gradient(circle, rgba(79,195,247,0.35) 0%, transparent 70%); top: -100px; left: -100px; }
+    .bg-orb-2 { width: 400px; height: 400px; background: radial-gradient(circle, rgba(255,193,7,0.25) 0%, transparent 70%); bottom: -80px; right: -80px; animation-delay: -3s; }
+    .bg-orb-3 { width: 300px; height: 300px; background: radial-gradient(circle, rgba(124,58,237,0.2) 0%, transparent 70%); top: 40%; left: 60%; animation-delay: -5s; }
+    @keyframes float { 0%,100% { transform: translate(0,0) scale(1); } 33% { transform: translate(30px,-30px) scale(1.05); } 66% { transform: translate(-20px,20px) scale(0.97); } }
+    .page { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* Nav */
+    .top-nav { display: flex; align-items: center; justify-content: space-between; padding: 20px 40px; }
+    .top-nav-logo { font-family: 'Fraunces',Georgia,serif; font-size: 1.3rem; font-weight: 700; color: #4FC3F7; text-decoration: none; letter-spacing: -0.02em; }
+    .top-nav-logo em { color: #FFC107; font-style: normal; }
+
+    /* Lang selector */
+    #lang-selector { position: relative; }
+    .lang-btn { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); color: #fff; font-family: 'Source Sans 3',sans-serif; font-size: 0.85rem; font-weight: 600; padding: 6px 12px; border-radius: 6px; cursor: pointer; white-space: nowrap; transition: background 0.15s; }
+    .lang-btn:hover { background: rgba(255,255,255,0.2); }
+    .lang-dropdown { display: none; position: absolute; right: 0; top: calc(100% + 6px); background: #0d1340; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; min-width: 110px; z-index: 200; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+    .lang-dropdown.open { display: block; }
+    .lang-option { display: block; width: 100%; text-align: left; padding: 10px 16px; background: none; border: none; font-family: 'Source Sans 3',sans-serif; font-size: 0.88rem; color: rgba(255,255,255,0.75); cursor: pointer; transition: background 0.1s; }
+    .lang-option:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .lang-option--active { font-weight: 700; color: #4FC3F7; }
+
+    /* Center */
+    .center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px 24px 60px; gap: 20px; }
+
+    /* Hero wordmark */
+    .hero-wordmark { text-align: center; line-height: 1; animation: hero-in 0.8s cubic-bezier(0.16,1,0.3,1) both; }
+    @keyframes hero-in { from { opacity: 0; transform: translateY(-20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    .hero-wordmark .re  { font-family: 'Fraunces',Georgia,serif; font-size: clamp(56px,12vw,110px); font-weight: 700; color: #4FC3F7; letter-spacing: -0.03em; text-shadow: 0 0 60px rgba(79,195,247,0.6), 0 0 120px rgba(79,195,247,0.25); display: inline-block; animation: glow-blue 4s ease-in-out infinite; }
+    .hero-wordmark .taux{ font-family: 'Fraunces',Georgia,serif; font-size: clamp(56px,12vw,110px); font-weight: 700; color: #FFC107; letter-spacing: -0.03em; text-shadow: 0 0 60px rgba(255,193,7,0.5),  0 0 120px rgba(255,193,7,0.2);  display: inline-block; animation: glow-gold 4s ease-in-out infinite; animation-delay: -2s; }
+    @keyframes glow-blue { 0%,100% { text-shadow: 0 0 60px rgba(79,195,247,0.6), 0 0 120px rgba(79,195,247,0.25); } 50% { text-shadow: 0 0 80px rgba(79,195,247,0.9), 0 0 160px rgba(79,195,247,0.4); } }
+    @keyframes glow-gold { 0%,100% { text-shadow: 0 0 60px rgba(255,193,7,0.5), 0 0 120px rgba(255,193,7,0.2); } 50% { text-shadow: 0 0 80px rgba(255,193,7,0.8), 0 0 160px rgba(255,193,7,0.35); } }
+
+    /* Glass card */
+    .glass-card { background: rgba(255,255,255,0.06); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 40px 44px; width: 100%; max-width: 400px; box-shadow: 0 32px 64px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08); animation: card-in 0.8s cubic-bezier(0.16,1,0.3,1) 0.15s both; }
+    @keyframes card-in { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+    .card-title { font-family: 'Fraunces',Georgia,serif; font-size: 1.45rem; font-weight: 700; color: #fff; margin-bottom: 6px; }
+    .card-subtitle { font-size: 0.88rem; color: rgba(255,255,255,0.45); margin-bottom: 24px; line-height: 1.5; }
+    .card-subtitle strong { color: rgba(255,255,255,0.8); }
+
+    .form-group { margin-bottom: 20px; }
+    .glass-card label { display: block; font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.55); margin-bottom: 6px; letter-spacing: 0.06em; text-transform: uppercase; }
+    .glass-card input { width: 100%; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 14px; font-size: 2rem; color: #fff; font-family: 'IBM Plex Mono',monospace; letter-spacing: 0.4em; text-align: center; outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+    .glass-card input::placeholder { color: rgba(255,255,255,0.2); font-size: 1.5rem; }
+    .glass-card input:focus { border-color: #4FC3F7; box-shadow: 0 0 0 3px rgba(79,195,247,0.15); }
+
+    .btn-submit { width: 100%; padding: 14px; background: linear-gradient(135deg,#FFC107,#FFD54F); color: #060920; font-family: 'Source Sans 3',sans-serif; font-size: 1rem; font-weight: 700; border: none; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 24px rgba(255,193,7,0.4); transition: transform 0.1s, box-shadow 0.2s; }
+    .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(255,193,7,0.55); }
+
+    .alert-dark { background: rgba(193,57,43,0.18); border: 1px solid rgba(193,57,43,0.35); color: #ff8a80; border-radius: 8px; padding: 10px 14px; font-size: 0.88rem; margin-bottom: 16px; }
+    .alert-ok   { background: rgba(45,106,79,0.25); border: 1px solid rgba(45,106,79,0.4); color: #69f0ae; border-radius: 8px; padding: 10px 14px; font-size: 0.88rem; margin-bottom: 16px; }
+
+    .resend-row { text-align: center; margin-top: 18px; font-size: 0.88rem; color: rgba(255,255,255,0.4); }
+    .resend-row a, .resend-btn { color: #4FC3F7; text-decoration: none; background: none; border: none; font-size: 0.88rem; cursor: pointer; font-family: inherit; }
+    .resend-row a:hover, .resend-btn:hover { text-decoration: underline; }
+
+    .page-footer { text-align: center; padding: 16px; font-size: 11px; color: rgba(255,255,255,0.18); }
+    .page-footer a { color: rgba(255,193,7,0.4); text-decoration: none; }
+
+    @media (max-width: 480px) { .top-nav { padding: 14px 20px; } .glass-card { padding: 30px 22px; } }
+  </style>
+</head>
+<body>
+<div class="bg">
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
+  <div class="bg-orb bg-orb-3"></div>
+</div>
+
+<div class="page">
+  <nav class="top-nav">
+    <a href="/" class="top-nav-logo">RE<em>TAUX</em></a>
+    <div id="lang-selector"></div>
+  </nav>
+
+  <div class="center">
+    <div class="hero-wordmark">
+      <span class="re">RE</span><span class="taux">TAUX</span>
+    </div>
+
+    <div class="glass-card">
+      <p class="card-title" data-i18n="auth.verify_title">Confirmá tu cuenta</p>
+      <p class="card-subtitle">
+        <span data-i18n="auth.verify_subtitle_pre">Te enviamos un código de 6 dígitos a</span><br>
+        <strong><%= user.email %></strong>
+      </p>
+
+      <% if (sent) { %>
+        <div class="alert-ok" data-i18n="auth.verify_resent">Te reenviamos el código. Revisá tu bandeja de entrada (y spam).</div>
+      <% } %>
+      <% if (error) { %>
+        <div class="alert-dark"><%= error %></div>
+      <% } %>
+
+      <form method="POST" action="/verify-email" id="verifyForm">
+        <div class="form-group">
+          <label data-i18n="auth.verify_code_label">Código de verificación</label>
+          <input type="text" name="code" id="code" required maxlength="6" minlength="6" inputmode="numeric" pattern="\d{6}" placeholder="······" autocomplete="one-time-code" value="<%= prefillCode %>">
+        </div>
+        <button type="submit" class="btn-submit" data-i18n="auth.verify_btn">Verificar cuenta →</button>
+      </form>
+
+      <div class="resend-row">
+        <span data-i18n="auth.verify_no_code">¿No recibiste el código?</span> &nbsp;
+        <form method="POST" action="/verify-email/resend" style="display:inline">
+          <button type="submit" class="resend-btn" data-i18n="auth.verify_resend">Reenviar</button>
+        </form>
+        &nbsp;·&nbsp;
+        <a href="/logout" data-i18n="auth.verify_logout">Cerrar sesión</a>
+      </div>
+    </div>
+  </div>
+
+  <footer class="page-footer">
+    RETAUX © <%= new Date().getFullYear() %> &nbsp;·&nbsp;
+    <a href="mailto:hola@retaux.com">hola@retaux.com</a>
+  </footer>
+</div>
+
+<% if (prefillCode && prefillCode.length === 6) { %>
+<script>document.getElementById('verifyForm').submit();</script>
+<% } %>
+<script src="/js/i18n.js"></script>
+</body>
+</html>

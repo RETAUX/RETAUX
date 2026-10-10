@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="<%= lang || 'es' %>">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title><%- __('auth.register_title') %> — RETAUX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { min-height: 100vh; background: #060920; font-family: 'Source Sans 3','Segoe UI',Arial,sans-serif; overflow-x: hidden; color: #fff; }
+    .bg { position: fixed; inset: 0; z-index: 0; background: radial-gradient(ellipse at 20% 50%, #0d1a7a 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, #0a4a7a 0%, transparent 55%), #060920; }
+    .bg-orb { position: absolute; border-radius: 50%; filter: blur(80px); animation: float 8s ease-in-out infinite; }
+    .bg-orb-1 { width: 500px; height: 500px; background: radial-gradient(circle, rgba(79,195,247,0.3) 0%, transparent 70%); top: -100px; left: -100px; }
+    .bg-orb-2 { width: 400px; height: 400px; background: radial-gradient(circle, rgba(255,193,7,0.2) 0%, transparent 70%); bottom: -80px; right: -80px; animation-delay: -3s; }
+    @keyframes float { 0%,100% { transform: translate(0,0); } 50% { transform: translate(20px,-20px); } }
+    .page { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
+    .top-nav { display: flex; align-items: center; justify-content: space-between; padding: 20px 40px; }
+    .top-nav-logo { font-family: 'Fraunces',Georgia,serif; font-size: 1.3rem; font-weight: 700; color: #4FC3F7; text-decoration: none; letter-spacing: -0.02em; }
+    .top-nav-logo em { color: #FFC107; font-style: normal; }
+    .center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px 24px 60px; gap: 20px; }
+    .hero-wordmark .re  { font-family: 'Fraunces',Georgia,serif; font-size: clamp(36px,7vw,72px); font-weight: 700; color: #4FC3F7; letter-spacing: -0.03em; text-shadow: 0 0 60px rgba(79,195,247,0.6); }
+    .hero-wordmark .taux{ font-family: 'Fraunces',Georgia,serif; font-size: clamp(36px,7vw,72px); font-weight: 700; color: #FFC107; letter-spacing: -0.03em; text-shadow: 0 0 60px rgba(255,193,7,0.5); }
+    .glass-card { background: rgba(255,255,255,0.06); backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 36px 44px; width: 100%; max-width: 480px; box-shadow: 0 32px 64px rgba(0,0,0,0.4); }
+    .card-title { font-family: 'Fraunces',Georgia,serif; font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 22px; }
+    .form-group { margin-bottom: 18px; }
+    .field-label-row { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+    label { font-size: 0.72rem; font-weight: 600; color: rgba(255,255,255,0.55); letter-spacing: 0.06em; text-transform: uppercase; }
+    input[type=email], input[type=text], input[type=password] { width: 100%; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 11px 14px; font-size: 0.95rem; color: #fff; font-family: 'Source Sans 3',sans-serif; outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+    input::placeholder { color: rgba(255,255,255,0.25); }
+    input:focus { border-color: #4FC3F7; box-shadow: 0 0 0 3px rgba(79,195,247,0.15); }
+    .mono-input { font-family: 'IBM Plex Mono','Courier New',monospace !important; letter-spacing: 0.1em; }
+    .password-wrapper { position: relative; }
+    .password-wrapper input { padding-right: 46px; }
+    .password-toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: rgba(255,255,255,0.4); padding: 4px; line-height: 1; }
+    .form-hint { font-size: 0.78rem; color: rgba(255,255,255,0.35); margin-top: 4px; }
+    .info-btn { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: rgba(79,195,247,0.2); border: 1px solid rgba(79,195,247,0.5); color: #4FC3F7; font-size: 0.65rem; font-weight: 700; cursor: pointer; flex-shrink: 0; transition: background 0.15s; line-height: 1; padding: 0; }
+    .info-btn:hover { background: rgba(79,195,247,0.35); }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+    .modal-overlay.open { display: flex; }
+    .modal-box { background: #0d1340; border: 1px solid rgba(255,255,255,0.15); border-radius: 16px; padding: 28px; max-width: 420px; width: 100%; position: relative; max-height: 80vh; overflow-y: auto; }
+    .modal-close { position: absolute; top: 14px; right: 16px; background: none; border: none; color: rgba(255,255,255,0.5); font-size: 1.3rem; cursor: pointer; }
+    .modal-title { font-family: 'Fraunces',Georgia,serif; font-size: 1.05rem; font-weight: 700; color: #4FC3F7; margin-bottom: 12px; }
+    .modal-body { font-size: 0.88rem; color: rgba(255,255,255,0.75); line-height: 1.7; }
+    .modal-body ol { padding-left: 18px; margin-top: 8px; }
+    .modal-body li { margin-bottom: 6px; }
+    .modal-body strong { color: #FFC107; }
+    .modal-body a { color: #4FC3F7; }
+    .check-group { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; margin-bottom: 10px; }
+    .check-group input[type=checkbox] { width: 18px; height: 18px; accent-color: #4FC3F7; flex-shrink: 0; margin-top: 2px; cursor: pointer; }
+    .check-label { font-size: 0.88rem; color: rgba(255,255,255,0.8); line-height: 1.4; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; text-transform: none; letter-spacing: normal; font-weight: 400; }
+    .btn-submit { width: 100%; padding: 14px; background: linear-gradient(135deg,#FFC107,#FFD54F); color: #060920; font-family: 'Source Sans 3',sans-serif; font-size: 1rem; font-weight: 700; border: none; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 24px rgba(255,193,7,0.4); transition: transform 0.1s, box-shadow 0.2s; margin-top: 8px; }
+    .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(255,193,7,0.55); }
+    .alert-dark { background: rgba(193,57,43,0.18); border: 1px solid rgba(193,57,43,0.35); color: #ff8a80; border-radius: 8px; padding: 10px 14px; font-size: 0.88rem; margin-bottom: 16px; }
+    .auth-footer { text-align: center; margin-top: 18px; font-size: 0.88rem; color: rgba(255,255,255,0.4); }
+    .auth-footer a { color: #4FC3F7; text-decoration: none; margin-left: 4px; }
+    .page-footer { text-align: center; padding: 16px; font-size: 11px; color: rgba(255,255,255,0.18); }
+    @media (max-width: 480px) { .top-nav { padding: 14px 20px; } .glass-card { padding: 28px 20px; } }
+  </style>
+</head>
+<body>
+<div class="bg"><div class="bg-orb bg-orb-1"></div><div class="bg-orb bg-orb-2"></div></div>
+
+<!-- Modal TFN -->
+<div class="modal-overlay" id="modal-tfn">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('modal-tfn')">✕</button>
+    <div class="modal-title" data-i18n="auth.tfn_modal_title">¿Qué es el TFN y cómo lo obtengo?</div>
+    <div class="modal-body">
+      <p data-i18n="auth.tfn_modal_p1">El <strong>Tax File Number (TFN)</strong> es tu número de identificación fiscal en Australia. Es único, permanente y confidencial.</p>
+      <p style="margin-top:10px"><strong data-i18n="auth.tfn_modal_how">¿Cómo obtenerlo?</strong></p>
+      <ol>
+        <li data-i18n="auth.tfn_modal_step1">Ingresá a <a href="https://www.ato.gov.au/individuals-and-families/tax-file-number" target="_blank" rel="noopener">ato.gov.au</a></li>
+        <li data-i18n="auth.tfn_modal_step2">Seleccioná <em>"Apply for a TFN"</em></li>
+        <li data-i18n="auth.tfn_modal_step3">Elegí la opción según tu situación: Working Holiday, estudiante, residente, etc.</li>
+        <li data-i18n="auth.tfn_modal_step4">Completá el formulario — necesitás tu pasaporte y datos de visa</li>
+        <li data-i18n="auth.tfn_modal_step5">El TFN llega por myGov o carta en pocos días</li>
+      </ol>
+      <p style="margin-top:10px;font-size:0.82rem;color:rgba(255,255,255,0.4)" data-i18n="auth.tfn_modal_note">Si ya trabajaste en Australia probablemente ya tenés uno — buscalo en tus payslips o contactá a tu empleador.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Modal myGov -->
+<div class="modal-overlay" id="modal-mygov">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('modal-mygov')">✕</button>
+    <div class="modal-title" data-i18n="auth.mygov_modal_title">¿Cómo crear una cuenta en myGov?</div>
+    <div class="modal-body">
+      <ol>
+        <li data-i18n="auth.mygov_step1">Ingresá a <a href="https://my.gov.au" target="_blank" rel="noopener">my.gov.au</a></li>
+        <li data-i18n="auth.mygov_step2">Hacé click en <em>"Create a myGov account"</em></li>
+        <li data-i18n="auth.mygov_step3">Ingresá tu e-mail y creá una contraseña</li>
+        <li data-i18n="auth.mygov_step4">Verificá tu e-mail con el código que te llegará</li>
+        <li data-i18n="auth.mygov_step5">Completá tu identidad con pasaporte u otro documento</li>
+        <li>Tu usuario myGov será del formato <strong>AB123456</strong> <span data-i18n="auth.mygov_step6">(2 letras + 6 números)</span></li>
+      </ol>
+      <p style="margin-top:10px;font-size:0.82rem;color:rgba(255,255,255,0.4)" data-i18n="auth.mygov_note">Guardá bien tu usuario y contraseña — los necesitarás para el trámite.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Modal ATO -->
+<div class="modal-overlay" id="modal-ato">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('modal-ato')">✕</button>
+    <div class="modal-title" data-i18n="auth.ato_modal_title">¿Cómo vincular myGov con la ATO?</div>
+    <div class="modal-body">
+      <ol>
+        <li data-i18n="auth.ato_step1">Ingresá a tu cuenta en <a href="https://my.gov.au" target="_blank" rel="noopener">my.gov.au</a></li>
+        <li data-i18n="auth.ato_step2">Hacé click en <em>"Link a service"</em></li>
+        <li data-i18n="auth.ato_step3">Seleccioná <strong>Australian Taxation Office (ATO)</strong></li>
+        <li data-i18n="auth.ato_step4">Ingresá tu TFN y confirmá tu identidad</li>
+        <li data-i18n="auth.ato_step5">Una vez vinculado verás tu info fiscal en myGov</li>
+      </ol>
+      <p style="margin-top:10px;font-size:0.82rem;color:rgba(255,255,255,0.4)" data-i18n="auth.ato_note">Este paso es importante para gestionar tu declaración correctamente.</p>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <nav class="top-nav">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <a href="/" class="top-nav-logo">RE<em>TAUX</em></a>
+      <a href="https://www.tpb.gov.au/public-register?search=26346246" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:7px;text-decoration:none;" aria-label="Registered BAS Agent 26346246">
+        <svg width="34" height="34" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <path id="rg-bas-top" d="M 12,50 A 38,38 0 0 1 88,50"/>
+            <path id="rg-bas-bot" d="M 20,50 A 30,30 0 0 0 80,50"/>
+          </defs>
+          <circle cx="50" cy="50" r="48" fill="#fff" stroke="#111" stroke-width="4"/>
+          <circle cx="50" cy="50" r="34" fill="#8DC63F"/>
+          <polyline points="31,52 44,65 69,38" fill="none" stroke="#fff" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <text font-family="Arial,sans-serif" font-size="8" font-weight="700" fill="#111" text-anchor="middle">
+            <textPath href="#rg-bas-top" startOffset="50%">TAX PRACTITIONERS BOARD</textPath>
+          </text>
+          <text font-family="Arial,sans-serif" font-size="9" font-weight="700" fill="#111" text-anchor="middle">
+            <textPath href="#rg-bas-bot" startOffset="50%">REGISTERED</textPath>
+          </text>
+        </svg>
+        <div style="display:flex;flex-direction:column;line-height:1.25">
+          <span style="font-size:0.57rem;font-weight:700;color:rgba(255,255,255,.45);letter-spacing:.05em;text-transform:uppercase">BAS agent</span>
+          <span style="font-size:0.67rem;font-weight:700;color:#fff;font-family:'IBM Plex Mono',monospace">26346246</span>
+        </div>
+      </a>
+    </div>
+    <div id="lang-selector"></div>
+  </nav>
+
+  <div class="center">
+    <div class="hero-wordmark"><span class="re">RE</span><span class="taux">TAUX</span></div>
+
+    <div class="glass-card">
+      <p class="card-title" data-i18n="auth.register_title">Creá tu cuenta para empezar</p>
+      <% if (error) { %><div class="alert-dark"><%= error %></div><% } %>
+
+      <form method="POST" action="/register">
+        <div style="position:absolute;left:-9999px;top:-9999px;opacity:0;pointer-events:none;" aria-hidden="true">
+          <input type="text" name="website" tabindex="-1" autocomplete="off">
+          <input type="hidden" name="_t" id="form-ts">
+        </div>
+
+        <div class="form-group">
+          <div class="field-label-row"><label data-i18n="auth.email">E-MAIL</label></div>
+          <input type="email" name="email" required placeholder="tu@email.com">
+        </div>
+
+        <div class="form-group">
+          <div class="field-label-row"><label data-i18n="auth.password">CLAVE</label></div>
+          <div class="password-wrapper">
+            <input type="password" name="password" id="reg-pwd" required minlength="6" placeholder="••••••••">
+            <button type="button" class="password-toggle" onclick="togglePwd('reg-pwd',this)" aria-label="Mostrar/ocultar clave">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <p class="form-hint" data-i18n="auth.password_hint">Mínimo 6 caracteres.</p>
+        </div>
+
+        <input type="hidden" name="referralCode" id="ref-code-field" value="<%= typeof refCode !== 'undefined' && refCode ? refCode : '' %>">
+        <button type="submit" class="btn-submit" data-i18n="auth.btn_register">Crear cuenta</button>
+      </form>
+
+      <div class="auth-footer">
+        <span data-i18n="auth.have_account">¿Ya tenés cuenta?</span>
+        <a href="/login" data-i18n="auth.go_login">Ingresá aquí</a>
+      </div>
+    </div>
+  </div>
+  <footer class="page-footer">RETAUX © <%= new Date().getFullYear() %> &nbsp;·&nbsp; <a href="mailto:hola@retaux.com">hola@retaux.com</a></footer>
+</div>
+
+<script>
+function togglePwd(id,btn){var i=document.getElementById(id);var s=i.type==='password';i.type=s?'text':'password';btn.innerHTML=s?'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>':'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';}
+function formatTFN(input){var v=input.value.replace(/\D/g,'').slice(0,9);if(v.length>6)v=v.slice(0,3)+' '+v.slice(3,6)+' '+v.slice(6);else if(v.length>3)v=v.slice(0,3)+' '+v.slice(3);input.value=v;}
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(function(m){m.addEventListener('click',function(e){if(e.target===m)m.classList.remove('open');});});
+</script>
+<script>document.getElementById("form-ts").value=Date.now();</script>
+<script src="/js/i18n.js"></script>
+</body>
+</html>

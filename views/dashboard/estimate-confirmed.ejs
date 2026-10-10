@@ -1,0 +1,38 @@
+<%- include('../layout/header', { title: 'Estimación confirmada — RETAUX', currentUser: user }) %>
+
+<div style="min-height:70vh;display:flex;align-items:center;justify-content:center;padding:40px 20px;">
+  <div style="background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.08);padding:48px 40px;max-width:480px;width:100%;text-align:center;">
+
+    <div style="font-size:3.5rem;margin-bottom:16px;">🎉</div>
+
+    <div style="font-size:0.72rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#FFC107;margin-bottom:8px;">RETAUX</div>
+
+    <h1 style="font-size:1.5rem;font-weight:800;color:#0A0E5C;margin:0 0 12px;">¡Estimación confirmada!</h1>
+
+    <p style="font-size:0.95rem;color:#6B7280;line-height:1.7;margin:0 0 28px;">
+      Gracias por confirmar tu estimación. Tu declaración de impuestos ya está en proceso de presentación ante la ATO.
+      <br><br>
+      <strong style="color:#0A0E5C;">Ahora solo queda esperar el pago de la ATO</strong>, que generalmente se acredita dentro de los 14 días hábiles.
+    </p>
+
+    <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:16px 20px;margin-bottom:28px;text-align:left;">
+      <div style="font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#166534;margin-bottom:6px;">¿Qué pasa ahora?</div>
+      <div style="font-size:0.85rem;color:#14532D;line-height:1.8;">
+        ✅ Tu declaración fue presentada ante la ATO<br>
+        ⏳ La ATO procesa el reintegro (7–14 días hábiles)<br>
+        💳 El dinero se acredita en tu cuenta bancaria
+      </div>
+    </div>
+
+    <a href="/dashboard" style="display:inline-block;background:#0A0E5C;color:#FFC107;text-decoration:none;font-weight:700;font-size:0.9rem;padding:13px 32px;border-radius:8px;">
+      Ver mi panel →
+    </a>
+
+    <p style="margin-top:20px;font-size:0.78rem;color:#9CA3AF;">
+      ¿Tenés alguna duda? Escribinos a <a href="mailto:hola@retaux.com" style="color:#0A0E5C;">hola@retaux.com</a>
+    </p>
+
+  </div>
+</div>
+
+<%- include('../layout/footer') %>

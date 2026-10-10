@@ -1,0 +1,44 @@
+<%- include('../layout/header', { title: __('linking.page_title'), currentUser: user }) %>
+
+<div class="container--narrow" style="padding:40px 24px 60px">
+  <a href="/dashboard" style="font-size:14px;color:var(--text-muted)">← <%- __('case.back') %></a>
+
+  <h1 style="margin:16px 0 8px"><%- __('linking.title') %></h1>
+  <p class="text-muted" style="margin-bottom:28px"><%- __('linking.subtitle') %></p>
+
+  <% if (success) { %><div class="alert alert--success"><%= success %></div><% } %>
+  <% if (error) { %><div class="alert alert--error"><%= error %></div><% } %>
+
+  <div class="card mb-3">
+    <h3 style="margin-bottom:12px"><%- __('linking.how_title') %></h3>
+    <ol style="padding-left:20px;line-height:2.2;font-size:15px">
+      <li><%- __('linking.step1') %></li>
+      <li><%- __('linking.step2') %></li>
+      <li><%- __('linking.step3') %></li>
+      <li><%- __('linking.step4') %></li>
+      <li><%- __('linking.step5') %></li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:12px"><%- __('linking.form_title') %></h3>
+    <% if (user.atoLinkingStatus === 'linked') { %>
+      <div class="alert alert--success"><%- __('linking.status_linked') %></div>
+    <% } else { %>
+      <form method="POST" action="/linking">
+        <div class="form-group">
+          <label><%- __('linking.code_label') %></label>
+          <input type="text" name="atoCode" required
+            placeholder="<%- __('linking.code_placeholder') %>"
+            class="mono-input"
+            style="font-size:1.5rem;letter-spacing:6px;text-align:center"
+            value="<%= user.atoCode || '' %>">
+          <p class="form-hint"><%- __('linking.code_hint') %></p>
+        </div>
+        <button type="submit" class="btn btn--primary btn--full"><%- __('linking.submit_btn') %> →</button>
+      </form>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../layout/footer') %>

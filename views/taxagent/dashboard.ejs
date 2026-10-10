@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tax Agent Portal — RETAUX</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { min-height: 100vh; background: #F0F4F8; font-family: 'Segoe UI', Arial, sans-serif; color: #1a2430; }
+
+  /* NAV */
+  nav { background: #060C14; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; }
+  .nav-logo { font-size: 1.3rem; font-weight: 900; letter-spacing: 0.04em; }
+  .nav-logo span:first-child { color: #38BDF8; }
+  .nav-logo span:last-child  { color: #FFC107; }
+  .nav-right { display: flex; align-items: center; gap: 20px; font-size: 0.85rem; color: rgba(255,255,255,0.5); }
+  .nav-right strong { color: #fff; }
+  .nav-right a { color: rgba(255,255,255,0.4); text-decoration: none; font-size: 0.8rem; border: 1px solid rgba(255,255,255,0.15); padding: 4px 12px; border-radius: 4px; }
+  .nav-right a:hover { color: #fff; border-color: rgba(255,255,255,0.4); }
+
+  /* HEADER */
+  .page-header { padding: 24px 32px 12px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .page-header h1 { font-size: 1.25rem; font-weight: 700; color: #060C14; }
+  .page-header p  { font-size: 0.83rem; color: #7a8a9a; margin-top: 3px; }
+
+  /* STATS */
+  .stats { display: flex; gap: 14px; padding: 0 32px 18px; flex-wrap: wrap; }
+  .stat { background: #fff; border-radius: 8px; padding: 12px 18px; flex: 1; min-width: 120px; border-left: 4px solid #38BDF8; }
+  .stat.overdue-stat  { border-left-color: #DC2626; }
+  .stat.done-stat     { border-left-color: #10B981; }
+  .stat.submit-stat   { border-left-color: #8B5CF6; }
+  .stat-val { font-size: 1.5rem; font-weight: 700; color: #060C14; }
+  .stat.overdue-stat .stat-val { color: #DC2626; }
+  .stat.done-stat    .stat-val { color: #10B981; }
+  .stat.submit-stat  .stat-val { color: #8B5CF6; }
+  .stat-lbl { font-size: 0.72rem; color: #7a8a9a; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+
+  /* SEARCH */
+  .search-bar { padding: 0 32px 16px; }
+  .search-input { width: 100%; max-width: 420px; border: 1px solid #D1D5DB; border-radius: 8px; padding: 9px 14px 9px 38px; font-size: 0.88rem; color: #1a2430; outline: none; background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='15' fill='none' stroke='%239CA3AF' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 12px center; }
+  .search-input:focus { border-color: #38BDF8; }
+
+  /* TABLE */
+  .table-wrap { padding: 0 32px 60px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,0.07); font-size: 0.85rem; min-width: 1100px; }
+  thead tr { background: #060C14; }
+  th { padding: 11px 12px; text-align: left; font-size: 0.69rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: rgba(255,255,255,0.5); white-space: nowrap; }
+  th.editable { color: #FFC107; }
+  td { padding: 10px 12px; border-bottom: 1px solid #EEF1F4; vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: #F8FAFC; }
+  tbody tr.overdue { background: #FEF2F2; }
+  tbody tr.overdue:hover { background: #FEE2E2; }
+  tbody tr.submitted-row { background: #F0FDF4; }
+  tbody tr.submitted-row:hover { background: #DCFCE7; }
+  tbody tr.hidden-row { display: none; }
+
+  /* BADGES */
+  .badge { display: inline-block; font-size: 0.67rem; font-weight: 700; padding: 2px 7px; border-radius: 4px; white-space: nowrap; }
+  .badge-overdue   { background: #DC2626; color: #fff; }
+  .badge-submitted { background: #8B5CF6; color: #fff; }
+  .badge-done      { background: #D1FAE5; color: #065F46; }
+
+  /* MONO fields */
+  .mono { font-family: 'Courier New', monospace; font-size: 0.8rem; color: #374151; letter-spacing: 0.04em; }
+  .muted { font-size: 0.8rem; color: #9CA3AF; }
+
+  /* Editable inputs */
+  .editable-cell { position: relative; }
+  .editable-cell input, .editable-cell textarea {
+    width: 100%; border: 1px solid transparent; border-radius: 5px;
+    padding: 5px 7px; font-size: 0.83rem; font-family: inherit;
+    background: transparent; color: #1a2430; resize: none;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .editable-cell input:focus, .editable-cell textarea:focus {
+    border-color: #38BDF8; background: #EFF9FF; outline: none;
+  }
+  .editable-cell input { width: 105px; }
+  .editable-cell textarea { width: 155px; height: 34px; }
+  .save-ok { display: none; font-size: 0.7rem; color: #10B981; font-weight: 700; margin-top: 2px; }
+  .save-ok.show { display: block; }
+
+  /* View button */
+  .btn-view { display: inline-flex; align-items: center; gap: 5px; background: #060C14; color: #38BDF8; border: 1px solid #38BDF8; border-radius: 5px; padding: 5px 11px; font-size: 0.77rem; font-weight: 600; text-decoration: none; white-space: nowrap; cursor: pointer; }
+  .btn-view:hover { background: #0f172a; }
+  .btn-view.no-report { border-color: #9CA3AF; color: #9CA3AF; cursor: not-allowed; pointer-events: none; }
+
+  /* Submit button */
+  .btn-submit { display: inline-flex; align-items: center; gap: 5px; background: #fff; color: #7C3AED; border: 1px solid #8B5CF6; border-radius: 5px; padding: 5px 11px; font-size: 0.77rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+  .btn-submit:hover { background: #F5F3FF; }
+  .submitted-label { font-size: 0.78rem; color: #7C3AED; font-weight: 600; }
+
+  /* Empty */
+  .empty { text-align: center; padding: 60px 20px; color: #7a8a9a; font-size: 0.92rem; }
+  .no-results { display: none; text-align: center; padding: 30px; color: #9CA3AF; font-size: 0.88rem; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo"><span>RE</span><span>TAUX</span></div>
+  <div class="nav-right">
+    <span>Signed in as <strong><%= agent.fullName || agent.email %></strong></span>
+    <a href="/taxagent/logout">Sign out</a>
+  </div>
+</nav>
+
+<div class="page-header">
+  <div>
+    <h1>Client Dashboard</h1>
+    <p>Clients assigned for tax return processing. Edit fields directly — changes save automatically.</p>
+  </div>
+</div>
+
+<%
+  const total     = clients.length;
+  const overdue   = clients.filter(c => c.overdue).length;
+  const done      = clients.filter(c => c.grossIncome && c.returnAmt).length;
+  const submitted = clients.filter(c => c.stage === 'issued').length;
+%>
+
+<div class="stats">
+  <div class="stat">
+    <div class="stat-val"><%= total %></div>
+    <div class="stat-lbl">Total clients</div>
+  </div>
+  <div class="stat done-stat">
+    <div class="stat-val"><%= done %></div>
+    <div class="stat-lbl">Completed</div>
+  </div>
+  <div class="stat submit-stat">
+    <div class="stat-val"><%= submitted %></div>
+    <div class="stat-lbl">Submitted to ATO</div>
+  </div>
+  <div class="stat overdue-stat">
+    <div class="stat-val"><%= overdue %></div>
+    <div class="stat-lbl">Overdue (&gt;5 days)</div>
+  </div>
+</div>
+
+<div class="search-bar">
+  <input type="text" class="search-input" id="searchInput" placeholder="Search by name, TFN or ABN…" oninput="filterClients(this.value)">
+</div>
+
+<div class="table-wrap">
+  <% if (clients.length === 0) { %>
+    <div class="empty">No clients assigned yet.</div>
+  <% } else { %>
+  <table id="clientTable">
+    <thead>
+      <tr>
+        <th style="width:40px;text-align:center;">#</th>
+        <th>Report</th>
+        <th>Name</th>
+        <th>TFN</th>
+        <th>ABN</th>
+        <th>Date Added</th>
+        <th class="editable">Occupation</th>
+        <th class="editable">Gross Income</th>
+        <th class="editable">Return Amount</th>
+        <th class="editable">Observations</th>
+        <th>Submitted</th>
+      </tr>
+    </thead>
+    <tbody id="clientBody">
+      <% clients.forEach(function(c, idx) { %>
+      <tr class="<%= c.stage === 'issued' ? 'submitted-row' : (c.overdue ? 'overdue' : '') %>"
+          data-id="<%= c.id %>"
+          data-search="<%= (c.fullName + ' ' + c.tfn + ' ' + c.abn).toLowerCase() %>">
+        <td style="text-align:center;font-size:0.78rem;color:#9CA3AF;font-family:monospace;"><%= idx + 1 %></td>
+        <td>
+          <% if (c.hasReport) { %>
+            <a href="/taxagent/client/<%= c.id %>/report" target="_blank" class="btn-view">
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              View
+            </a>
+          <% } else { %>
+            <span class="btn-view no-report">No report</span>
+          <% } %>
+        </td>
+        <td>
+          <strong><%= c.fullName %></strong>
+          <% if (c.overdue && !c.submitted) { %> <span class="badge badge-overdue"><%= c.daysSince %>d</span><% } %>
+          <% if (c.submitted) { %> <span class="badge badge-submitted">Submitted</span><% } %>
+          <% if (!c.submitted && c.grossIncome && c.returnAmt) { %> <span class="badge badge-done">Done</span><% } %>
+        </td>
+        <td><span class="mono"><%= c.tfn || '—' %></span></td>
+        <td><span class="mono"><%= c.abn || '—' %></span></td>
+        <td><span class="muted"><%= c.sentAt %></span></td>
+        <td class="editable-cell">
+          <input type="text" value="<%= c.occupation %>" placeholder="e.g. Chef" data-field="occupation" data-id="<%= c.id %>">
+          <div class="save-ok" id="oc-saved-<%= c.id %>">Saved ✓</div>
+        </td>
+        <td class="editable-cell">
+          <input type="text" value="<%= c.grossIncome %>" placeholder="0.00" data-field="grossIncome" data-id="<%= c.id %>">
+          <div class="save-ok" id="gi-saved-<%= c.id %>">Saved ✓</div>
+        </td>
+        <td class="editable-cell">
+          <input type="text" value="<%= c.returnAmt %>" placeholder="0.00" data-field="returnAmt" data-id="<%= c.id %>">
+          <div class="save-ok" id="ra-saved-<%= c.id %>">Saved ✓</div>
+        </td>
+        <td class="editable-cell">
+          <textarea data-field="notes" data-id="<%= c.id %>" placeholder="Notes…"><%= c.notes %></textarea>
+          <div class="save-ok" id="nt-saved-<%= c.id %>">Saved ✓</div>
+        </td>
+        <td>
+          <% if (c.stage === 'issued') { %>
+            <span class="badge badge-submitted">Submitted to ATO<% if (c.submittedAt) { %> · <%= c.submittedAt %><% } %></span>
+          <% } else if (c.stage === 'with_agent') { %>
+            <div style="display:flex;flex-direction:column;gap:5px;">
+              <span class="badge" style="background:#DBEAFE;color:#1D4ED8;">Tax Agent Hold</span>
+              <button class="btn-submit" onclick="submitClient('<%= c.id %>', this)">
+                <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                Mark submitted
+              </button>
+            </div>
+          <% } else { %>
+            <span class="badge" style="background:#F3F4F6;color:#6B7280;">Processing</span>
+          <% } %>
+        </td>
+      </tr>
+      <% }); %>
+    </tbody>
+  </table>
+  <div class="no-results" id="noResults">No clients match your search.</div>
+  <% } %>
+</div>
+
+<script>
+var saveTimers = {};
+
+function saveField(id, field, value) {
+  clearTimeout(saveTimers[id + field]);
+  saveTimers[id + field] = setTimeout(function() {
+    var body = {};
+    body[field] = value;
+    fetch('/taxagent/client/' + id + '/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    }).then(function(r) { return r.json(); }).then(function(d) {
+      if (!d.ok) return;
+      var prefix = { occupation:'oc', grossIncome:'gi', returnAmt:'ra', notes:'nt' }[field] || 'oc';
+      var el = document.getElementById(prefix + '-saved-' + id);
+      if (el) { el.classList.add('show'); setTimeout(function(){ el.classList.remove('show'); }, 2000); }
+    });
+  }, 600);
+}
+
+document.querySelectorAll('input[data-field], textarea[data-field]').forEach(function(el) {
+  el.addEventListener('input', function() {
+    saveField(el.dataset.id, el.dataset.field, el.value);
+  });
+});
+
+function submitClient(id, btn) {
+  if (!confirm('Mark this client as submitted to ATO? This cannot be undone.')) return;
+  btn.disabled = true;
+  fetch('/taxagent/client/' + id + '/submit', { method: 'POST' })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (!d.ok) { btn.disabled = false; return; }
+      var row = btn.closest('tr');
+      row.classList.remove('overdue');
+      row.classList.add('submitted-row');
+      // Replace button with label
+      var td = btn.parentNode;
+      var date = new Date(d.submittedAt).toLocaleDateString('en-AU', { day:'2-digit', month:'2-digit', year:'numeric' });
+      td.innerHTML = '<span class="submitted-label">✓ ' + date + '</span>';
+      // Update name cell badges
+      var nameTd = row.querySelector('td:nth-child(2)');
+      var overdueBadge = nameTd ? nameTd.querySelector('.badge-overdue') : null;
+      if (overdueBadge) overdueBadge.remove();
+      var doneBadge = nameTd ? nameTd.querySelector('.badge-done') : null;
+      if (doneBadge) doneBadge.remove();
+      var sub = document.createElement('span');
+      sub.className = 'badge badge-submitted'; sub.textContent = 'Submitted';
+      if (nameTd) nameTd.appendChild(sub);
+      // Update stat
+      var sv = document.querySelector('.submit-stat .stat-val');
+      if (sv) sv.textContent = parseInt(sv.textContent || '0') + 1;
+    });
+}
+
+function filterClients(q) {
+  q = q.toLowerCase().trim();
+  var rows = document.querySelectorAll('#clientBody tr');
+  var visible = 0;
+  rows.forEach(function(row) {
+    var search = row.dataset.search || '';
+    var show = !q || search.indexOf(q) !== -1;
+    row.classList.toggle('hidden-row', !show);
+    if (show) visible++;
+  });
+  var noRes = document.getElementById('noResults');
+  if (noRes) noRes.style.display = visible === 0 ? 'block' : 'none';
+}
+</script>
+
+</body>
+</html>

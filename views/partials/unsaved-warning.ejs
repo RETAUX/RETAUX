@@ -1,0 +1,144 @@
+<!-- Modal: cambios sin guardar — 3 acciones -->
+<style>
+  @keyframes retaux-modal-in {
+    from { opacity:0; transform:translateY(14px) scale(0.96); }
+    to   { opacity:1; transform:translateY(0)    scale(1);    }
+  }
+  #unsaved-card { animation: retaux-modal-in 0.22s cubic-bezier(.22,.68,0,1.2); }
+  #unsaved-save-continue:hover { background:#070A45 !important; }
+  #unsaved-continue:hover      { background:#DC2626 !important; color:#fff !important; }
+  #unsaved-cancel:hover        { background:var(--bg-page) !important; color:var(--text-navy) !important; border-color:var(--muted) !important; }
+</style>
+
+<div id="unsaved-overlay" style="display:none;position:fixed;inset:0;background:rgba(10,14,92,0.52);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);z-index:9999;align-items:center;justify-content:center;padding:20px;">
+  <div id="unsaved-card" style="background:#fff;border-radius:20px;width:100%;max-width:440px;box-shadow:0 24px 64px rgba(10,14,92,0.22),0 4px 16px rgba(10,14,92,0.1);overflow:hidden;">
+
+    <!-- Top accent bar -->
+    <div style="height:4px;background:linear-gradient(90deg,#FFC107 0%,#E5AC00 55%,#0A0E5C 100%);"></div>
+
+    <!-- Body -->
+    <div style="padding:28px 28px 26px;">
+
+      <!-- Icon + text -->
+      <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:20px;">
+        <div style="width:48px;height:48px;border-radius:14px;background:#FFF8E1;border:1.5px solid #FDE68A;display:flex;align-items:center;justify-content:center;font-size:1.45rem;flex-shrink:0;">⚠️</div>
+        <div>
+          <div style="font-size:1.05rem;font-weight:700;color:#0D2B55;font-family:var(--font-display);line-height:1.2;margin-bottom:7px;"><%- __('profile.unsaved_title') %></div>
+          <div style="font-size:0.875rem;color:#5A6A7A;line-height:1.6;"><%- __('profile.unsaved_body') %></div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div style="display:flex;flex-direction:column;gap:9px;">
+
+        <!-- Primary: Guardar y continuar -->
+        <button id="unsaved-save-continue" style="display:flex;align-items:center;justify-content:center;gap:9px;padding:13px 20px;border:none;background:#0A0E5C;color:#fff;border-radius:11px;font-size:0.95rem;font-weight:700;cursor:pointer;font-family:inherit;transition:background 0.15s;width:100%;">
+          <span>💾</span> <%- __('profile.unsaved_save_continue') %>
+        </button>
+
+        <!-- Secondary row: Eliminar + Cancelar -->
+        <div style="display:flex;gap:9px;">
+          <button id="unsaved-continue" style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 14px;border:1.5px solid #DC2626;background:transparent;color:#DC2626;border-radius:10px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.15s;">
+            <span style="font-size:0.95rem;">🗑</span> <%- __('profile.unsaved_continue') %>
+          </button>
+          <button id="unsaved-cancel" style="flex:1;padding:11px 14px;border:1.5px solid #D0DAEA;background:transparent;color:#5A6A7A;border-radius:10px;font-size:0.9rem;font-weight:500;cursor:pointer;font-family:inherit;transition:all 0.15s;">
+            <%- __('profile.unsaved_cancel') %>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var dirty = false;
+  var pendingHref = null;
+
+  // ── Redirect post-guardado (viene de "Guardar y continuar") ──
+  try {
+    var dest = sessionStorage.getItem('retaux_post_save');
+    if (dest) {
+      var hasError = document.querySelector('.alert-error, .alert--error');
+      sessionStorage.removeItem('retaux_post_save');
+      if (!hasError) {
+        window.location.replace(dest);
+        return;
+      }
+    }
+  } catch(e){}
+
+  // ── Detectar cambios ──
+  document.querySelectorAll('input:not([type="file"]), select, textarea').forEach(function(el){
+    el.addEventListener('change', function(){ dirty = true; });
+    el.addEventListener('input',  function(){ dirty = true; });
+  });
+
+  // ── Limpiar al guardar ──
+  document.querySelectorAll('form').forEach(function(f){
+    f.addEventListener('submit', function(){ dirty = false; });
+  });
+
+  // ── Interceptar clicks en links ──
+  document.addEventListener('click', function(e){
+    var a = e.target.closest('a[href]');
+    if (!a) return;
+    var href = a.getAttribute('href');
+    if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('javascript:') || href.startsWith('tel:')) return;
+    if (!dirty) return;
+    e.preventDefault();
+    pendingHref = href;
+    showModal();
+  });
+
+  // ── Advertencia nativa (cerrar pestaña / retroceder) ──
+  window.addEventListener('beforeunload', function(e){
+    if (!dirty) return;
+    e.preventDefault();
+    e.returnValue = '';
+  });
+
+  // ── Controles del modal ──
+  var overlay = document.getElementById('unsaved-overlay');
+  overlay.addEventListener('click', function(e){ if(e.target === overlay) hideModal(); });
+
+  document.getElementById('unsaved-cancel').addEventListener('click', hideModal);
+
+  // "Eliminar" — descartar cambios y navegar
+  document.getElementById('unsaved-continue').addEventListener('click', function(){
+    dirty = false;
+    hideModal();
+    if (pendingHref) window.location.href = pendingHref;
+  });
+
+  // "Guardar y continuar" — guardar formulario y luego ir al destino
+  document.getElementById('unsaved-save-continue').addEventListener('click', function(){
+    dirty = false;
+    if (pendingHref) {
+      try { sessionStorage.setItem('retaux_post_save', pendingHref); } catch(e){}
+    }
+    hideModal();
+    // Buscar el botón primario de guardar (no file upload)
+    var saveBtn = document.querySelector('.btn--primary[type="submit"], button.btn-primary[type="submit"]');
+    if (!saveBtn) saveBtn = document.querySelector('button[type="submit"]:not(.btn--sm):not(.btn--secondary)');
+    if (saveBtn) {
+      saveBtn.click();
+    } else if (pendingHref) {
+      window.location.href = pendingHref;
+    }
+  });
+
+  function showModal(){
+    overlay.style.display = 'flex';
+    var card = document.getElementById('unsaved-card');
+    card.style.animation = 'none';
+    void card.offsetWidth;
+    card.style.animation = '';
+  }
+  function hideModal(){
+    overlay.style.display = 'none';
+    pendingHref = null;
+  }
+})();
+</script>

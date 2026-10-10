@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title><%= typeof title !== 'undefined' ? title + ' — ' : '' %>RETAUX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="/" class="navbar__logo" aria-label="RETAUX" style="text-decoration:none">
+      <span style="font-family:'Fraunces',Georgia,serif;font-size:1.35rem;font-weight:700;color:#4FC3F7;letter-spacing:-0.02em;line-height:1">RE</span><span style="font-family:'Fraunces',Georgia,serif;font-size:1.35rem;font-weight:700;color:#FFC107;letter-spacing:-0.02em;line-height:1">TAUX</span>
+    </a>
+
+    <button class="navbar__hamburger" id="nav-toggle" aria-label="Menú" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+
+    <div class="nav-links" id="nav-links">
+      <% if (typeof currentUser !== 'undefined' && currentUser) { %>
+        <a href="/dashboard" data-i18n="nav.dashboard">Mi panel</a>
+        <a href="/profile" data-i18n="nav.personalData">Mi perfil</a>
+        <a href="/logout" data-i18n="nav.logout">Salir</a>
+      <% } else { %>
+        <a href="/tax-info" data-i18n="nav.taxGuide">Tasas de impuestos</a>
+        <a href="/login" data-i18n="nav.login">Ingresar</a>
+        <a href="/register" class="btn btn--primary btn--sm" data-i18n="nav.register">Registrarme</a>
+      <% } %>
+      <div id="lang-selector"></div>
+    </div>
+  </div>
+</nav>
+<script>
+(function(){
+  var btn=document.getElementById('nav-toggle');
+  var links=document.getElementById('nav-links');
+  if(btn&&links){btn.addEventListener('click',function(){var o=links.classList.toggle('open');btn.setAttribute('aria-expanded',o);});}
+})();
+</script>

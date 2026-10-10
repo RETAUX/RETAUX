@@ -1,0 +1,87 @@
+<%- include('../layout/admin-header', { title: 'Panel admin' }) %>
+
+<div class="admin-header">
+  <div>
+    <h2 style="font-family:'Fraunces',serif">Panel principal</h2>
+    <p class="text-muted text-sm">Gestión de clientes RETAUX</p>
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-card__label">Total clientes</div>
+    <div class="stat-card__value"><%= totalUsers %></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card__label">Pagaron</div>
+    <div class="stat-card__value"><%= totalPaid %></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card__label">Referidos</div>
+    <div class="stat-card__value"><%= totalReferrals %></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card__label">Ingresos</div>
+    <div class="stat-card__value mono" style="font-size:1.4rem">AUD <%= (totalPaid * 120).toLocaleString() %></div>
+  </div>
+</div>
+
+<div class="card">
+  <form method="GET" action="/admin" class="search-bar" style="margin-bottom:16px;flex-wrap:wrap;gap:8px">
+    <input type="text" name="q" placeholder="Buscar por nombre o e-mail..." value="<%= q %>">
+    <select name="status" style="padding:9px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;outline:none">
+      <option value="">Clientes</option>
+      <option value="paid" <%= status === 'paid' ? 'selected' : '' %>>Pagaron</option>
+      <option value="pending" <%= status === 'pending' ? 'selected' : '' %>>Sin pagar</option>
+      <option value="unverified" <%= status === 'unverified' ? 'selected' : '' %>>Sin verificar</option>
+      <option value="referrer" <%= status === 'referrer' ? 'selected' : '' %>>Referidores</option>
+    </select>
+    <button type="submit" class="btn btn--navy btn--sm">Buscar</button>
+    <% if (q || status) { %><a href="/admin" class="btn btn--outline btn--sm">Limpiar</a><% } %>
+  </form>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th>E-mail</th>
+          <th>Visa</th>
+          <th>Estado</th>
+          <th>Turno</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (users.length === 0) { %>
+          <tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:32px">No hay clientes que coincidan.</td></tr>
+        <% } %>
+        <% users.forEach(u => { %>
+        <tr>
+          <td><strong><%= u.firstName %> <%= u.lastName %></strong><br><span class="text-muted text-sm mono"><%= u.referralCode %></span></td>
+          <td class="text-sm"><%= u.email %></td>
+          <td class="text-sm"><%= u.profile && u.profile.visaType ? u.profile.visaType.toUpperCase() : '—' %></td>
+          <td>
+            <% if (u.role === 'referrer') { %>
+              <span class="status-badge" style="background:#E8F0FE;color:#1a56db;border:1px solid #93c5fd">Referidor</span>
+            <% } else if (!u.verified) { %>
+              <span class="status-badge status--cancelled">Sin verificar</span>
+            <% } else if (!u.paymentComplete) { %>
+              <span class="status-badge status--pending">Sin pagar</span>
+            <% } else { %>
+              <span class="status-badge status--paid">Pagó ✓</span>
+            <% } %>
+          </td>
+          <td class="text-sm mono">
+            <% const apt = typeof appointments !== 'undefined' ? null : null %>
+            —
+          </td>
+          <td><a href="/admin/client/<%= u.id %>" class="btn btn--sm btn--outline">Ver</a></td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../layout/admin-footer') %>

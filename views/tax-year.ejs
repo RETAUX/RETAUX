@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('partials/head') %>
+  <title>FY <%= taxYear %> — RETAUX</title>
+</head>
+<body>
+  <%- include('partials/nav', { active: 'dashboard', user: user }) %>
+
+  <section class="section">
+    <div class="container">
+      <p class="muted" style="margin-bottom:4px;"><a href="/dashboard">← Volver a mi panel</a></p>
+      <h1 style="font-size:1.8rem; margin-bottom:18px;">Año fiscal <%= taxYear %></h1>
+
+      <div class="fy-tabs">
+        <% financialYears.forEach(function(fy) { %>
+          <a href="/tax-year/<%= fy %>" class="fy-tab <%= fy === taxYear ? 'active' : '' %>">FY <%= fy %></a>
+        <% }); %>
+      </div>
+
+      <div class="fy-panel">
+        <% if (saved) { %>
+          <div class="alert alert-success">Cambios guardados.</div>
+        <% } %>
+        <% if (uploadError) { %>
+          <div class="alert alert-error"><%= uploadError %></div>
+        <% } %>
+
+        <h3>Trabajos y ubicaciones</h3>
+        <form method="POST" action="/tax-year/<%= taxYear %>/info">
+          <div class="form-group">
+            <label for="jobsDescription">Trabajos realizados en este período</label>
+            <textarea id="jobsDescription" name="jobsDescription" rows="3" placeholder="Ej: mesero/a en restaurante, recolector/a en granja de frutillas..."><%= profile.jobsDescription %></textarea>
+            <p class="field-hint">Una descripción breve por cada trabajo alcanza.</p>
+          </div>
+          <div class="form-group">
+            <label for="workLocations">Lugares donde trabajaste</label>
+            <textarea id="workLocations" name="workLocations" rows="3" placeholder="Ej: Sídney, NSW (julio-octubre 2024); Bundaberg, QLD (noviembre 2024-febrero 2025)..."><%= profile.workLocations %></textarea>
+            <p class="field-hint">Si podés, indicá la duración aproximada en cada lugar.</p>
+          </div>
+
+          <hr class="divider">
+          <h3>Vehículo</h3>
+          <div class="checkbox-row">
+            <input type="checkbox" id="hasCar" name="hasCar" <%= profile.hasCar ? 'checked' : '' %> onchange="document.getElementById('carFields').style.display = this.checked ? 'block' : 'none';">
+            <label for="hasCar" class="mb-0">Tengo un auto propio</label>
+          </div>
+          <div id="carFields" style="display: <%= profile.hasCar ? 'block' : 'none' %>;">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="carBrand">Marca</label>
+                <input type="text" id="carBrand" name="carBrand" value="<%= profile.carBrand %>">
+              </div>
+              <div class="form-group">
+                <label for="carModel">Modelo</label>
+                <input type="text" id="carModel" name="carModel" value="<%= profile.carModel %>">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="carYear">Año</label>
+                <input type="text" id="carYear" name="carYear" value="<%= profile.carYear %>">
+              </div>
+              <div class="form-group">
+                <label for="carPlate">Patente</label>
+                <input type="text" id="carPlate" name="carPlate" class="mono" value="<%= profile.carPlate %>">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="carState">Estado de la patente</label>
+              <select id="carState" name="carState">
+                <option value="">Seleccioná</option>
+                <% states.forEach(function(s) { %>
+                  <option value="<%= s %>" <%= profile.carState === s ? 'selected' : '' %>><%= s %></option>
+                <% }); %>
+              </select>
+            </div>
+          </div>
+
+          <hr class="divider">
+          <h3>Seguro de salud privado</h3>
+          <div class="checkbox-row">
+            <input type="checkbox" id="hasHealthInsurance" name="hasHealthInsurance" <%= profile.hasHealthInsurance ? 'checked' : '' %> onchange="document.getElementById('healthFields').style.display = this.checked ? 'block' : 'none';">
+            <label for="hasHealthInsurance" class="mb-0">Tengo seguro de salud privado (BUPA, Medibank, etc.)</label>
+          </div>
+          <div id="healthFields" style="display: <%= profile.hasHealthInsurance ? 'block' : 'none' %>;">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="healthProvider">Compañía</label>
+                <input type="text" id="healthProvider" name="healthProvider" value="<%= profile.healthProvider %>" placeholder="BUPA, Medibank...">
+              </div>
+              <div class="form-group">
+                <label for="healthMemberNumber">Número de socio/a</label>
+                <input type="text" id="healthMemberNumber" name="healthMemberNumber" class="mono" value="<%= profile.healthMemberNumber %>">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="healthStartDate">Fecha de inicio</label>
+                <input type="date" id="healthStartDate" name="healthStartDate" value="<%= profile.healthStartDate %>">
+              </div>
+              <div class="form-group">
+                <label for="healthEndDate">Fecha de fin (si corresponde)</label>
+                <input type="date" id="healthEndDate" name="healthEndDate" value="<%= profile.healthEndDate %>">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="healthPlanType">Tipo de plan o monto pagado</label>
+              <input type="text" id="healthPlanType" name="healthPlanType" value="<%= profile.healthPlanType %>" placeholder="Ej: Basic Hospital, o monto anual pagado">
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary">Guardar información</button>
+        </form>
+
+        <hr class="divider">
+        <h3>Documentos de FY <%= taxYear %></h3>
+        <p class="muted">Subí lo que tengas. Si una categoría no aplica a tu situación, podés dejarla vacía.</p>
+
+        <% categories.forEach(function(cat) { %>
+          <% var catDocs = documents.filter(function(d) { return d.category === cat.id; }); %>
+          <div class="doc-category">
+            <div class="doc-category-header">
+              <div>
+                <h4><%= cat.label %></h4>
+                <p class="field-hint"><%= cat.description %></p>
+              </div>
+              <span class="doc-count"><%= catDocs.length %> archivo<%= catDocs.length === 1 ? '' : 's' %></span>
+            </div>
+
+            <% if (catDocs.length) { %>
+              <ul class="doc-list">
+                <% catDocs.forEach(function(d) { %>
+                  <li>
+                    <span class="doc-name"><%= d.originalName %></span>
+                    <span style="display:flex; gap:8px; flex-shrink:0;">
+                      <a href="/tax-year/<%= taxYear %>/document/<%= d.id %>/download" class="btn btn-ghost btn-sm">Descargar</a>
+                      <form method="POST" action="/tax-year/<%= taxYear %>/document/<%= d.id %>/delete" style="margin:0;">
+                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                      </form>
+                    </span>
+                  </li>
+                <% }); %>
+              </ul>
+            <% } %>
+
+            <form method="POST" action="/tax-year/<%= taxYear %>/upload" enctype="multipart/form-data" class="upload-row">
+              <input type="hidden" name="category" value="<%= cat.id %>">
+              <input type="file" name="files" multiple>
+              <button type="submit" class="btn btn-secondary btn-sm">Subir</button>
+            </form>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+  </section>
+
+  <%- include('partials/footer') %>
+</body>
+</html>

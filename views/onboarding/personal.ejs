@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="<%= lang || 'es' %>">
+<head>
+  <%- include('../partials/head') %>
+  <title><%- __('personal.title') %> — RETAUX</title>
+  <style>
+    .info-tooltip { position: relative; }
+    .info-tooltip::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1C2B45;
+      color: #fff;
+      font-size: 0.78rem;
+      font-weight: 400;
+      line-height: 1.4;
+      padding: 8px 12px;
+      border-radius: 8px;
+      width: 220px;
+      text-align: left;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 100;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+    .info-tooltip:hover::after { opacity: 1; }
+  </style>
+</head>
+<body>
+  <%- include('../partials/nav', { active: 'profile', user: user }) %>
+
+  <section class="section">
+    <div class="container-narrow">
+
+      <div class="step-nav">
+        <div class="step-item step-item--active">1 · <%- __('steps.personal') %></div>
+        <a href="/onboarding/documents" class="step-item">2 · <%- __('steps.documents') %></a>
+        <a href="/dashboard" class="step-item">3 · <%- __('steps.dashboard') %></a>
+      </div>
+
+      <h1 style="font-size:1.7rem;"><%- __('personal.title') %></h1>
+      <p class="muted" style="margin-bottom:28px"><%- __('personal.subtitle') %></p>
+
+      <% if (error) { %><div class="alert alert-error"><%= error %></div><% } %>
+      <% if (saved) { %><div class="alert alert-success"><%- __('personal.saved_ok') %></div><% } %>
+
+      <!-- Formulario único: datos + selfie -->
+      <form method="POST" action="/onboarding/personal" class="card" id="personal-form" novalidate enctype="multipart/form-data">
+
+        <h3 style="margin-bottom:16px"><%- __('personal.contact_section') %></h3>
+
+        <div class="form-group">
+          <label><%- __('personal.fullName') %> *</label>
+          <input type="text" name="fullName" value="<%= user.fullName || '' %>" required>
+        </div>
+
+        <div class="form-group">
+          <label>TFN (Tax File Number) *</label>
+          <input type="text" name="tfn" id="tfn-input" class="mono-input" value="<%= (user.profile && user.profile.tfn) ? user.profile.tfn : '' %>" placeholder="XXX XXX XXX" maxlength="11" readonly onfocus="this.removeAttribute('readonly')" autocomplete="off" data-lpignore="true" inputmode="numeric">
+          <small class="field-hint"><%- __('personal.tfn_hint') %></small>
+        </div>
+
+        <div class="form-group">
+          <label>ABN (Australian Business Number) <span style="font-weight:400;color:#9CA3AF;">(optional)</span></label>
+          <input type="text" name="abn" id="abn-input" class="mono-input" value="<%= user.abn || '' %>" placeholder="XX XXX XXX XXX" maxlength="14" readonly onfocus="this.removeAttribute('readonly')" autocomplete="off" data-lpignore="true" inputmode="numeric">
+          <small class="field-hint">If you have an ABN for freelance or self-employment income, enter it here.</small>
+        </div>
+
+        <div class="form-group">
+          <label><%- __('personal.phone') %></label>
+          <input type="tel" name="phone" value="<%= user.phone || '' %>" readonly onfocus="this.removeAttribute('readonly')" autocomplete="off" data-lpignore="true" placeholder="<%- __('personal.phone_placeholder') %>" inputmode="tel">
+          <label style="display:flex;align-items:center;gap:8px;margin-top:10px;cursor:pointer;font-weight:400;font-size:0.92rem;">
+            <input type="checkbox" name="phoneWhatsapp" value="1" <%= (user.phoneWhatsapp) ? 'checked' : '' %> style="width:18px;height:18px;cursor:pointer;accent-color:var(--gold);">
+            <%- __('personal.phone_whatsapp') %>
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label><%- __('personal.birthDate') %> *</label>
+          <input type="date" name="birthDate" value="<%= user.birthDate || '' %>" required>
+          <small class="field-hint"><%- __('personal.birthDate_hint') %></small>
+        </div>
+
+        <div class="form-group">
+          <label><%- __('personal.nationality') %> *</label>
+          <input type="text" name="nationality" value="<%= user.nationality || '' %>"
+            placeholder="<%- __('personal.nationality_placeholder') %>">
+          <small class="field-hint"><%- __('personal.nationality_hint') %></small>
+        </div>
+
+        <div class="form-group">
+          <label><%- __('personal.occupation') %> *</label>
+          <input type="text" name="occupation" value="<%= user.occupation || '' %>"
+            placeholder="<%- __('personal.occupation_placeholder') %>">
+          <small class="field-hint"><%- __('personal.occupation_hint') %></small>
+          <div style="margin-top:10px;display:flex;align-items:flex-start;gap:10px;background:#FFFBEB;border:1.5px solid #FDE68A;border-radius:8px;padding:12px 14px;">
+            <span style="font-size:1.1rem;flex-shrink:0;">💡</span>
+            <span style="font-size:0.83rem;color:#78350F;line-height:1.55;"><%- __('personal.occupation_tip') %></span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label><%- __('personal.visa_subclass') %> *</label>
+          <select name="currentVisaSubclass">
+            <option value="">— <%- __('personal.visa_select') %> —</option>
+            <option value="417" <%= user.currentVisaSubclass === '417' ? 'selected' : '' %>>417 — Working Holiday</option>
+            <option value="462" <%= user.currentVisaSubclass === '462' ? 'selected' : '' %>>462 — Work and Holiday</option>
+            <option value="485" <%= user.currentVisaSubclass === '485' ? 'selected' : '' %>>485 — Temporary Graduate</option>
+            <option value="500" <%= user.currentVisaSubclass === '500' ? 'selected' : '' %>>500 — Student</option>
+            <option value="482" <%= user.currentVisaSubclass === '482' ? 'selected' : '' %>>482 — Temporary Skill Shortage</option>
+            <option value="other" <%= (user.currentVisaSubclass && !['417','462','485','500','482'].includes(user.currentVisaSubclass)) ? 'selected' : '' %>><%- __('personal.visa_other') %></option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label><%- __('personal.visa_start') %></label>
+            <input type="date" name="visaStartDate" value="<%= user.visaStartDate || '' %>">
+          </div>
+          <div class="form-group">
+            <label><%- __('personal.visa_end') %></label>
+            <input type="date" name="visaEndDate" value="<%= user.visaEndDate || '' %>">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label><%- __('personal.address') %> *</label>
+          <input type="text" name="currentAddress" id="address-input" value="<%= user.currentAddress || '' %>" readonly onfocus="this.removeAttribute('readonly')" autocomplete="off" data-lpignore="true" placeholder="<%- __('personal.address_placeholder') %>">
+          <small class="field-hint"><%- __('personal.address_hint') %></small>
+        </div>
+
+        <!-- Residencia fiscal -->
+        <div style="margin-top:28px;padding-top:20px;border-top:1px solid var(--border);">
+          <h3 style="margin:0 0 4px;font-size:1rem;"><%- __('personal.tax_residency_section') %></h3>
+          <p class="muted" style="font-size:0.85rem;margin-bottom:14px;"><%- __('personal.tax_residency_hint') %></p>
+          <div class="form-group">
+            <label><%- __('personal.residency_status') %> *</label>
+            <select name="taxResidencyStatus" required>
+              <option value="">— <%- __('personal.residency_select') %> —</option>
+              <option value="working_holiday" <%= user.taxResidencyStatus === 'working_holiday' ? 'selected' : '' %>><%- __('personal.residency_working_holiday') %></option>
+              <option value="resident" <%= user.taxResidencyStatus === 'resident' ? 'selected' : '' %>><%- __('personal.residency_resident') %></option>
+              <option value="foreign_resident" <%= user.taxResidencyStatus === 'foreign_resident' ? 'selected' : '' %>><%- __('personal.residency_foreign') %></option>
+            </select>
+          </div>
+
+          <%# Info card: ATO residency tests %>
+          <div style="margin-top:14px;">
+            <button type="button" onclick="document.getElementById('residency-info').style.display=document.getElementById('residency-info').style.display==='none'?'block':'none'" style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:6px;padding:0;font-size:0.85rem;color:var(--accent);">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>
+              <%- __('personal.residency_info_toggle') %>
+            </button>
+
+            <div id="residency-info" style="display:none;margin-top:12px;background:var(--bg-alt, #f0f4f8);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:8px;padding:18px 20px;">
+              <p style="margin:0 0 10px;font-size:0.95rem;font-weight:700;color:var(--text);"><%- __('personal.residency_info_title') %></p>
+              <p style="margin:0 0 12px;font-size:0.85rem;color:var(--muted, #666);line-height:1.6;"><%- __('personal.residency_info_intro') %></p>
+
+              <ul style="margin:0 0 14px;padding-left:18px;font-size:0.85rem;color:var(--muted, #666);line-height:1.8;">
+                <li><strong style="color:var(--text);"><%- __('personal.residency_test1_name') %>:</strong> <%- __('personal.residency_test1_desc') %></li>
+                <li><strong style="color:var(--text);"><%- __('personal.residency_test2_name') %>:</strong> <%- __('personal.residency_test2_desc') %></li>
+                <li><strong style="color:var(--text);"><%- __('personal.residency_test3_name') %>:</strong> <%- __('personal.residency_test3_desc') %></li>
+                <li><strong style="color:var(--text);"><%- __('personal.residency_test4_name') %>:</strong> <%- __('personal.residency_test4_desc') %></li>
+              </ul>
+
+              <p style="margin:0 0 12px;font-size:0.85rem;color:var(--muted, #666);line-height:1.6;"><%- __('personal.residency_info_cta') %></p>
+
+              <a href="tel:132861" style="display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;padding:10px 20px;border-radius:6px;font-size:0.9rem;font-weight:700;text-decoration:none;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16"><path d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.6 17.6 0 0 0 4.168 6.608 17.6 17.6 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.68.68 0 0 0-.58-.122l-2.19.547a1.745 1.745 0 0 1-1.657-.459L5.482 8.062a1.745 1.745 0 0 1-.46-1.657l.548-2.19a.68.68 0 0 0-.122-.58L3.654 1.328z"/></svg>
+                ATO — 13 28 61
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:28px;padding-top:20px;border-top:1px solid var(--border);">
+          <h3 style="margin:0 0 4px;font-size:1rem;"><%- __('personal.bank_section') %></h3>
+          <p class="muted" style="font-size:0.85rem;margin-bottom:16px;"><%- __('personal.bank_hint') %></p>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label><%- __('personal.bank_bsb') %></label>
+              <input type="text" name="bankBSB" id="bsb-input" class="mono-input" value="<%= (user.bankBSB) ? user.bankBSB : '' %>" placeholder="XXX-XXX" maxlength="7" readonly onfocus="this.removeAttribute('readonly')" autocomplete="off" data-lpignore="true" inputmode="numeric">
+            </div>
+            <div class="form-group">
+              <label><%- __('personal.bank_account') %></label>
+              <input type="text" name="bankAccount" class="mono-input" value="<%= (user.bankAccount) ? user.bankAccount : '' %>" placeholder="XXXXXXXXX" maxlength="9" readonly onfocus="this.removeAttribute('readonly')" autocomplete="off" data-lpignore="true" inputmode="numeric">
+            </div>
+          </div>
+
+          <div class="form-group" id="bank-institution-group" style="margin-bottom:4px;">
+            <label>Banco / Financial Institution</label>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <input type="text" name="bankInstitution" id="bank-institution-input"
+                value="<%= (user.bankInstitution) ? user.bankInstitution : '' %>"
+                placeholder="Se detecta automáticamente por el BSB"
+                style="flex:1;"
+                autocomplete="off" data-lpignore="true">
+              <span id="bank-detected-badge" style="display:none;font-size:0.75rem;background:#D1FAE5;color:#065F46;border-radius:4px;padding:3px 8px;white-space:nowrap;flex-shrink:0;">✓ detectado</span>
+            </div>
+            <small class="field-hint" id="bank-institution-hint" style="margin-top:4px;display:block;color:var(--muted);">Escribí el nombre del banco si no se detecta automáticamente.</small>
+          </div>
+
+          <div class="form-group">
+            <label><%- __('personal.bank_name') %></label>
+            <input type="text" name="bankAccountName" value="<%= (user.bankAccountName) ? user.bankAccountName : '' %>" placeholder="<%- __('personal.bank_name_placeholder') %>" readonly onfocus="this.removeAttribute('readonly')" autocomplete="off" data-lpignore="true">
+          </div>
+
+          <div class="form-group" style="margin-top:16px;">
+            <label style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+              Bank Statement *
+              <button type="button"
+                onclick="document.getElementById('bs-info').style.display=document.getElementById('bs-info').style.display==='none'?'block':'none'"
+                style="background:none;border:none;cursor:pointer;padding:0;display:inline-flex;align-items:center;color:var(--accent);"
+                title="¿Por qué lo pedimos?">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>
+              </button>
+            </label>
+            <div id="bs-info" style="display:none;margin-bottom:12px;background:#EFF6FF;border:1px solid #BFDBFE;border-left:4px solid #3B82F6;border-radius:8px;padding:12px 14px;">
+              <p style="margin:0;font-size:0.85rem;color:#1E40AF;line-height:1.55;">
+                Lo necesitamos para <strong>confirmar que la cuenta bancaria es tuya</strong>. El ATO deposita el reembolso directamente ahí, así que tenemos que verificar la titularidad.<br><br>
+                Podés subir un <strong>PDF</strong> del estado de cuenta o una <strong>captura de pantalla</strong> desde tu app bancaria. No necesita tener una fecha en particular — alcanza con que se vea tu nombre y los datos de la cuenta.
+              </p>
+            </div>
+            <% if (bankStatementDoc) { %>
+            <div style="display:flex;align-items:center;gap:12px;background:var(--bg-page);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:10px;">
+              <span style="font-size:1.2rem;">✅</span>
+              <div style="flex:1;min-width:0;">
+                <div style="font-weight:600;font-size:0.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><%= bankStatementDoc.originalName %></div>
+                <div style="font-size:0.78rem;color:var(--muted);"><%= new Date(bankStatementDoc.uploadedAt).toLocaleDateString('es-AR') %></div>
+              </div>
+            </div>
+            <% } %>
+            <input type="file" name="bankStatement" accept="image/jpeg,image/jpg,image/png,image/heic,image/webp,application/pdf" style="font-size:0.9rem;" <%= !bankStatementDoc ? 'required' : '' %>>
+            <small class="field-hint" style="margin-top:6px;display:block;">PDF o captura de pantalla con tu nombre y datos de cuenta.</small>
+          </div>
+        </div>
+
+        <!-- Selfie con documento — dentro del mismo form -->
+        <div style="margin-top:28px;padding-top:20px;border-top:1px solid var(--border);">
+          <h3 style="margin:0 0 6px;font-size:1rem;"><%- __('personal.selfie_title') %></h3>
+          <p class="muted" style="margin-bottom:16px;font-size:0.88rem"><%- __('personal.selfie_subtitle') %></p>
+
+          <% if (selfieDoc) { %>
+          <div style="display:flex;align-items:center;gap:12px;background:var(--bg-page);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:16px">
+            <span style="font-size:1.4rem">✅</span>
+            <div>
+              <div style="font-weight:600;font-size:0.9rem"><%- __('personal.selfie_uploaded') %></div>
+              <div style="font-size:0.78rem;color:var(--muted)"><%= selfieDoc.originalName %> · <%= new Date(selfieDoc.uploadedAt).toLocaleDateString() %></div>
+            </div>
+          </div>
+          <% } %>
+
+          <div class="form-group">
+            <label style="display:block;margin-bottom:8px"><%- __('personal.selfie_label') %></label>
+            <input type="file" name="selfie" accept="image/jpeg,image/jpg,image/png,image/heic,image/webp" style="font-size:0.9rem" <%= !selfieDoc ? 'required' : '' %>>
+            <small class="field-hint" style="margin-top:6px;display:block"><%- __('personal.selfie_hint') %></small>
+          </div>
+        </div>
+
+        <!-- Botón único de guardado -->
+        <div style="margin-top:24px;">
+          <button type="submit" class="btn btn--primary" style="width:100%;font-size:1rem;padding:14px;"><%- __('personal.btn_save') %></button>
+        </div>
+      </form>
+
+      <!-- Continuar a documentación -->
+      <div style="margin-top:24px;padding:20px 24px;background:var(--bg-page);border:1px solid var(--border);border-radius:var(--radius);text-align:center;">
+        <p style="margin:0 0 14px;font-size:0.92rem;color:var(--muted);"><%- __('personal.go_docs_hint') %></p>
+        <a href="/onboarding/documents" class="btn btn--primary" style="display:inline-block;padding:14px 32px;font-size:1rem;width:100%;">
+          <%- __('personal.btn_go_docs') %> →
+        </a>
+      </div>
+
+    </div>
+  </section>
+
+  <%- include('../partials/footer') %>
+
+<script>
+(function(){
+  var BSB_MAP = {
+    '01':'ANZ','02':'Westpac','03':'Westpac','04':'ANZ','06':'Commonwealth Bank (CBA)',
+    '07':'Commonwealth Bank (CBA)','08':'NAB','09':'Reserve Bank / Other',
+    '10':'Suncorp Bank','11':'St.George Bank','12':'Bank of Queensland (BOQ)',
+    '13':'Bendigo Bank','14':'Westpac','15':'Westpac','16':'HSBC',
+    '17':'Macquarie Bank','18':'Bankwest','19':'Various','21':'Citibank',
+    '22':'CUA Credit Union','23':'Various','24':'Various','25':'Various',
+    '26':'ING Direct','28':'Various','30':'Bankwest','31':'HSBC','33':'ANZ',
+    '34':'Various','35':'Various','38':'Various','40':'Credit Unions',
+    '48':'Macquarie Bank','55':'Various','57':'Various','61':'Credit Union Australia',
+    '63':'Heritage Bank','64':'Various','65':'Greater Bank','66':'Teachers Mutual Bank',
+    '67':'Various','70':'Various','72':'Various','73':'Westpac','76':'Commonwealth Bank (CBA)',
+    '80':'NAB','82':'Various','88':'Various'
+  };
+
+  var bsb = document.getElementById('bsb-input');
+  var inst = document.getElementById('bank-institution-input');
+  var badge = document.getElementById('bank-detected-badge');
+  var hint = document.getElementById('bank-institution-hint');
+
+  function lookupBSB(digits) {
+    var prefix = digits.slice(0,2);
+    return BSB_MAP[prefix] || null;
+  }
+
+  function applyLookup(digits) {
+    if (!inst) return;
+    if (digits.length < 6) {
+      badge && (badge.style.display = 'none');
+      if (inst.dataset.autoDetected === '1') {
+        inst.value = '';
+        inst.removeAttribute('readonly');
+        inst.dataset.autoDetected = '0';
+      }
+      return;
+    }
+    var bank = lookupBSB(digits);
+    if (bank) {
+      inst.value = bank;
+      inst.setAttribute('readonly', true);
+      inst.dataset.autoDetected = '1';
+      badge && (badge.style.display = 'inline-block');
+      hint && (hint.textContent = 'Banco detectado por BSB. Hacé clic en el campo para editarlo si es incorrecto.');
+    } else {
+      inst.value = '';
+      inst.removeAttribute('readonly');
+      inst.dataset.autoDetected = '0';
+      badge && (badge.style.display = 'none');
+      hint && (hint.textContent = 'No se pudo detectar el banco. Escribí el nombre manualmente.');
+    }
+  }
+
+  if (inst) {
+    inst.addEventListener('click', function(){
+      this.removeAttribute('readonly');
+      this.dataset.autoDetected = '0';
+      badge && (badge.style.display = 'none');
+    });
+    var saved = inst.value.trim();
+    if (saved) {
+      inst.dataset.autoDetected = '0';
+    }
+  }
+
+  if (bsb) {
+    bsb.addEventListener('input', function(){
+      var digits = this.value.replace(/\D/g,'').slice(0,6);
+      this.value = digits.length > 3 ? digits.slice(0,3) + '-' + digits.slice(3) : digits;
+      applyLookup(digits);
+    });
+    var existingDigits = bsb.value.replace(/\D/g,'');
+    if (existingDigits.length === 6 && inst && !inst.value.trim()) {
+      applyLookup(existingDigits);
+    }
+  }
+})();
+
+(function(){
+  var tfn = document.getElementById('tfn-input');
+  if (!tfn) return;
+  tfn.addEventListener('input', function(){
+    var digits = this.value.replace(/\D/g,'').slice(0,9);
+    var parts = [];
+    if (digits.length > 0) parts.push(digits.slice(0,3));
+    if (digits.length > 3) parts.push(digits.slice(3,6));
+    if (digits.length > 6) parts.push(digits.slice(6,9));
+    this.value = parts.join(' ');
+  });
+})();
+
+(function(){
+  var abn = document.getElementById('abn-input');
+  if (!abn) return;
+  abn.addEventListener('input', function(){
+    var digits = this.value.replace(/\D/g,'').slice(0,11);
+    var parts = [];
+    if (digits.length > 0) parts.push(digits.slice(0,2));
+    if (digits.length > 2) parts.push(digits.slice(2,5));
+    if (digits.length > 5) parts.push(digits.slice(5,8));
+    if (digits.length > 8) parts.push(digits.slice(8,11));
+    this.value = parts.join(' ');
+  });
+})();
+
+</script>
+
+<%- include('../partials/unsaved-warning') %>
+</body>
+</html>

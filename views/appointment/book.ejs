@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="<%= lang || 'es' %>">
+<head>
+  <%- include('../partials/head') %>
+  <title><%- __('appointment.book_title') %> — RETAUX</title>
+  <style>
+    .booking-hero { background: var(--navy); color:#fff; padding:40px 0 32px; text-align:center; }
+    .booking-hero h1 { color:#fff; font-size:1.8rem; margin-bottom:6px; }
+    .booking-hero p { color:rgba(255,255,255,0.6); margin:0; }
+
+    .date-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:16px; margin-bottom:32px; }
+
+    .date-card { background:#fff; border:2px solid var(--border); border-radius:12px; overflow:hidden; transition:border-color 0.15s; }
+    .date-card:hover { border-color:var(--navy); }
+    .date-card.selected { border-color:var(--navy); box-shadow: 0 0 0 3px rgba(10,14,92,0.15); }
+
+    .date-header { background:var(--navy); color:#fff; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; }
+    .date-header .day-name { font-family:var(--font-display); font-size:1rem; font-weight:600; }
+    .date-header .day-date { font-family:var(--font-mono); font-size:0.8rem; color:rgba(255,255,255,0.65); }
+
+    .hours-grid { display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; padding:14px; }
+
+    .hour-btn { border:1px solid var(--border); border-radius:8px; padding:10px 6px; text-align:center; cursor:pointer; font-family:var(--font-mono); font-size:0.82rem; color:var(--text-navy); background:#fff; transition:all 0.15s; }
+    .hour-btn:hover { border-color:var(--navy); background:var(--bg-page); }
+    .hour-btn.selected { background:var(--navy); color:#fff; border-color:var(--navy); font-weight:700; }
+    .hour-btn:disabled { opacity:0.35; cursor:not-allowed; }
+
+    .selection-summary { position:sticky; bottom:0; background:#fff; border-top:1px solid var(--border); padding:16px 24px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; z-index:50; box-shadow:0 -4px 20px rgba(10,14,92,0.1); }
+    .selected-slot-text { font-family:var(--font-display); font-size:1rem; font-weight:600; color:var(--text-navy); }
+    .selected-slot-text.empty { color:var(--muted); font-weight:400; font-family:var(--font-body); font-size:0.9rem; }
+
+    .month-title { font-family:var(--font-mono); font-size:0.75rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold-dark); margin:28px 0 14px; }
+
+    @media (max-width: 640px) {
+      .hours-grid { grid-template-columns: repeat(3, 1fr); }
+      .selection-summary { flex-direction:column; align-items:stretch; }
+    }
+  </style>
+</head>
+<body>
+  <%- include('../partials/nav', { active: '', user: user }) %>
+
+  <div class="booking-hero">
+    <div class="container">
+      <h1><%- __('appointment.book_hero_title') %> 🗓️</h1>
+      <p><%- __('appointment.book_hero_sub') %></p>
+    </div>
+  </div>
+
+  <section class="section">
+    <div class="container">
+
+      <% if (error) { %>
+        <div class="alert alert--error" style="margin-bottom:20px;"><%= error %></div>
+      <% } %>
+
+      <form method="POST" action="/appointment/book" id="book-form">
+        <input type="hidden" name="date" id="selected-date">
+        <input type="hidden" name="hour" id="selected-hour">
+
+        <%
+          var months = {};
+          Object.keys(dates).sort().forEach(function(d) {
+            var dt = new Date(d + 'T00:00:00');
+            var monthKey = dt.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+            if (!months[monthKey]) months[monthKey] = [];
+            months[monthKey].push(d);
+          });
+        %>
+
+        <% Object.keys(months).forEach(function(month) { %>
+        <div class="month-title"><%= month %></div>
+        <div class="date-grid">
+          <% months[month].forEach(function(d) { %>
+          <%
+            var dt = new Date(d + 'T00:00:00');
+            var dayName = dt.toLocaleDateString('es-AR', { weekday: 'long' });
+            var dayDate = dt.toLocaleDateString('es-AR', { day: 'numeric', month: 'long' });
+            dayName = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+          %>
+          <div class="date-card" id="card-<%= d %>">
+            <div class="date-header">
+              <span class="day-name"><%= dayName %></span>
+              <span class="day-date"><%= dayDate %></span>
+            </div>
+            <div class="hours-grid">
+              <% dates[d].forEach(function(h) { %>
+              <%
+                var suffix = h >= 12 ? 'PM' : 'AM';
+                var h12 = h > 12 ? h - 12 : h;
+                var label = h12 + ':00 ' + suffix;
+              %>
+              <button type="button" class="hour-btn" data-date="<%= d %>" data-hour="<%= h %>"
+                onclick="selectSlot('<%= d %>', <%= h %>, '<%= label %>', '<%= dayName %> <%= dayDate %>')">
+                <%= label %>
+              </button>
+              <% }); %>
+            </div>
+          </div>
+          <% }); %>
+        </div>
+        <% }); %>
+
+        <% if (!Object.keys(dates).length) { %>
+        <div class="card" style="text-align:center;padding:40px;">
+          <p style="font-size:1.5rem;margin-bottom:12px;">📅</p>
+          <h3><%- __('appointment.no_slots_title') %></h3>
+          <p class="muted"><%- __('appointment.no_slots_desc') %> <a href="mailto:hola@retaux.com">hola@retaux.com</a> <%- __('appointment.no_slots_suffix') %></p>
+        </div>
+        <% } %>
+
+        <!-- Barra inferior fija -->
+        <div class="selection-summary">
+          <div>
+            <p style="margin:0 0 2px;font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--font-mono);"><%- __('appointment.selected_slot_label') %></p>
+            <p class="selected-slot-text empty" id="slot-display"><%- __('appointment.click_to_select') %></p>
+          </div>
+          <button type="submit" class="btn btn--primary" id="confirm-btn" disabled style="min-width:220px;font-size:1rem;">
+            <%- __('appointment.confirm_btn') %>
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </section>
+
+  <%- include('../partials/footer') %>
+
+<script>
+var selectedDate = null;
+var selectedHour = null;
+
+function selectSlot(date, hour, hourLabel, dayLabel) {
+  // Deseleccionar anterior
+  document.querySelectorAll('.hour-btn.selected').forEach(function(b){ b.classList.remove('selected'); });
+  document.querySelectorAll('.date-card.selected').forEach(function(c){ c.classList.remove('selected'); });
+
+  // Seleccionar nuevo
+  var btn = document.querySelector('[data-date="'+date+'"][data-hour="'+hour+'"]');
+  if (btn) btn.classList.add('selected');
+  var card = document.getElementById('card-' + date);
+  if (card) card.classList.add('selected');
+
+  // Guardar valores
+  selectedDate = date;
+  selectedHour = hour;
+  document.getElementById('selected-date').value = date;
+  document.getElementById('selected-hour').value = hour;
+
+  // Actualizar UI
+  var display = document.getElementById('slot-display');
+  display.textContent = dayLabel + ' <%- __("appointment.at") %> ' + hourLabel;
+  display.classList.remove('empty');
+
+  document.getElementById('confirm-btn').disabled = false;
+
+  // Scroll suave a la barra inferior
+  display.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+document.getElementById('book-form').addEventListener('submit', function(e) {
+  if (!selectedDate || !selectedHour) {
+    e.preventDefault();
+    alert('<%- __("appointment.select_alert") %>');
+    return;
+  }
+  var btn = document.getElementById('confirm-btn');
+  btn.disabled = true;
+  btn.textContent = '<%- __("appointment.confirming") %>';
+});
+</script>
+</body>
+</html>

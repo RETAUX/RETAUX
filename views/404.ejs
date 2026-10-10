@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="<%= lang || 'es' %>">
+<head>
+  <%- include('partials/head') %>
+  <title><%- __('page.not_found') %> — RETAUX</title>
+</head>
+<body>
+  <%- include('partials/nav', { active: '', user: user }) %>
+  <section class="section text-center">
+    <div class="container">
+      <h1>404</h1>
+      <p><%- __('page.not_found_msg') %></p>
+      <a href="/" class="btn btn-primary"><%- __('page.back_home') %></a>
+    </div>
+  </section>
+  <%- include('partials/footer') %>
+</body>
+</html>

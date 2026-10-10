@@ -1,0 +1,425 @@
+<%- include('../layout/header', { title: __('payment.title'), currentUser: user }) %>
+
+<style>
+  .pay-tabs { display:flex; gap:0; margin-bottom:32px; border-radius:4px; overflow:hidden; border:1px solid var(--border); max-width:680px; }
+  .pay-tabs a, .pay-tabs span { flex:1; padding:10px 16px; font-size:0.82rem; font-weight:700; font-family:var(--font-mono); text-decoration:none; display:block; text-align:center; }
+  .pay-tabs a.done  { background:var(--green); color:#fff; }
+  .pay-tabs span.active { background:var(--gold); color:var(--text-navy); }
+  .pay-tabs span.pending { background:var(--bg-page); color:var(--muted); }
+
+  .checkout-card { background:#fff; border:1px solid var(--border); border-radius:16px; padding:32px; max-width:520px; box-shadow:var(--shadow); }
+
+  .price-display { background:var(--navy); border-radius:12px; padding:24px 28px; margin-bottom:24px; color:#fff; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+  .price-label { font-size:0.85rem; color:rgba(255,255,255,0.6); margin-bottom:4px; }
+  .price-amount { font-family:var(--font-display); font-size:2.8rem; font-weight:700; color:#FFC107; line-height:1; }
+  .price-sup { font-size:1.1rem; color:rgba(255,255,255,0.7); margin-right:4px; vertical-align:super; }
+  .price-old { text-decoration:line-through; color:rgba(255,255,255,0.4); font-size:1rem; margin-left:10px; }
+  .price-desc { font-size:0.8rem; color:rgba(255,255,255,0.5); margin-top:4px; }
+
+  .discount-box { background:#E6F4EE; border:1px solid #B8DECE; border-radius:8px; padding:12px 16px; margin-bottom:20px; display:flex; align-items:center; gap:10px; font-size:0.9rem; color:var(--green); font-weight:600; }
+
+  .ref-section { margin-bottom:20px; }
+  .ref-section label { font-weight:600; font-size:0.88rem; color:var(--text-navy); margin-bottom:6px; display:block; }
+  .ref-input-wrap { display:flex; gap:8px; }
+  .ref-input-wrap input { flex:1; font-family:var(--font-mono); text-transform:uppercase; letter-spacing:0.05em; }
+  .ref-feedback { font-size:0.82rem; margin-top:6px; height:20px; }
+  .ref-feedback.ok { color:var(--green); }
+  .ref-feedback.error { color:var(--red); }
+
+  .summary-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; font-size:0.9rem; color:var(--muted); border-bottom:1px solid var(--border); }
+  .summary-row:last-child { border-bottom:none; font-weight:700; color:var(--text-navy); font-size:1rem; }
+
+  .terms-check { display:flex; align-items:flex-start; gap:10px; margin-bottom:20px; padding:16px; background:#EFF6FF; border-radius:10px; border:1.5px solid #BFDBFE; }
+  .terms-check input[type="checkbox"] { width:18px; height:18px; margin-top:3px; flex-shrink:0; cursor:pointer; accent-color:var(--navy); }
+  .terms-check label { font-size:0.85rem; color:#1e3a5f; cursor:pointer; line-height:1.6; }
+  .terms-check label a { color:var(--navy); font-weight:700; }
+  .terms-check label strong { color:#1A2340; }
+  .terms-check label em { font-style:italic; }
+
+  .pay-btn { width:100%; padding:16px; background:linear-gradient(135deg,#191C87,#2d31c7); color:#fff; border:none; border-radius:10px; font-size:1.05rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; transition:transform 0.1s, box-shadow 0.2s; box-shadow:0 4px 20px rgba(25,28,135,0.35); font-family:var(--font-body); text-decoration:none; }
+  .pay-btn:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(25,28,135,0.5); color:#fff; text-decoration:none; }
+  .pay-btn:disabled, .pay-btn.disabled { opacity:0.45; cursor:not-allowed; transform:none; pointer-events:none; }
+
+  .pay-link-btn { width:100%; padding:16px; background:linear-gradient(135deg,#191C87,#2d31c7); color:#fff; border:none; border-radius:10px; font-size:1.05rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; transition:transform 0.1s, box-shadow 0.2s; box-shadow:0 4px 20px rgba(25,28,135,0.35); text-decoration:none; }
+  .pay-link-btn:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(25,28,135,0.5); color:#fff; text-decoration:none; }
+
+  .manual-instructions { background:var(--bg-page); border:1px solid var(--border); border-radius:10px; padding:20px; margin-bottom:16px; }
+  .manual-step { display:flex; align-items:flex-start; gap:12px; margin-bottom:14px; }
+  .manual-step:last-child { margin-bottom:0; }
+  .step-num { background:var(--navy); color:#fff; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; font-size:0.78rem; font-weight:700; flex-shrink:0; margin-top:1px; }
+
+  .security-note { display:flex; align-items:center; gap:8px; font-size:0.78rem; color:var(--muted); margin-top:12px; justify-content:center; }
+</style>
+
+<section class="section">
+  <div class="container-narrow">
+
+    <div class="pay-tabs">
+      <a href="/onboarding/personal" class="done">✓ <%- __('payment.tab_data') %></a>
+      <a href="/onboarding/documents" class="done">✓ <%- __('payment.tab_docs') %></a>
+      <span class="active">3 · <%- __('payment.tab_pay') %></span>
+    </div>
+
+    <h1 style="font-size:1.7rem;margin-bottom:6px;"><%- __('payment.title') %></h1>
+    <p class="muted" style="margin-bottom:28px;"></p>
+
+    <% if (error) { %>
+      <div class="alert alert--error" style="margin-bottom:20px;">
+        <% if (error === 'cancelled') { %><%- __('payment.error_cancelled') %>
+        <% } else { %><%- __('payment.error_generic') %>
+        <% } %>
+      </div>
+    <% } %>
+
+    <div class="checkout-card">
+
+      <!-- Selector de años fiscales -->
+      <div style="margin-bottom:20px;padding:16px;background:rgba(255,255,255,0.07);border-radius:10px;">
+        <div style="font-size:0.82rem;color:rgba(255,255,255,0.6);margin-bottom:10px;font-weight:600;letter-spacing:0.05em;"><%- __('payment.years_label') %></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;" id="years-selector">
+          <% for (var y = 1; y <= 4; y++) { %>
+          <button type="button" onclick="setYears(<%= y %>)"
+            id="yr-btn-<%= y %>"
+            style="padding:8px 18px;border-radius:8px;font-weight:700;font-family:var(--font-mono);font-size:0.88rem;cursor:pointer;border:2px solid <%= y === 1 ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.25)' %>;background:<%= y === 1 ? 'rgba(255,255,255,0.15)' : 'transparent' %>;color:#fff;transition:all .15s;">
+            <%= y %> <%- y === 1 ? __('payment.year_singular') : __('payment.year_plural') %>
+          </button>
+          <% } %>
+        </div>
+        <div style="font-size:0.78rem;color:rgba(255,255,255,0.45);margin-top:8px;" id="years-note"><%- __('payment.years_note_single') %></div>
+      </div>
+
+      <!-- Precio -->
+      <div class="price-display">
+        <div>
+          <div class="price-label" id="price-label">Australian Tax Return — FY <%= taxYear || '2025-26' %></div>
+          <div>
+            <span class="price-sup">AUD</span>
+            <span class="price-amount" id="price-amount"><%= linkedRef ? priceAUD - discountAUD : priceAUD %></span>
+            <% if (linkedRef) { %><span class="price-old">120</span><% } %>
+          </div>
+          <div class="price-desc" id="price-desc">
+            <%= linkedRef ? __('payment.ref_applied') : __('payment.service_price') %>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:0.78rem;color:rgba(255,255,255,0.5);margin-bottom:4px;"><%- __('payment.includes') %></div>
+          <div style="font-size:0.82rem;color:rgba(255,255,255,0.75);line-height:1.7;">
+            ✓ <%- __('payment.inc_advice') %><br>
+            ✓ <%- __('payment.inc_lodgment') %><br>
+            ✓ <%- __('payment.inc_followup') %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Descuento ya aplicado -->
+      <% if (linkedRef) { %>
+      <div class="discount-box">
+        🎉 <%- __('payment.discount_applied') %> — <strong>AUD 30 OFF</strong>
+      </div>
+      <% } else { %>
+      <div class="discount-box" id="discount-box" style="display:none;">
+        🎉 <%- __('payment.code_valid') %> — <strong>AUD 30 OFF</strong> <%- __('payment.applied') %>
+      </div>
+      <% } %>
+
+      <!-- Código de referido -->
+      <% if (!linkedRef) { %>
+      <div class="ref-section">
+        <label><%- __('payment.have_ref_code') %></label>
+        <div class="ref-input-wrap">
+          <input type="text" id="ref-input" placeholder="RTX-XXXXXX" maxlength="12"
+            style="text-transform:uppercase;">
+          <button type="button" class="btn btn--outline btn--sm" onclick="applyRef()" id="ref-btn">
+            <%- __('payment.apply_btn') %>
+          </button>
+        </div>
+        <div class="ref-feedback" id="ref-feedback"></div>
+      </div>
+      <% } %>
+
+      <!-- Resumen -->
+      <div style="margin-bottom:20px;">
+        <div class="summary-row">
+          <span><%- __('payment.row_service') %></span>
+          <span style="font-family:var(--font-mono);">AUD <%= priceAUD %>.00</span>
+        </div>
+        <div class="summary-row" id="discount-row"
+          style="<%= linkedRef ? '' : 'display:none;' %>color:var(--green);">
+          <span><%- __('payment.row_discount') %></span>
+          <span style="font-family:var(--font-mono);">- AUD 20.00</span>
+        </div>
+        <div class="summary-row">
+          <span><%- __('payment.row_total') %></span>
+          <span style="font-family:var(--font-mono);" id="total-amount">
+            AUD <%= linkedRef ? priceAUD - discountAUD : priceAUD %>.00
+          </span>
+        </div>
+      </div>
+
+      <!-- Términos y condiciones -->
+      <div class="terms-check">
+        <input type="checkbox" id="terms-check" onchange="updatePayBtn()">
+        <label for="terms-check">
+          <%- __('payment.terms_prefix') %>
+          <a href="/terms" target="_blank"><%- __('payment.terms_link') %></a>
+          <%- __('payment.terms_suffix') %>
+        </label>
+      </div>
+
+      <!-- Aviso método de cobro -->
+      <div style="background:#FEF3C7;border:1px solid #FCD34D;border-radius:10px;padding:14px 16px;margin-bottom:20px;display:flex;gap:10px;align-items:flex-start;">
+        <span style="font-size:1.2rem;flex-shrink:0;">🔧</span>
+        <div style="font-size:0.85rem;color:#92400E;line-height:1.5;">
+          Estamos trabajando en nuestra sección de cobro online. Por el momento el pago se realiza por <strong>transferencia bancaria</strong> usando tu app bancaria habitual.
+        </div>
+      </div>
+
+      <!-- Paso 1: botón para ver instrucciones -->
+      <button type="button" id="pay-btn" class="pay-btn disabled" disabled onclick="showInstructions()">
+        Ver cómo pagar →
+      </button>
+
+      <!-- Paso 2: instrucciones PayID + upload comprobante -->
+      <div id="pay-instructions" style="display:none; margin-top:16px;">
+
+        <div class="manual-instructions">
+          <div style="font-size:0.82rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:14px;">Paso a paso para pagar</div>
+
+          <div class="manual-step">
+            <div class="step-num">1</div>
+            <div style="font-size:0.9rem;line-height:1.5;">
+              Abrí tu app de banca online (cualquier banco australiano).<br>
+              <span style="color:var(--muted);font-size:0.82rem;">NAB, ANZ, CommBank, Westpac, ING, Up, etc.</span>
+            </div>
+          </div>
+
+          <div class="manual-step">
+            <div class="step-num">2</div>
+            <div style="font-size:0.9rem;line-height:1.5;">
+              Elegí la opción <strong>Pay / Transfer</strong> y seleccioná pagar con <strong>PayID</strong>.
+            </div>
+          </div>
+
+          <div class="manual-step">
+            <div class="step-num">3</div>
+            <div style="font-size:0.9rem;line-height:1.5;">
+              Ingresá el PayID:
+              <div style="margin-top:8px;background:#fff;border:2px solid var(--navy);border-radius:8px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+                <div>
+                  <div style="font-size:0.72rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">PayID (número de teléfono)</div>
+                  <div style="font-family:var(--font-mono);font-size:1.4rem;font-weight:700;color:var(--navy);letter-spacing:0.08em;">+61 481 315 878</div>
+                </div>
+                <button type="button" onclick="copyPayID(this)" style="background:var(--navy);color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:0.78rem;font-weight:700;cursor:pointer;flex-shrink:0;">Copiar</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="manual-step">
+            <div class="step-num">4</div>
+            <div style="font-size:0.9rem;line-height:1.5;">
+              Ingresá el monto exacto:
+              <div style="margin-top:8px;background:#fff;border:2px solid var(--gold);border-radius:8px;padding:10px 16px;display:inline-block;">
+                <span style="font-size:0.72rem;color:var(--muted);font-weight:600;text-transform:uppercase;display:block;">Monto a transferir</span>
+                <span style="font-family:var(--font-display);font-size:1.6rem;font-weight:700;color:var(--navy);">AUD <span id="instr-amount"><%= linkedRef ? priceAUD - discountAUD : priceAUD %></span>.00</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="manual-step">
+            <div class="step-num">5</div>
+            <div style="font-size:0.9rem;line-height:1.5;">
+              En el campo <strong>descripción / referencia</strong> escribí tu nombre completo.
+            </div>
+          </div>
+
+          <div class="manual-step">
+            <div class="step-num">6</div>
+            <div style="font-size:0.9rem;line-height:1.5;">
+              Confirmá la transferencia y <strong>tomá un screenshot</strong> del comprobante (la pantalla de "pago exitoso").
+            </div>
+          </div>
+        </div>
+
+        <!-- Upload comprobante + confirmar -->
+        <form method="POST" action="/payment/submit-manual" id="pay-form" enctype="multipart/form-data">
+          <input type="hidden" name="referralCode" id="ref-hidden" value="<%= linkedRef || '' %>">
+          <input type="hidden" name="years" id="years-hidden" value="1">
+
+          <div style="margin-top:4px;padding:16px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;">
+            <label style="font-weight:700;font-size:0.88rem;color:#166534;display:block;margin-bottom:8px;">
+              📎 Adjuntá el screenshot de tu pago *
+            </label>
+            <input type="file" name="paymentProof" id="proof-input" accept="image/*,.pdf"
+              onchange="checkProof()"
+              style="display:block;width:100%;padding:10px;border:2px dashed #86EFAC;border-radius:8px;font-size:0.85rem;cursor:pointer;box-sizing:border-box;background:#fff;">
+            <p style="font-size:0.78rem;color:#16A34A;margin:6px 0 0;">Podés subir una captura de pantalla o PDF del comprobante.</p>
+          </div>
+
+          <button type="submit" id="confirm-btn" class="pay-btn" style="margin-top:14px;background:linear-gradient(135deg,#166534,#16a34a);box-shadow:0 4px 20px rgba(22,101,52,0.35);" disabled>
+            ✅ Ya pagué — Confirmar pago
+          </button>
+        </form>
+
+        <p style="font-size:0.8rem; color:var(--muted); margin-top:10px; text-align:center;">
+          Una vez confirmado revisamos el comprobante y activamos tu cuenta en menos de 24 horas.
+        </p>
+      </div>
+
+      <div class="security-note">
+        🔒 <%- __('payment.security_note') %>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<%- include('../layout/footer') %>
+
+<script>
+var discountApplied      = <%= linkedRef ? 'true' : 'false' %>;
+var validRefCode         = '<%= linkedRef || "" %>';
+var PRICE                = <%= priceAUD %>;
+var DISCOUNT             = <%= discountAUD %>;
+var LINK_FULL            = '<%- paymentLinkFull %>';
+var LINK_DISCOUNT        = '<%- paymentLinkDiscount %>';
+var LINK_BASE            = '<%- paymentLinkBase %>';
+var selectedYears        = 1;
+
+function setYears(n) {
+  selectedYears = n;
+  document.getElementById('years-hidden').value = n;
+  // Actualizar botones
+  for (var i = 1; i <= 4; i++) {
+    var btn = document.getElementById('yr-btn-' + i);
+    if (i === n) {
+      btn.style.borderColor = 'rgba(255,255,255,0.9)';
+      btn.style.background  = 'rgba(255,255,255,0.15)';
+    } else {
+      btn.style.borderColor = 'rgba(255,255,255,0.25)';
+      btn.style.background  = 'transparent';
+    }
+  }
+  // Nota bajo el selector
+  var note = document.getElementById('years-note');
+  if (n > 1) {
+    var perYear = discountApplied ? (PRICE - DISCOUNT) : PRICE;
+    note.textContent = n + ' × AUD ' + perYear + ' = AUD ' + (n * perYear);
+  } else {
+    note.textContent = '';
+  }
+  // Actualizar precio mostrado
+  updatePriceDisplay();
+  // Si ya se mostraron instrucciones, actualizar link
+  if (document.getElementById('pay-instructions').style.display !== 'none') {
+    updateRevolutLink();
+  }
+}
+
+function getTotalAmount() {
+  var perYear = discountApplied ? (PRICE - DISCOUNT) : PRICE;
+  return selectedYears * perYear;
+}
+
+function updatePriceDisplay() {
+  var total = getTotalAmount();
+  document.getElementById('price-amount').textContent = total;
+  document.getElementById('total-amount').textContent = 'AUD ' + total + '.00';
+  if (document.getElementById('instr-amount')) {
+    document.getElementById('instr-amount').textContent = total;
+    document.getElementById('link-amount').textContent  = total;
+  }
+}
+
+function updatePayBtn() {
+  var btn = document.getElementById('pay-btn');
+  var checked = document.getElementById('terms-check').checked;
+  if (checked) {
+    btn.classList.remove('disabled');
+    btn.disabled = false;
+  } else {
+    btn.classList.add('disabled');
+    btn.disabled = true;
+  }
+}
+
+function showInstructions() {
+  var checked = document.getElementById('terms-check').checked;
+  if (!checked) {
+    document.getElementById('terms-check').closest('.terms-check').style.border = '2px solid var(--red)';
+    return;
+  }
+  document.getElementById('ref-hidden').value = validRefCode;
+  document.getElementById('pay-btn').style.display = 'none';
+  document.getElementById('pay-instructions').style.display = 'block';
+  document.getElementById('instr-amount').textContent = getTotalAmount();
+}
+
+function copyPayID(btn) {
+  navigator.clipboard.writeText('61481315878').then(function() {
+    btn.textContent = '✓ Copiado';
+    btn.style.background = '#166534';
+    setTimeout(function(){ btn.textContent = 'Copiar'; btn.style.background = ''; }, 2000);
+  });
+}
+
+function checkProof() {
+  var input = document.getElementById('proof-input');
+  var btn   = document.getElementById('confirm-btn');
+  btn.disabled = !input.files || input.files.length === 0;
+}
+
+var REF_STR = {
+  enter:       <%- JSON.stringify(__('payment.ref_enter')) %>,
+  checking:    <%- JSON.stringify(__('payment.ref_checking')) %>,
+  from:        <%- JSON.stringify(__('payment.ref_from')) %>,
+  applied:     <%- JSON.stringify(__('payment.ref_discount_applied')) %>,
+  refApplied:  <%- JSON.stringify(__('payment.ref_applied')) %>,
+  errOwn:      <%- JSON.stringify(__('payment.ref_err_own')) %>,
+  errUsed:     <%- JSON.stringify(__('payment.ref_err_used')) %>,
+  errInvalid:  <%- JSON.stringify(__('payment.ref_err_invalid')) %>,
+  errVerify:   <%- JSON.stringify(__('payment.ref_err_verify')) %>
+};
+
+function applyRef() {
+  var code = document.getElementById('ref-input').value.trim().toUpperCase();
+  var fb   = document.getElementById('ref-feedback');
+  if (!code) { fb.textContent = REF_STR.enter; fb.className = 'ref-feedback error'; return; }
+  fb.textContent = REF_STR.checking; fb.className = 'ref-feedback';
+
+  fetch('/payment/validate-ref?code=' + encodeURIComponent(code))
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d.valid) {
+        discountApplied = true;
+        validRefCode = code;
+        fb.textContent = '✓ ' + REF_STR.from + ' ' + d.referrerName + ' — AUD 20 ' + REF_STR.applied;
+        fb.className = 'ref-feedback ok';
+        var discBox = document.getElementById('discount-box');
+        if (discBox) discBox.style.display = 'flex';
+        var discRow = document.getElementById('discount-row');
+        if (discRow) discRow.style.display = 'flex';
+        document.getElementById('price-amount').textContent = PRICE - DISCOUNT;
+        document.getElementById('price-desc').textContent = REF_STR.refApplied;
+        document.getElementById('total-amount').textContent = 'AUD ' + (PRICE - DISCOUNT) + '.00';
+        var refBtn = document.getElementById('ref-btn');
+        if (refBtn) refBtn.disabled = true;
+        var refInput = document.getElementById('ref-input');
+        if (refInput) refInput.readOnly = true;
+        updatePayBtn();
+        updateRevolutLink();
+      } else {
+        fb.className = 'ref-feedback error';
+        if (d.reason === 'own') fb.textContent = REF_STR.errOwn;
+        else if (d.reason === 'already_used') fb.textContent = REF_STR.errUsed;
+        else fb.textContent = REF_STR.errInvalid;
+      }
+    })
+    .catch(function(){ fb.textContent = REF_STR.errVerify; fb.className = 'ref-feedback error'; });
+}
+
+var refInput = document.getElementById('ref-input');
+if (refInput) {
+  refInput.addEventListener('keydown', function(e){ if(e.key === 'Enter') applyRef(); });
+  refInput.addEventListener('input', function(){ this.value = this.value.toUpperCase(); });
+}
+</script>

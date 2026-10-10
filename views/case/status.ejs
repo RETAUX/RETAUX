@@ -1,0 +1,80 @@
+<%- include('../layout/header', { title: __('case.title'), currentUser: user }) %>
+
+<div class="container" style="max-width:600px;padding:48px 24px;">
+
+  <h1 style="font-size:1.6rem;margin-bottom:4px;"><%- __('case.title') %></h1>
+  <p class="muted" style="margin-bottom:36px;font-size:0.92rem;"><%- __('case.subtitle') %></p>
+
+  <%
+    var stage = user.taxReturnStage || 'paid';
+    var steps = [
+      { key: 'personal',    label: __('case.step1'), desc: __('case.step1_desc') },
+      { key: 'documents',   label: __('case.step2'), desc: __('case.step2_desc') },
+      { key: 'payment',     label: __('case.step3'), desc: __('case.step3_desc') },
+      { key: 'verified',    label: __('case.step4'), desc: __('case.step4_desc') },
+      { key: 'processing',  label: __('case.step5'), desc: __('case.step5_desc') },
+      { key: 'with_agent', label: __('case.step6'), desc: __('case.step6_desc') },
+      { key: 'issued',     label: __('case.step7'), desc: __('case.step7_desc') }
+    ];
+    var stageOrder = ['personal','documents','payment','verified','processing','with_agent','issued'];
+    var currentIdx;
+    if (stage === 'processing')       currentIdx = 4;
+    else if (stage === 'with_agent')  currentIdx = 5;
+    else if (stage === 'issued')      currentIdx = 6;
+    else currentIdx = 4; // 'paid' legacy → same as processing
+  %>
+
+  <div style="position:relative;padding-left:40px;">
+
+    <% steps.forEach(function(step, i) {
+      var done    = i < currentIdx;
+      var active  = i === currentIdx;
+      var pending = i > currentIdx;
+      var color   = done ? '#10b981' : active ? '#0A0E5C' : '#CBD5E1';
+      var bgColor = done ? '#10b981' : active ? '#0A0E5C' : '#F1F5F9';
+      var textColor = pending ? 'var(--muted)' : 'var(--ink)';
+    %>
+
+    <!-- línea vertical -->
+    <% if (i < steps.length - 1) { %>
+    <div style="position:absolute;left:15px;top:<%= 28 + i*90 %>px;width:2px;height:70px;background:<%= done ? '#10b981' : '#E2E8F0' %>;"></div>
+    <% } %>
+
+    <div style="display:flex;align-items:flex-start;gap:16px;margin-bottom:24px;position:relative;">
+
+      <!-- círculo -->
+      <div style="position:absolute;left:-40px;top:0;width:32px;height:32px;border-radius:50%;background:<%= bgColor %>;border:2px solid <%= color %>;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <% if (done) { %>
+          <span style="color:#fff;font-size:0.85rem;font-weight:700;">✓</span>
+        <% } else if (active) { %>
+          <span style="color:#fff;font-size:0.7rem;font-weight:800;"><%= i+1 %></span>
+        <% } else { %>
+          <span style="color:#94A3B8;font-size:0.7rem;font-weight:700;"><%= i+1 %></span>
+        <% } %>
+      </div>
+
+      <!-- contenido -->
+      <div style="padding-bottom:8px;">
+        <div style="font-weight:<%= active ? '700' : '600' %>;font-size:0.95rem;color:<%= active ? 'var(--navy)' : textColor %>;">
+          <%= step.label %>
+          <% if (active) { %><span style="display:inline-block;margin-left:8px;background:var(--gold);color:#060920;font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:20px;vertical-align:middle;"><%- __('case.current') %></span><% } %>
+          <% if (done) { %><span style="display:inline-block;margin-left:8px;color:#10b981;font-size:0.75rem;font-weight:700;">✓</span><% } %>
+        </div>
+        <div style="font-size:0.83rem;color:var(--muted);margin-top:3px;line-height:1.5;"><%= step.desc %></div>
+      </div>
+    </div>
+
+    <% }); %>
+  </div>
+
+  <div style="margin-top:16px;padding:16px 20px;background:var(--bg-page);border:1px solid var(--border);border-radius:var(--radius);font-size:0.88rem;color:var(--muted);line-height:1.6;">
+    <%- __('case.contact_note') %>
+  </div>
+
+  <div style="margin-top:24px;">
+    <a href="/dashboard" class="btn btn--outline">← <%- __('case.back') %></a>
+  </div>
+
+</div>
+
+<%- include('../layout/footer') %>

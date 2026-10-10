@@ -1,0 +1,223 @@
+<style>
+.calc-wrap { background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:28px 32px 24px; margin-bottom:28px; }
+.calc-title { font-size:1.15rem; font-weight:700; color:var(--ink); margin-bottom:4px; }
+.calc-sub { font-size:0.83rem; color:var(--muted); margin-bottom:22px; line-height:1.5; }
+.calc-toggle { display:flex; gap:8px; margin-bottom:22px; }
+.calc-toggle-btn { flex:1; padding:10px 8px; border:1.5px solid var(--line); border-radius:8px; background:none; font-family:var(--font-body); font-size:0.85rem; font-weight:600; color:var(--muted); cursor:pointer; transition:all .15s; text-align:center; }
+.calc-toggle-btn.active { border-color:var(--ink); background:var(--ink); color:var(--paper); }
+.calc-field { margin-bottom:18px; }
+.calc-field-header { display:flex; align-items:center; gap:6px; margin-bottom:7px; }
+.calc-field-label { font-size:0.8rem; font-weight:700; color:var(--ink); text-transform:uppercase; letter-spacing:.05em; }
+.calc-info-btn { background:none; border:none; cursor:pointer; padding:0; line-height:1; position:relative; }
+.calc-info-icon { width:16px; height:16px; border-radius:50%; border:1.5px solid var(--muted); color:var(--muted); font-size:10px; font-weight:700; font-family:var(--font-body); display:inline-flex; align-items:center; justify-content:center; transition:all .15s; }
+.calc-info-btn:hover .calc-info-icon { border-color:var(--ochre); color:var(--ochre); }
+.calc-tooltip { display:none; position:absolute; left:50%; transform:translateX(-50%); bottom:calc(100% + 8px); background:var(--ink); color:var(--paper); font-size:0.75rem; line-height:1.5; padding:10px 14px; border-radius:8px; width:240px; z-index:50; font-family:var(--font-body); font-weight:400; text-transform:none; letter-spacing:0; text-align:left; box-shadow:0 4px 16px rgba(0,0,0,.25); }
+.calc-tooltip::after { content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:5px solid transparent; border-top-color:var(--ink); }
+.calc-info-btn:hover .calc-tooltip, .calc-info-btn:focus .calc-tooltip { display:block; }
+.calc-input { width:100%; padding:11px 14px; border:1.5px solid var(--line); border-radius:var(--radius); font-size:1rem; font-family:var(--font-mono); background:var(--paper); color:var(--ink); transition:border-color .15s; box-sizing:border-box; }
+.calc-input:focus { outline:none; border-color:var(--ochre); }
+.calc-btn { width:100%; padding:14px; background:var(--ink); color:var(--paper); border:none; border-radius:var(--radius); font-size:0.95rem; font-weight:700; font-family:var(--font-body); cursor:pointer; transition:background .15s; margin-top:4px; }
+.calc-btn:hover { background:var(--ochre-dark); }
+.calc-results { margin-top:22px; display:none; }
+.calc-row { display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid var(--line); font-size:0.9rem; }
+.calc-row:last-child { border-bottom:none; }
+.calc-row-label { color:var(--muted); }
+.calc-row-value { font-family:var(--font-mono); font-weight:600; color:var(--ink); }
+.calc-result-box { border-radius:10px; padding:16px 20px; margin-top:16px; display:flex; justify-content:space-between; align-items:center; }
+.calc-result-box.refund { background:#EBF1ED; border:1px solid #B8DECE; }
+.calc-result-box.owed { background:#FBEAE5; border:1px solid #F5C0B0; }
+.calc-result-box .res-label { font-size:0.82rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; }
+.calc-result-box.refund .res-label { color:#1d5c2e; }
+.calc-result-box.owed .res-label { color:#8b2e1c; }
+.calc-result-box .res-amount { font-size:1.6rem; font-weight:700; font-family:var(--font-mono); }
+.calc-result-box.refund .res-amount { color:#1d5c2e; }
+.calc-result-box.owed .res-amount { color:#8b2e1c; }
+.calc-penalty-box { background:#FFF8E1; border:1px solid #FFD54F; border-radius:8px; padding:14px 16px; margin-top:14px; display:none; }
+.calc-penalty-box .pen-title { font-size:0.82rem; font-weight:700; color:#7B5800; margin-bottom:6px; }
+.calc-penalty-box .pen-body { font-size:0.8rem; color:#5C4200; line-height:1.6; }
+.calc-disclaimer-txt { font-size:0.78rem; color:var(--muted); margin-top:14px; line-height:1.5; }
+.calc-cta { display:block; text-align:center; margin-top:16px; padding:13px; background:var(--ochre); color:var(--ink); font-weight:700; font-size:0.9rem; border-radius:var(--radius); text-decoration:none; font-family:var(--font-body); transition:background .15s; }
+.calc-cta:hover { background:var(--ochre-dark); color:var(--paper); text-decoration:none; }
+.calc-reset { display:block; text-align:center; margin-top:10px; font-size:0.8rem; color:var(--muted); cursor:pointer; background:none; border:none; font-family:var(--font-body); text-decoration:underline; }
+</style>
+
+<div class="calc-wrap">
+  <div class="calc-title"><%- __('calc.title') %></div>
+  <div class="calc-sub"><%- __('calc.subtitle') %></div>
+  <div style="background:#F0F7FF;border:1px solid #BFDBFE;border-radius:8px;padding:11px 14px;margin-bottom:20px;font-size:0.82rem;color:#1e3a5f;line-height:1.6;">
+    <%- __('calc.where_to_find') %>
+  </div>
+
+  <!-- Toggle WHM / Resident -->
+  <div class="calc-toggle">
+    <button class="calc-toggle-btn active" id="calc-btn-whm" onclick="calcSetType('whm')"><%- __('calc.type_whm') %></button>
+    <button class="calc-toggle-btn" id="calc-btn-res" onclick="calcSetType('resident')"><%- __('calc.type_resident') %></button>
+  </div>
+
+  <!-- Gross Income -->
+  <div class="calc-field">
+    <div class="calc-field-header">
+      <label class="calc-field-label" for="calc-income"><%- __('calc.income_label') %></label>
+      <button class="calc-info-btn" type="button" tabindex="0" aria-label="info">
+        <span class="calc-info-icon">i</span>
+        <span class="calc-tooltip"><%- __('calc.income_info') %></span>
+      </button>
+    </div>
+    <input class="calc-input" type="number" id="calc-income" min="0" max="999999" placeholder="0" oninput="calcRun()">
+  </div>
+
+  <!-- PAYG Withheld -->
+  <div class="calc-field">
+    <div class="calc-field-header">
+      <label class="calc-field-label" for="calc-payg"><%- __('calc.payg_label') %></label>
+      <button class="calc-info-btn" type="button" tabindex="0" aria-label="info">
+        <span class="calc-info-icon">i</span>
+        <span class="calc-tooltip"><%- __('calc.payg_info') %></span>
+      </button>
+    </div>
+    <input class="calc-input" type="number" id="calc-payg" min="0" max="999999" placeholder="0" oninput="calcRun()">
+  </div>
+
+  <!-- Deductions -->
+  <div class="calc-field">
+    <div class="calc-field-header">
+      <label class="calc-field-label" for="calc-deductions"><%- __('calc.deductions_label') %></label>
+      <button class="calc-info-btn" type="button" tabindex="0" aria-label="info">
+        <span class="calc-info-icon">i</span>
+        <span class="calc-tooltip"><%- __('calc.deductions_info') %></span>
+      </button>
+    </div>
+    <input class="calc-input" type="number" id="calc-deductions" min="0" max="999999" placeholder="0" oninput="calcRun()">
+  </div>
+
+  <button class="calc-btn" onclick="calcRun(true)"><%- __('calc.calculate_btn') %></button>
+
+  <!-- Results -->
+  <div class="calc-results" id="calc-results">
+    <div class="calc-row"><span class="calc-row-label"><%- __('calc.result_taxable') %></span><span class="calc-row-value" id="cr-taxable">—</span></div>
+    <div class="calc-row"><span class="calc-row-label"><%- __('calc.result_tax') %></span><span class="calc-row-value" id="cr-tax">—</span></div>
+    <div class="calc-row" id="cr-medicare-row"><span class="calc-row-label"><%- __('calc.result_medicare') %></span><span class="calc-row-value" id="cr-medicare">—</span></div>
+    <div class="calc-row"><span class="calc-row-label"><%- __('calc.result_total_tax') %></span><span class="calc-row-value" id="cr-total-tax">—</span></div>
+    <div class="calc-row"><span class="calc-row-label"><%- __('calc.result_withheld') %></span><span class="calc-row-value" id="cr-withheld">—</span></div>
+
+    <!-- Refund or owed box -->
+    <div class="calc-result-box refund" id="cr-refund-box" style="display:none">
+      <span class="res-label"><%- __('calc.result_refund') %></span>
+      <span class="res-amount" id="cr-refund-amount">AUD 0</span>
+    </div>
+    <div class="calc-result-box owed" id="cr-owed-box" style="display:none">
+      <span class="res-label"><%- __('calc.result_owed') %></span>
+      <span class="res-amount" id="cr-owed-amount">AUD 0</span>
+    </div>
+
+    <!-- Penalty warning (only when owed) -->
+    <div class="calc-penalty-box" id="cr-penalty-box">
+      <div class="pen-title"><%- __('calc.penalty_title') %></div>
+      <div class="pen-body"><%- __('calc.penalty_body') %></div>
+    </div>
+
+    <div class="calc-disclaimer-txt"><%- __('calc.disclaimer') %></div>
+
+    <a href="/register" class="calc-cta"><%- __('calc.cta') %></a>
+    <button class="calc-reset" onclick="calcReset()"><%- __('calc.reset') %></button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var calcType = 'whm';
+
+  window.calcSetType = function(type) {
+    calcType = type;
+    document.getElementById('calc-btn-whm').classList.toggle('active', type === 'whm');
+    document.getElementById('calc-btn-res').classList.toggle('active', type === 'resident');
+    calcRun();
+  };
+
+  function taxWHM(income) {
+    // FY 2024-25 Working Holiday Maker rates
+    if (income <= 0) return 0;
+    var tax = 0;
+    if (income <= 45000)  { tax = income * 0.15; }
+    else if (income <= 120000) { tax = 6750 + (income - 45000) * 0.325; }
+    else if (income <= 180000) { tax = 31125 + (income - 120000) * 0.37; }
+    else { tax = 53325 + (income - 180000) * 0.45; }
+    return Math.round(tax);
+  }
+
+  function taxResident(income) {
+    // FY 2024-25 Resident rates (Stage 3 tax cuts)
+    if (income <= 18200) return 0;
+    var tax = 0;
+    if (income <= 45000)  { tax = (income - 18200) * 0.16; }
+    else if (income <= 135000) { tax = 4288 + (income - 45000) * 0.30; }
+    else if (income <= 190000) { tax = 31288 + (income - 135000) * 0.37; }
+    else { tax = 51638 + (income - 190000) * 0.45; }
+    // LITO
+    var lito = 0;
+    if (income <= 37500) { lito = 700; }
+    else if (income <= 45000) { lito = 700 - (income - 37500) * 0.05; }
+    else if (income <= 66667) { lito = 325 - (income - 45000) * 0.015; }
+    tax = Math.max(0, tax - lito);
+    return Math.round(tax);
+  }
+
+  function fmt(n) { return 'AUD ' + Math.abs(n).toLocaleString('en-AU', {minimumFractionDigits:0, maximumFractionDigits:0}); }
+
+  window.calcRun = function(force) {
+    var income     = parseFloat(document.getElementById('calc-income').value) || 0;
+    var payg       = parseFloat(document.getElementById('calc-payg').value) || 0;
+    var deductions = parseFloat(document.getElementById('calc-deductions').value) || 0;
+
+    if (!force && income === 0 && payg === 0) return; // no correr si vacío
+
+    var taxable  = Math.max(0, income - deductions);
+    var baseTax  = calcType === 'whm' ? taxWHM(taxable) : taxResident(taxable);
+    var medicare = calcType === 'resident' ? Math.round(taxable * 0.02) : 0;
+    var totalTax = baseTax + medicare;
+    var diff     = payg - totalTax;
+
+    document.getElementById('cr-taxable').textContent   = fmt(taxable);
+    document.getElementById('cr-tax').textContent       = fmt(baseTax);
+    document.getElementById('cr-total-tax').textContent = fmt(totalTax);
+    document.getElementById('cr-withheld').textContent  = fmt(payg);
+
+    var medRow = document.getElementById('cr-medicare-row');
+    if (calcType === 'resident') {
+      medRow.style.display = '';
+      document.getElementById('cr-medicare').textContent = fmt(medicare);
+    } else {
+      medRow.style.display = 'none';
+      document.getElementById('cr-medicare').textContent = '<%- __("calc.whm_exempt") %>';
+    }
+
+    var refundBox  = document.getElementById('cr-refund-box');
+    var owedBox    = document.getElementById('cr-owed-box');
+    var penaltyBox = document.getElementById('cr-penalty-box');
+
+    if (diff >= 0) {
+      refundBox.style.display = 'flex';
+      owedBox.style.display   = 'none';
+      penaltyBox.style.display = 'none';
+      document.getElementById('cr-refund-amount').textContent = fmt(diff);
+    } else {
+      refundBox.style.display = 'none';
+      owedBox.style.display   = 'flex';
+      penaltyBox.style.display = 'block';
+      document.getElementById('cr-owed-amount').textContent = fmt(Math.abs(diff));
+    }
+
+    document.getElementById('calc-results').style.display = 'block';
+  };
+
+  window.calcReset = function() {
+    document.getElementById('calc-income').value = '';
+    document.getElementById('calc-payg').value = '';
+    document.getElementById('calc-deductions').value = '';
+    document.getElementById('calc-results').style.display = 'none';
+    document.getElementById('cr-refund-box').style.display = 'none';
+    document.getElementById('cr-owed-box').style.display = 'none';
+    document.getElementById('cr-penalty-box').style.display = 'none';
+  };
+})();
+</script>

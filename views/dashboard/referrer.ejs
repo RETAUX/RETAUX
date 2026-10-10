@@ -1,0 +1,100 @@
+<%- include('../partials/nav', { active: '', user: user }) %>
+<!DOCTYPE html>
+<html lang="<%= lang || 'es' %>">
+<head>
+  <%- include('../partials/head') %>
+  <title><%- __('admin_referrers.title') %> — RETAUX</title>
+</head>
+<body>
+
+<section class="section">
+  <div class="container" style="max-width:680px">
+
+    <h1 style="font-size:1.7rem;margin-bottom:4px"><%- __('admin_referrers.title') %></h1>
+    <p class="muted" style="margin-bottom:28px"><%- __('admin_referrers.subtitle') %></p>
+
+    <!-- Código y link -->
+    <div class="card" style="margin-bottom:20px">
+      <h3 style="margin-bottom:12px"><%- __('referrer.your_code') %></h3>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <span style="font-family:var(--font-mono);font-size:1.6rem;font-weight:700;color:var(--gold);letter-spacing:3px"><%= user.referralCode %></span>
+        <button onclick="copyCode()" class="btn btn--outline btn--sm" id="copy-btn"><%- __('referrer.copy_code') %></button>
+      </div>
+      <div style="margin-top:12px;background:var(--bg-page);border-radius:var(--radius);padding:10px 14px;font-family:var(--font-mono);font-size:0.82rem;word-break:break-all">
+        <%= refLink %>
+        <button onclick="copyLink()" class="btn btn--sm btn--outline" style="margin-left:8px"><%- __('referrer.copy_link') %></button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px">
+      <div class="card" style="text-align:center;padding:20px 12px">
+        <div style="font-size:2rem;font-weight:700;color:var(--text-navy)"><%= referrals.length %></div>
+        <div class="muted" style="font-size:0.85rem"><%- __('referrer.total') %></div>
+      </div>
+      <div class="card" style="text-align:center;padding:20px 12px">
+        <div style="font-size:2rem;font-weight:700;color:var(--green)"><%= paidReferrals.length %></div>
+        <div class="muted" style="font-size:0.85rem"><%- __('referrer.paid_count') %></div>
+      </div>
+      <div class="card" style="text-align:center;padding:20px 12px">
+        <div style="font-size:2rem;font-weight:700;color:var(--gold)">$<%= earned %></div>
+        <div class="muted" style="font-size:0.85rem"><%- __('referrer.earned') %></div>
+      </div>
+    </div>
+
+    <!-- Lista de referidos -->
+    <div class="card">
+      <h3 style="margin-bottom:16px"><%- __('referrer.list_title') %></h3>
+      <% if (!referrals.length) { %>
+        <p class="muted"><%- __('referrer.empty') %></p>
+      <% } else { %>
+        <table style="width:100%;border-collapse:collapse;font-size:0.9rem">
+          <thead>
+            <tr style="border-bottom:2px solid var(--border)">
+              <th style="text-align:left;padding:8px 4px"><%- __('referrer.col_name') %></th>
+              <th style="text-align:left;padding:8px 4px"><%- __('referrer.col_status') %></th>
+              <th style="text-align:left;padding:8px 4px"><%- __('referrer.col_date') %></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% referrals.forEach(function(r) {
+              var referred = referredUsers.find(function(u){ return u.id === r.referredUserId; });
+            %>
+            <tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:10px 4px"><%= referred ? referred.fullName || referred.email : '—' %></td>
+              <td style="padding:10px 4px">
+                <% if (r.status === 'paid') { %>
+                  <span style="background:var(--green);color:#fff;font-size:0.72rem;padding:2px 8px;border-radius:4px;font-family:var(--font-mono)"><%- __('referrer.status_paid') %></span>
+                <% } else { %>
+                  <span style="background:var(--gold);color:#fff;font-size:0.72rem;padding:2px 8px;border-radius:4px;font-family:var(--font-mono)"><%- __('referrer.status_pending') %></span>
+                <% } %>
+              </td>
+              <td style="padding:10px 4px;color:var(--muted);font-size:0.82rem"><%= new Date(r.createdAt||Date.now()).toLocaleDateString(lang === 'en' ? 'en-AU' : lang === 'fr' ? 'fr-FR' : lang === 'it' ? 'it-IT' : 'es-AR',{day:'numeric',month:'short',year:'numeric'}) %></td>
+            </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+
+  </div>
+</section>
+
+<%- include('../partials/footer') %>
+
+<script>
+var _copiedLabel = '<%- __("referrer.copied") %>';
+var _copyCodeLabel = '<%- __("referrer.copy_code") %>';
+function copyCode() {
+  navigator.clipboard.writeText('<%= user.referralCode %>').then(function(){
+    var btn = document.getElementById('copy-btn');
+    btn.textContent = _copiedLabel;
+    setTimeout(function(){ btn.textContent = _copyCodeLabel; }, 2000);
+  });
+}
+function copyLink() {
+  navigator.clipboard.writeText('<%= refLink %>');
+}
+</script>
+</body>
+</html>

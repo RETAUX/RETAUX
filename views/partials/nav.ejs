@@ -1,0 +1,63 @@
+<nav class="navbar">
+  <div class="navbar-inner">
+    <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0;margin-right:10px;">
+      <a href="https://www.tpb.gov.au/public-register?search=26346246" target="_blank" rel="noopener" title="Registered BAS Agent 26346246 — verify on TPB" style="display:flex;align-items:center;gap:6px;text-decoration:none;" aria-label="Registered BAS Agent 26346246">
+        <svg width="34" height="34" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <path id="bas-top" d="M 12,50 A 38,38 0 0 1 88,50"/>
+            <path id="bas-bot" d="M 20,50 A 30,30 0 0 0 80,50"/>
+          </defs>
+          <circle cx="50" cy="50" r="48" fill="#fff" stroke="#111" stroke-width="4"/>
+          <circle cx="50" cy="50" r="34" fill="#8DC63F"/>
+          <polyline points="31,52 44,65 69,38" fill="none" stroke="#fff" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <text font-family="Arial,sans-serif" font-size="8" font-weight="700" fill="#111" text-anchor="middle">
+            <textPath href="#bas-top" startOffset="50%">TAX PRACTITIONERS BOARD</textPath>
+          </text>
+          <text font-family="Arial,sans-serif" font-size="9" font-weight="700" fill="#111" text-anchor="middle">
+            <textPath href="#bas-bot" startOffset="50%">REGISTERED</textPath>
+          </text>
+        </svg>
+        <div class="tpb-text" style="display:flex;flex-direction:column;line-height:1.25">
+          <span style="font-size:0.58rem;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:.05em;text-transform:uppercase">BAS agent</span>
+          <span style="font-size:0.68rem;font-weight:700;color:#fff;font-family:'IBM Plex Mono',monospace">26346246</span>
+        </div>
+      </a>
+    </div>
+
+    <a href="/" class="navbar__logo" aria-label="RETAUX" style="text-decoration:none">
+      <span style="font-family:'Fraunces',Georgia,serif;font-size:1.35rem;font-weight:700;color:#4FC3F7;letter-spacing:-0.02em;line-height:1">RE</span><span style="font-family:'Fraunces',Georgia,serif;font-size:1.35rem;font-weight:700;color:#FFC107;letter-spacing:-0.02em;line-height:1">TAUX</span>
+    </a>
+
+    <button class="navbar__hamburger" id="nav-toggle" aria-label="Menú" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+
+    <div class="nav-links" id="nav-links">
+      <% if (typeof user !== 'undefined' && user) { %>
+        <a href="/dashboard" class="<%= active === 'dashboard' ? 'active' : '' %>" data-i18n="nav.dashboard"><%- __('nav.dashboard') %></a>
+        <a href="/dasp" class="<%= active === 'dasp' ? 'active' : '' %>" style="<%= active === 'dasp' ? '' : 'color:#FFC107' %>">DASP ✦</a>
+        <a href="/referrals" class="<%= active === 'referrals' ? 'active' : '' %>" data-i18n="nav.referrals"><%- __('nav.referrals') %></a>
+        <a href="/forgot-password" style="font-size:0.82rem;opacity:0.45;" data-i18n="nav.change_password"><%- __('nav.change_password') %></a>
+        <a href="/logout" data-i18n="nav.logout"><%- __('nav.logout') %></a>
+      <% } else { %>
+        <a href="/tax-info" class="<%= active === 'tax-info' ? 'active' : '' %>" data-i18n="nav.taxGuide"><%- __('nav.taxGuide') %></a>
+        <a href="/login" data-i18n="nav.login"><%- __('nav.login') %></a>
+        <a href="/register" class="btn btn--primary btn--sm" data-i18n="nav.register"><%- __('nav.register') %></a>
+      <% } %>
+      <div id="lang-selector"></div>
+    </div>
+  </div>
+</nav>
+
+<script>
+  (function(){
+    var btn = document.getElementById('nav-toggle');
+    var links = document.getElementById('nav-links');
+    if(btn && links){
+      btn.addEventListener('click', function(){
+        var open = links.classList.toggle('open');
+        btn.setAttribute('aria-expanded', open);
+      });
+    }
+  })();
+</script>

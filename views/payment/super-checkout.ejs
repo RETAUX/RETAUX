@@ -1,0 +1,156 @@
+<%- include('../layout/header', { title: __('super.title'), currentUser: user }) %>
+
+<style>
+  .checkout-card { background:#fff; border:1px solid var(--border); border-radius:16px; padding:32px; max-width:520px; box-shadow:var(--shadow); }
+
+  .price-display { background:var(--navy); border-radius:12px; padding:24px 28px; margin-bottom:24px; color:#fff; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+  .price-label { font-size:0.85rem; color:rgba(255,255,255,0.6); margin-bottom:4px; }
+  .price-amount { font-family:var(--font-display); font-size:2.8rem; font-weight:700; color:#FFC107; line-height:1; }
+  .price-sup { font-size:1.1rem; color:rgba(255,255,255,0.7); margin-right:4px; vertical-align:super; }
+  .price-desc { font-size:0.8rem; color:rgba(255,255,255,0.5); margin-top:4px; }
+
+  .summary-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; font-size:0.9rem; color:var(--muted); border-bottom:1px solid var(--border); }
+  .summary-row:last-child { border-bottom:none; font-weight:700; color:var(--text-navy); font-size:1rem; }
+
+  .terms-check { display:flex; align-items:flex-start; gap:10px; margin-bottom:20px; padding:14px; background:var(--bg-page); border-radius:8px; border:1px solid var(--border); }
+  .terms-check input[type="checkbox"] { width:18px; height:18px; margin-top:2px; flex-shrink:0; cursor:pointer; accent-color:var(--navy); }
+  .terms-check label { font-size:0.88rem; color:var(--text-navy); cursor:pointer; line-height:1.5; }
+  .terms-check label a { color:var(--navy); font-weight:600; }
+
+  .pay-btn { width:100%; padding:16px; background:linear-gradient(135deg,#191C87,#2d31c7); color:#fff; border:none; border-radius:10px; font-size:1.05rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; transition:transform 0.1s, box-shadow 0.2s; box-shadow:0 4px 20px rgba(25,28,135,0.35); font-family:var(--font-body); }
+  .pay-btn:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(25,28,135,0.5); }
+  .pay-btn:disabled, .pay-btn.disabled { opacity:0.45; cursor:not-allowed; transform:none; pointer-events:none; }
+
+  .pay-link-btn { width:100%; padding:16px; background:linear-gradient(135deg,#191C87,#2d31c7); color:#fff; border:none; border-radius:10px; font-size:1.05rem; font-weight:700; display:flex; align-items:center; justify-content:center; gap:10px; transition:transform 0.1s, box-shadow 0.2s; box-shadow:0 4px 20px rgba(25,28,135,0.35); text-decoration:none; }
+  .pay-link-btn:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(25,28,135,0.5); color:#fff; text-decoration:none; }
+
+  .manual-instructions { background:var(--bg-page); border:1px solid var(--border); border-radius:10px; padding:20px; margin-bottom:16px; }
+  .manual-step { display:flex; align-items:flex-start; gap:12px; margin-bottom:14px; }
+  .manual-step:last-child { margin-bottom:0; }
+  .step-num { background:var(--navy); color:#fff; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; font-size:0.78rem; font-weight:700; flex-shrink:0; margin-top:1px; }
+
+  .security-note { display:flex; align-items:center; gap:8px; font-size:0.78rem; color:var(--muted); margin-top:12px; justify-content:center; }
+
+  .info-banner { background:#EBF4FD; border:1px solid #BCD8F3; border-radius:10px; padding:16px 20px; margin-bottom:24px; font-size:0.88rem; color:#1a4a7a; line-height:1.6; }
+</style>
+
+<section class="section">
+  <div class="container-narrow">
+
+    <h1 style="font-size:1.7rem;margin-bottom:6px;"><%- __('super.title') %></h1>
+    <p class="muted" style="margin-bottom:20px;"><%- __('super.subtitle') %></p>
+
+    <div class="info-banner">
+      📋 <%- __('super.info_banner') %>
+    </div>
+
+    <% if (error) { %>
+      <div class="alert alert--error" style="margin-bottom:20px;"><%- __('super.error_generic') %></div>
+    <% } %>
+
+    <div class="checkout-card">
+
+      <!-- Precio -->
+      <div class="price-display">
+        <div>
+          <div class="price-label"><%- __('super.service_name') %></div>
+          <div>
+            <span class="price-sup">AUD</span>
+            <span class="price-amount"><%= priceAUD %></span>
+          </div>
+          <div class="price-desc"><%- __('super.price_desc') %></div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:0.78rem;color:rgba(255,255,255,0.5);margin-bottom:4px;"><%- __('super.includes') %></div>
+          <div style="font-size:0.82rem;color:rgba(255,255,255,0.75);line-height:1.7;">
+            ✓ <%- __('super.inc_1') %><br>
+            ✓ <%- __('super.inc_2') %><br>
+            ✓ <%- __('super.inc_3') %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resumen -->
+      <div style="margin-bottom:20px;">
+        <div class="summary-row">
+          <span><%- __('super.row_service') %></span>
+          <span style="font-family:var(--font-mono);">AUD <%= priceAUD %>.00</span>
+        </div>
+        <div class="summary-row">
+          <span><%- __('super.row_total') %></span>
+          <span style="font-family:var(--font-mono);">AUD <%= priceAUD %>.00</span>
+        </div>
+      </div>
+
+      <!-- Términos -->
+      <div class="terms-check">
+        <input type="checkbox" id="terms-check" onchange="updatePayBtn()">
+        <label for="terms-check">
+          <%- __('payment.terms_prefix') %>
+          <a href="/terms" target="_blank"><%- __('payment.terms_link') %></a>
+          <%- __('payment.terms_suffix') %>
+        </label>
+      </div>
+
+      <!-- Paso 1: ver instrucciones -->
+      <button type="button" id="pay-btn" class="pay-btn disabled" disabled onclick="showInstructions()">
+        <%- __('payment.see_instructions_btn') %> →
+      </button>
+
+      <!-- Paso 2: instrucciones + link + "ya pagué" -->
+      <div id="pay-instructions" style="display:none; margin-top:16px;">
+        <div class="manual-instructions">
+          <div class="manual-step">
+            <div class="step-num">1</div>
+            <div style="font-size:0.9rem;"><%- __('super.step1') %> <strong>AUD <%= priceAUD %>.00</strong></div>
+          </div>
+          <div class="manual-step">
+            <div class="step-num">2</div>
+            <div style="font-size:0.9rem;"><%- __('super.step2') %></div>
+          </div>
+          <div class="manual-step">
+            <div class="step-num">3</div>
+            <div style="font-size:0.9rem;"><%- __('super.step3') %></div>
+          </div>
+        </div>
+
+        <a href="<%= paymentLink %>" target="_blank" rel="noopener" class="pay-link-btn" style="margin-bottom:12px;">
+          💳 <%- __('super.pay_link_btn') %> AUD <%= priceAUD %>
+        </a>
+
+        <form method="POST" action="/super/submit">
+          <button type="submit" class="btn btn--outline btn--full" style="margin-top:8px; font-size:0.95rem;">
+            ✅ <%- __('super.already_paid_btn') %>
+          </button>
+        </form>
+
+        <p style="font-size:0.8rem; color:var(--muted); margin-top:10px; text-align:center;"><%- __('payment.manual_note') %></p>
+      </div>
+
+      <div class="security-note">
+        🔒 <%- __('payment.security_note') %>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<%- include('../layout/footer') %>
+
+<script>
+function updatePayBtn() {
+  var btn = document.getElementById('pay-btn');
+  var checked = document.getElementById('terms-check').checked;
+  if (checked) { btn.classList.remove('disabled'); btn.disabled = false; }
+  else { btn.classList.add('disabled'); btn.disabled = true; }
+}
+
+function showInstructions() {
+  if (!document.getElementById('terms-check').checked) {
+    document.getElementById('terms-check').closest('.terms-check').style.border = '2px solid var(--red)';
+    return;
+  }
+  document.getElementById('pay-btn').style.display = 'none';
+  document.getElementById('pay-instructions').style.display = 'block';
+}
+</script>

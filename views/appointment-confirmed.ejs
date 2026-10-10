@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="<%= lang || 'es' %>">
+<head>
+  <%- include('partials/head') %>
+  <title><%- __('appointment.confirmed_title') %> — RETAUX</title>
+</head>
+<body>
+  <%- include('partials/nav', { active: '', user: user }) %>
+
+  <section class="section">
+    <div class="container-narrow text-center">
+      <div class="card">
+        <div style="font-size:3rem; margin-bottom:16px;">🎉</div>
+        <h1 style="font-size:1.8rem; margin-bottom:8px;"><%- __('appointment.thanks') %></h1>
+        <p class="muted" style="font-size:1.05rem;"><%- __('appointment.confirmed_sub') %></p>
+
+        <div style="background:var(--paper-alt); border:1px solid var(--line); border-radius:4px; padding:28px; margin:28px 0;">
+          <p style="margin:0 0 8px; font-family:var(--font-mono); font-size:0.75rem; letter-spacing:0.1em; color:var(--ochre-dark);"><%- __('appointment.slot_label') %></p>
+          <p style="margin:0; font-family:var(--font-display); font-size:1.5rem; font-weight:700; color:var(--ink);">
+            <%= formatSlot(appt.date, appt.hour) %>
+          </p>
+          <p style="margin:12px 0 0; font-size:0.88rem; color:var(--muted);">
+            <%- __('appointment.email_sent') %>
+          </p>
+        </div>
+
+        <div class="alert alert-info" style="text-align:left;">
+          <strong><%- __('appointment.what_happens_title') %></strong> <%- __('appointment.what_happens_body') %>
+        </div>
+
+        <div style="margin-top:20px; display:flex; gap:12px; flex-wrap:wrap; justify-content:center;">
+          <a href="/dashboard" class="btn btn-primary"><%- __('appointment.go_dashboard') %></a>
+          <%
+            var apptDate = new Date(appt.date + 'T' + String(appt.hour).padStart(2,'0') + ':00:00');
+            var now = new Date();
+            var hoursUntil = (apptDate - now) / 36e5;
+            if (hoursUntil > 24) {
+          %>
+            <button onclick="document.getElementById('cancel-confirm').style.display='block';this.style.display='none';"
+              class="btn btn--secondary" style="border-color:var(--terracotta); color:var(--terracotta);">
+              <%- __('appointment.cancel_btn') %>
+            </button>
+          <% } %>
+        </div>
+
+        <% if (hoursUntil > 24) { %>
+        <div id="cancel-confirm" style="display:none; margin-top:16px; padding:16px 18px; background:#FBEAE5; border:1px solid var(--terracotta); border-radius:var(--radius);">
+          <p style="margin:0 0 12px; font-size:0.92rem; color:var(--ink);">
+            <%- __('appointment.cancel_confirm') %>
+          </p>
+          <form method="POST" action="/appointment/cancel" style="display:inline;">
+            <button type="submit" class="btn btn--sm" style="background:var(--terracotta); border-color:var(--terracotta); color:#fff;">
+              <%- __('appointment.cancel_yes') %>
+            </button>
+          </form>
+          <button onclick="document.getElementById('cancel-confirm').style.display='none';"
+            class="btn btn--secondary btn--sm" style="margin-left:8px;">
+            <%- __('appointment.cancel_no') %>
+          </button>
+        </div>
+        <% } %>
+
+        <hr class="divider">
+        <h3><%- __('appointment.referral_heading') %></h3>
+        <p class="muted"><%- __('appointment.referral_desc') %></p>
+        <div class="referral-code" style="background:var(--paper-alt); color:var(--ink); font-size:1.1rem;">
+          retaux.com/register?ref=<%= user.referralCode %>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <%- include('partials/footer') %>
+</body>
+</html>

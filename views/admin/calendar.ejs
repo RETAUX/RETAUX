@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+  <title>Calendario de turnos — RETAUX Admin</title>
+  <style>
+    .cal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+    .cal-day { border: 1px solid var(--line); border-radius: 4px; overflow: hidden; background: var(--white); }
+    .cal-day-header { background: var(--ink); color: var(--paper); padding: 10px 14px; font-family: var(--font-mono); font-size: 0.82rem; font-weight: 700; }
+    .cal-slot { display: flex; justify-content: space-between; align-items: center; padding: 7px 14px; border-top: 1px solid var(--line); font-size: 0.88rem; }
+    .cap-full { background: #FBEAE5; }
+    .cap-bar { height: 6px; border-radius: 3px; background: var(--ochre); }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-inner">
+      <span class="brand">RE<span>TAUX</span> <span class="muted" style="font-size:0.8rem;font-weight:400;">admin</span></span>
+      <div class="nav-links"><a href="/admin">Clientes</a><a href="/admin/calendar">Calendario</a><a href="/admin/logout">Salir</a></div>
+    </div>
+  </nav>
+
+  <section class="section">
+    <div class="container">
+      <h1 style="font-size:1.6rem;">Calendario de turnos</h1>
+      <p class="muted">Capacidad: 10 clientes por slot horario · Lunes a viernes · 7am – 5pm</p>
+
+      <%
+        // Group slots by date
+        const days = {};
+        summary.forEach(function(s) {
+          if (!days[s.date]) days[s.date] = [];
+          days[s.date].push(s);
+        });
+        const dates = Object.keys(days).sort();
+      %>
+
+      <div class="cal-grid">
+        <% dates.forEach(function(date) { %>
+          <% var daySlots = days[date]; %>
+          <% var totalBooked = daySlots.reduce(function(a,s){return a+s.booked;},0); %>
+          <% var totalCap = daySlots.length * 10; %>
+          <div class="cal-day">
+            <div class="cal-day-header">
+              <%= new Date(date+'T00:00:00').toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'}) %>
+              <span style="float:right;font-weight:400;opacity:0.7;"><%= totalBooked %>/<%= totalCap %></span>
+            </div>
+            <% daySlots.forEach(function(s) { %>
+              <div class="cal-slot <%= s.remaining===0 ? 'cap-full' : '' %>">
+                <span>
+                  <% var suffix = s.hour >= 12 ? 'pm' : 'am'; var h12 = s.hour > 12 ? s.hour-12 : s.hour; %>
+                  <strong><%= h12 %>:00 <%= suffix %></strong>
+                </span>
+                <span style="display:flex;align-items:center;gap:10px;">
+                  <span style="width:60px;">
+                    <div style="background:var(--line);height:6px;border-radius:3px;">
+                      <div class="cap-bar" style="width:<%= Math.round((s.booked/10)*100) %>%;"></div>
+                    </div>
+                  </span>
+                  <span class="muted" style="font-size:0.8rem;font-family:var(--font-mono);min-width:42px;text-align:right;">
+                    <%= s.booked %>/10
+                  </span>
+                  <% if (s.remaining === 0) { %>
+                    <span class="badge badge-pending" style="font-size:0.7rem;">Lleno</span>
+                  <% } %>
+                </span>
+              </div>
+            <% }); %>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+  </section>
+</body>
+</html>

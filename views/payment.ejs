@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="<%= lang || 'es' %>">
+<head>
+  <%- include('partials/head') %>
+  <title><%- __('payment.title') %> — RETAUX</title>
+  <script src="https://js.stripe.com/v3/"></script>
+  <style>
+    @media (max-width: 480px) {
+      .payment-price-row { flex-direction: column !important; align-items: flex-start !important; gap: 6px !important; }
+      .payment-price-row .price-amt { font-size: 1.25rem !important; }
+    }
+  </style>
+</head>
+<body>
+  <%- include('partials/nav', { active: '', user: user }) %>
+
+  <section class="section">
+    <div class="container-narrow">
+
+      <div class="step-nav" style="display:flex; gap:0; margin-bottom:32px; border-radius:4px; overflow:hidden; border:1px solid var(--line);">
+        <div style="flex:1; background:var(--eucalyptus); color:#fff; padding:10px 16px; font-size:0.82rem; font-weight:700; font-family:var(--font-mono);"><%- __('payment.step_data') %></div>
+        <div style="flex:1; background:var(--eucalyptus); color:#fff; padding:10px 16px; font-size:0.82rem; font-weight:700; font-family:var(--font-mono);"><%- __('payment.step_docs') %></div>
+        <div style="flex:1; background:var(--ochre); color:#fff; padding:10px 16px; font-size:0.82rem; font-weight:700; font-family:var(--font-mono);"><%- __('payment.step_pay') %></div>
+      </div>
+
+      <h1 style="font-size:1.7rem;"><%- __('payment.title') %></h1>
+      <p class="muted"><%- __('payment.subtitle') %></p>
+
+      <% if (error) { %><div class="alert alert-error"><%= error %></div><% } %>
+
+      <div class="card">
+        <div class="payment-price-row" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:8px;">
+          <div>
+            <h3 style="margin-bottom:4px;"><%- __('payment.service_title') %></h3>
+            <p class="muted mb-0"><%- __('payment.service_desc') %></p>
+          </div>
+          <div style="text-align:right;">
+            <div class="price-amt" style="font-family:var(--font-mono); font-size:1.5rem; font-weight:700; color:var(--ink); white-space:nowrap;">
+              AUD <%= priceAUD.toFixed(2) %>
+            </div>
+            <div style="font-size:0.78rem; color:var(--muted); margin-top:4px; font-family:var(--font-mono);">PayID · B Quagliarella</div>
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="form-group">
+          <label for="referralCode"><%- __('payment.ref_label') %></label>
+          <input type="text" id="referralCode" class="mono" placeholder="RTX-XXXXXX" style="max-width:220px;">
+          <p class="field-hint"><%- __('payment.ref_hint') %></p>
+        </div>
+
+        <hr class="divider">
+
+        <% if (stripePublishableKey) { %>
+          <div id="payment-element" style="margin-bottom:20px;"></div>
+          <div id="payment-error" class="alert alert-error" style="display:none;"></div>
+          <button id="pay-btn" class="btn btn-primary btn-block"><%- __('payment.pay_btn') %> <%= priceAUD.toFixed(2) %></button>
+          <p class="field-hint text-center" style="margin-top:8px;"><%- __('payment.security_hint') %></p>
+
+          <script>
+            var PAY_BTN_LABEL = '<%- __("payment.pay_btn") %> <%= priceAUD.toFixed(2) %>';
+            var PROCESSING_LABEL = '<%- __("payment.processing") %>';
+            const stripe = Stripe('<%= stripePublishableKey %>');
+            let elements;
+
+            async function initStripe() {
+              const referralCode = document.getElementById('referralCode').value.trim();
+              const res = await fetch('/payment/create-intent', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ referralCode })
+              });
+              const data = await res.json();
+              if (data.error) {
+                document.getElementById('payment-error').style.display = 'block';
+                document.getElementById('payment-error').textContent = data.error;
+                return;
+              }
+
+              elements = stripe.elements({ clientSecret: data.clientSecret });
+              const paymentElement = elements.create('payment');
+              paymentElement.mount('#payment-element');
+            }
+
+            initStripe();
+
+            document.getElementById('pay-btn').addEventListener('click', async (e) => {
+              e.preventDefault();
+              document.getElementById('pay-btn').textContent = PROCESSING_LABEL;
+              document.getElementById('pay-btn').disabled = true;
+
+              const { error } = await stripe.confirmPayment({
+                elements,
+                confirmParams: { return_url: window.location.origin + '/payment/success' }
+              });
+
+              if (error) {
+                document.getElementById('payment-error').style.display = 'block';
+                document.getElementById('payment-error').textContent = error.message;
+                document.getElementById('pay-btn').textContent = PAY_BTN_LABEL;
+                document.getElementById('pay-btn').disabled = false;
+              }
+            });
+          </script>
+        <% } else { %>
+          <div class="alert alert-info">
+            <%- __('payment.dev_mode') %>
+          </div>
+          <a href="/payment/dev-skip" class="btn btn-primary btn-block"><%- __('payment.sim_btn') %></a>
+        <% } %>
+      </div>
+    </div>
+  </section>
+
+  <%- include('partials/footer') %>
+</body>
+</html>

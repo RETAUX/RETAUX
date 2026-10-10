@@ -1,0 +1,11 @@
+title = "RetauX gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Archivos a ignorar en el escaneo"
+paths = [
+  '''\.env$''',
+  '''views/onboarding/documents\.ejs'''
+]

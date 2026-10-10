@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="<%= lang || 'es' %>">
+<head>
+  <%- include('partials/head') %>
+  <title><%- __('support.page_title') %> — RETAUX</title>
+</head>
+<body>
+  <%- include('partials/nav', { active: 'support', user: user }) %>
+
+  <section class="section">
+    <div class="container-narrow">
+
+      <h1 style="font-size:1.9rem;margin-bottom:6px;"><%- __('support.title') %></h1>
+      <p class="muted" style="margin-bottom:28px;"><%- __('support.subtitle') %></p>
+
+      <% if (sent) { %>
+        <div class="alert alert--success" style="margin-bottom:24px;">
+          ✅ <%- __('support.sent_ok') %> <strong><%= user.email %></strong> <%- __('support.sent_ok_suffix') %>
+        </div>
+      <% } %>
+
+      <% if (error) { %>
+        <div class="alert alert--error" style="margin-bottom:24px;"><%= error %></div>
+      <% } %>
+
+      <% if (!sent) { %>
+      <form method="POST" action="/support" class="card">
+
+        <div class="form-group">
+          <label><%- __('support.name_label') %></label>
+          <input type="text" value="<%= user.fullName %>" readonly style="background:var(--bg-page);">
+        </div>
+
+        <div class="form-group">
+          <label><%- __('support.email_label') %></label>
+          <input type="text" value="<%= user.email %>" readonly style="background:var(--bg-page);">
+        </div>
+
+        <div class="form-group">
+          <label><%- __('support.subject_label') %> *</label>
+          <select name="subject" required>
+            <option value=""><%- __('support.subject_placeholder') %></option>
+            <option value="Problema con mi cuenta"><%- __('support.subj_account') %></option>
+            <option value="Pregunta sobre mi tax return"><%- __('support.subj_tax') %></option>
+            <option value="Problema con documentos"><%- __('support.subj_docs') %></option>
+            <option value="Pregunta sobre DASP / Superannuation"><%- __('support.subj_dasp') %></option>
+            <option value="Pregunta sobre el pago"><%- __('support.subj_payment') %></option>
+            <option value="Pregunta sobre referidos"><%- __('support.subj_referrals') %></option>
+            <option value="Otro"><%- __('support.subj_other') %></option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label><%- __('support.message_label') %> *</label>
+          <textarea name="message" rows="5" required placeholder="<%- __('support.message_placeholder') %>"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn--primary btn--full" style="font-size:1rem;">
+          📨 <%- __('support.send_btn') %>
+        </button>
+
+      </form>
+      <% } %>
+
+      <div class="card" style="margin-top:20px;background:var(--navy);color:#fff;border:none;">
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+          <div style="font-size:2rem;">📧</div>
+          <div>
+            <p style="color:rgba(255,255,255,0.6);font-size:0.85rem;margin-bottom:2px;"><%- __('support.also_email') %></p>
+            <a href="mailto:hola@retaux.com" style="color:#FFC107;font-weight:700;font-size:1.1rem;text-decoration:none;">hola@retaux.com</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <%- include('partials/footer') %>
+</body>
+</html>

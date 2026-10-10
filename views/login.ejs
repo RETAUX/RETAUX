@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="<%= lang || 'es' %>">
+<head>
+  <%- include('partials/head') %>
+  <title><%- __('page.login') %> — RETAUX</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: #060920;
+      font-family: 'Source Sans 3', 'Segoe UI', Arial, sans-serif;
+      overflow-x: hidden;
+    }
+
+    .bg {
+      position: fixed; inset: 0; z-index: 0;
+      background: radial-gradient(ellipse at 20% 50%, #0d1a7a 0%, transparent 60%),
+                  radial-gradient(ellipse at 80% 20%, #0a4a7a 0%, transparent 55%),
+                  radial-gradient(ellipse at 60% 80%, #1a0a5c 0%, transparent 50%),
+                  #060920;
+    }
+    .bg-orb { position: absolute; border-radius: 50%; filter: blur(80px); animation: float 8s ease-in-out infinite; }
+    .bg-orb-1 { width: 500px; height: 500px; background: radial-gradient(circle, rgba(79,195,247,0.35) 0%, transparent 70%); top: -100px; left: -100px; }
+    .bg-orb-2 { width: 400px; height: 400px; background: radial-gradient(circle, rgba(255,193,7,0.25) 0%, transparent 70%); bottom: -80px; right: -80px; animation-delay: -3s; }
+    .bg-orb-3 { width: 300px; height: 300px; background: radial-gradient(circle, rgba(124,58,237,0.2) 0%, transparent 70%); top: 40%; left: 60%; animation-delay: -5s; }
+    @keyframes float {
+      0%,100% { transform: translate(0,0) scale(1); }
+      33% { transform: translate(30px,-30px) scale(1.05); }
+      66% { transform: translate(-20px,20px) scale(0.97); }
+    }
+
+    .page { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* ── Nav ── */
+    .top-nav { display: flex; align-items: center; justify-content: space-between; padding: 20px 40px; }
+    .top-nav-logo { display: flex; align-items: center; gap: 8px; text-decoration: none; }
+    .top-nav-logo .wordmark { font-family: 'Fraunces',Georgia,serif; font-size: 1.3rem; font-weight: 700; color: #4FC3F7; letter-spacing: -0.02em; }
+    .top-nav-logo .wordmark em { color: #FFC107; font-style: normal; }
+    .top-nav-right { display: flex; align-items: center; gap: 16px; }
+    .top-nav-right a { color: rgba(255,255,255,0.55); font-size: 0.88rem; text-decoration: none; transition: color 0.2s; }
+    .top-nav-right a:hover { color: #fff; }
+    .top-nav-right .btn-nav { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 8px 18px; border-radius: 8px; font-size: 0.88rem; font-weight: 600; text-decoration: none; }
+    .top-nav-right .btn-nav:hover { background: rgba(255,255,255,0.15); color: #fff; }
+
+    /* Dark lang-selector override */
+    #lang-selector { position: relative; }
+    .lang-btn { background: rgba(255,255,255,0.12) !important; border: 1px solid rgba(255,255,255,0.25) !important; color: #fff !important; }
+    .lang-btn:hover { background: rgba(255,255,255,0.2) !important; }
+    .lang-dropdown { background: #0d1340 !important; border: 1px solid rgba(255,255,255,0.15) !important; box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important; }
+    .lang-option { color: rgba(255,255,255,0.75) !important; }
+    .lang-option:hover { background: rgba(255,255,255,0.08) !important; color: #fff !important; }
+    .lang-option--active { color: #4FC3F7 !important; }
+
+    /* ── Center ── */
+    .center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px 24px 60px; gap: 20px; }
+
+    /* ── Hero wordmark ── */
+    .hero-wordmark {
+      text-align: center;
+      line-height: 1;
+      animation: hero-in 0.8s cubic-bezier(0.16,1,0.3,1) both;
+    }
+    @keyframes hero-in {
+      from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .hero-wordmark .re {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: clamp(72px, 18vw, 160px);
+      font-weight: 700;
+      color: #4FC3F7;
+      letter-spacing: -0.03em;
+      text-shadow: 0 0 60px rgba(79,195,247,0.6), 0 0 120px rgba(79,195,247,0.25);
+      display: inline-block;
+      animation: glow-blue 4s ease-in-out infinite;
+    }
+    .hero-wordmark .taux {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: clamp(72px, 18vw, 160px);
+      font-weight: 700;
+      color: #FFC107;
+      letter-spacing: -0.03em;
+      text-shadow: 0 0 60px rgba(255,193,7,0.5), 0 0 120px rgba(255,193,7,0.2);
+      display: inline-block;
+      animation: glow-gold 4s ease-in-out infinite;
+      animation-delay: -2s;
+    }
+    @keyframes glow-blue {
+      0%,100% { text-shadow: 0 0 60px rgba(79,195,247,0.6), 0 0 120px rgba(79,195,247,0.25); }
+      50%      { text-shadow: 0 0 80px rgba(79,195,247,0.9), 0 0 160px rgba(79,195,247,0.4); }
+    }
+    @keyframes glow-gold {
+      0%,100% { text-shadow: 0 0 60px rgba(255,193,7,0.5), 0 0 120px rgba(255,193,7,0.2); }
+      50%      { text-shadow: 0 0 80px rgba(255,193,7,0.8), 0 0 160px rgba(255,193,7,0.35); }
+    }
+    .hero-tagline {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.35);
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      margin-top: 4px;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    /* ── Glass card ── */
+    .glass-card {
+      background: rgba(255,255,255,0.06);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 40px 44px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 32px 64px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08);
+      animation: card-in 0.8s cubic-bezier(0.16,1,0.3,1) 0.15s both;
+    }
+    @keyframes card-in {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .card-title { font-family: 'Fraunces',Georgia,serif; font-size: 1.55rem; font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .card-subtitle { font-size: 0.88rem; color: rgba(255,255,255,0.45); margin-bottom: 28px; }
+
+    .glass-card label { display: block; font-size: 0.75rem; font-weight: 600; color: rgba(255,255,255,0.55); margin-bottom: 6px; letter-spacing: 0.06em; text-transform: uppercase; }
+    .glass-card input {
+      width: 100%; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px; padding: 12px 16px; font-size: 0.95rem; color: #fff;
+      font-family: inherit; outline: none; transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    }
+    .glass-card input::placeholder { color: rgba(255,255,255,0.25); }
+    .glass-card input:focus { border-color: #4FC3F7; background: rgba(79,195,247,0.07); box-shadow: 0 0 0 3px rgba(79,195,247,0.15); }
+    .form-group { margin-bottom: 18px; }
+
+    .password-wrapper { position: relative; }
+    .password-wrapper input { padding-right: 44px; }
+    .password-toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: rgba(255,255,255,0.35); cursor: pointer; padding: 4px; transition: color 0.15s; }
+    .password-toggle:hover { color: rgba(255,255,255,0.75); }
+
+    .btn-submit {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, #FFC107 0%, #FFD54F 100%);
+      color: #060920; font-family: inherit; font-size: 1rem; font-weight: 700;
+      border: none; border-radius: 10px; cursor: pointer;
+      box-shadow: 0 4px 24px rgba(255,193,7,0.4);
+      transition: transform 0.1s, box-shadow 0.2s;
+      margin-top: 6px; letter-spacing: 0.01em;
+    }
+    .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(255,193,7,0.55); }
+    .btn-submit:active { transform: translateY(0); }
+
+    .card-footer-link { text-align: center; margin-top: 20px; font-size: 0.88rem; color: rgba(255,255,255,0.4); }
+    .card-footer-link a { color: #4FC3F7; font-weight: 600; text-decoration: none; }
+    .card-footer-link a:hover { color: #fff; }
+
+    .trust-bar { display: flex; align-items: center; justify-content: center; gap: 18px; margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.07); flex-wrap: wrap; }
+    .trust-item { font-size: 0.75rem; color: rgba(255,255,255,0.3); display: flex; align-items: center; gap: 5px; }
+
+    .alert-dark { background: rgba(193,57,43,0.18); border: 1px solid rgba(193,57,43,0.35); color: #ff8a80; border-radius: 8px; padding: 10px 14px; font-size: 0.88rem; margin-bottom: 18px; }
+
+    .page-footer { text-align: center; padding: 16px; font-size: 11px; color: rgba(255,255,255,0.18); position: relative; z-index: 1; }
+    .page-footer a { color: rgba(255,193,7,0.4); text-decoration: none; }
+
+    @media (max-width: 480px) {
+      .top-nav { padding: 14px 20px; }
+      .glass-card { padding: 30px 22px; }
+      .hero-tagline { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg">
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
+  <div class="bg-orb bg-orb-3"></div>
+</div>
+
+<div class="page">
+
+  <nav class="top-nav">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <a href="/" class="top-nav-logo">
+        <span class="wordmark">RE<em>TAUX</em></span>
+      </a>
+      <a href="https://www.tpb.gov.au/public-register?search=26346246" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:7px;text-decoration:none;" aria-label="Registered BAS Agent 26346246">
+        <svg width="34" height="34" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <path id="lg-bas-top" d="M 12,50 A 38,38 0 0 1 88,50"/>
+            <path id="lg-bas-bot" d="M 20,50 A 30,30 0 0 0 80,50"/>
+          </defs>
+          <circle cx="50" cy="50" r="48" fill="#fff" stroke="#111" stroke-width="4"/>
+          <circle cx="50" cy="50" r="34" fill="#8DC63F"/>
+          <polyline points="31,52 44,65 69,38" fill="none" stroke="#fff" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <text font-family="Arial,sans-serif" font-size="8" font-weight="700" fill="#111" text-anchor="middle">
+            <textPath href="#lg-bas-top" startOffset="50%">TAX PRACTITIONERS BOARD</textPath>
+          </text>
+          <text font-family="Arial,sans-serif" font-size="9" font-weight="700" fill="#111" text-anchor="middle">
+            <textPath href="#lg-bas-bot" startOffset="50%">REGISTERED</textPath>
+          </text>
+        </svg>
+        <div style="display:flex;flex-direction:column;line-height:1.25">
+          <span style="font-size:0.57rem;font-weight:700;color:rgba(255,255,255,.45);letter-spacing:.05em;text-transform:uppercase">BAS agent</span>
+          <span style="font-size:0.67rem;font-weight:700;color:#fff;font-family:'IBM Plex Mono',monospace">26346246</span>
+        </div>
+      </a>
+    </div>
+    <div class="top-nav-right">
+      <a href="/tax-info"><%- __('nav.taxGuide') %></a>
+      <a href="/register" class="btn-nav"><%- __('nav.register') %></a>
+      <div id="lang-selector"></div>
+    </div>
+  </nav>
+
+  <div class="center">
+
+    <!-- Hero typographic logo -->
+    <div class="hero-wordmark">
+      <span class="re">RE</span><span class="taux">TAUX</span>
+      <div class="hero-tagline">Australian Tax Return</div>
+    </div>
+
+    <!-- Glass form -->
+    <div class="glass-card">
+      <p class="card-title" data-i18n="auth.login_title"><%- __('auth.login_title') %></p>
+
+      <% if (error) { %>
+        <div class="alert-dark"><%= error %></div>
+      <% } %>
+
+      <form method="POST" action="/login">
+        <div class="form-group">
+          <label data-i18n="auth.email"><%- __('auth.email') %></label>
+          <input type="email" name="email" value="<%= prefill.email || '' %>" required data-i18n-placeholder="auth.email_placeholder" placeholder="<%- __('auth.email_placeholder') %>" autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label data-i18n="auth.password"><%- __('auth.password') %></label>
+          <div class="password-wrapper">
+            <input type="password" id="pin" name="pin" placeholder="••••••••" required autocomplete="current-password" style="font-family:'IBM Plex Mono',monospace;letter-spacing:0.15em">
+            <button type="button" class="password-toggle" onclick="togglePwd('pin',this)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+        <button type="submit" class="btn-submit" data-i18n="auth.btn_login"><%- __('auth.btn_login') %></button>
+      </form>
+
+      <p class="card-footer-link">
+        <span data-i18n="auth.no_account"><%- __('auth.no_account') %></span> <a href="/register" data-i18n="auth.go_register"><%- __('auth.go_register') %></a>
+      </p>
+      <p style="text-align:center;margin-top:10px;">
+        <a href="/forgot-password" style="color:rgba(255,255,255,0.35);font-size:0.82rem;text-decoration:none;" onmouseover="this.style.color='#4FC3F7'" onmouseout="this.style.color='rgba(255,255,255,0.35)'"><%- __('auth.forgot_password') %></a>
+      </p>
+      <p class="card-footer-link" style="display:none">
+      </p>
+
+      <div class="trust-bar">
+        <span class="trust-item">🔒 SSL</span>
+        <span class="trust-item">🇦🇺 <%- __('auth.trust_ato') %></span>
+        <span class="trust-item">✓ <%- __('auth.trust_mygov') %></span>
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="page-footer">
+    RETAUX © <%= new Date().getFullYear() %> &nbsp;·&nbsp;
+    <a href="mailto:hola@retaux.com.au">hola@retaux.com.au</a>
+  </footer>
+</div>
+
+<%# i18n.js ya cargado desde partials/head — no duplicar %>
+<script>
+function togglePwd(id, btn) {
+  var inp = document.getElementById(id);
+  var show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  btn.innerHTML = show
+    ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+    : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+}
+</script>
+
+</body>
+</html>
