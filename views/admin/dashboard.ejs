@@ -274,25 +274,40 @@
     <div class="card" style="margin-bottom:24px;">
       <h3 style="margin-bottom:18px; font-size:1rem;">Funnel por etapa</h3>
       <div style="display:flex;align-items:center;gap:32px;flex-wrap:wrap;">
-        <canvas id="funnelPie" width="180" height="180" style="flex-shrink:0;"></canvas>
-        <div id="funnelLegend" style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:10px;"></div>
+        <canvas id="funnelPie" width="180" height="180" style="flex-shrink:0;cursor:pointer;" title="Hacé click en un sector para ver los clientes"></canvas>
+        <div id="funnelLegend" style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:8px;"></div>
       </div>
     </div>
+
+    <!-- Modal clientes por etapa -->
+    <div id="funnelModal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.45);align-items:center;justify-content:center;">
+      <div style="background:#fff;border-radius:12px;padding:24px 28px;max-width:480px;width:90%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.25);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <h3 id="funnelModalTitle" style="font-size:1rem;margin:0;"></h3>
+          <button onclick="document.getElementById('funnelModal').style.display='none'" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:#6B7280;line-height:1;padding:2px 6px;">✕</button>
+        </div>
+        <div id="funnelModalList" style="overflow-y:auto;flex:1;"></div>
+      </div>
+    </div>
+
     <script>
     (function(){
       var steps = [
-        ['Datos personales',    <%= metrics.funnelSteps.personal %>,  '#9CA3AF'],
-        ['Documentación',       <%= metrics.funnelSteps.documents %>, '#F59E0B'],
-        ['Pago pendiente',      <%= metrics.funnelSteps.payment %>,   '#3B82F6'],
-        ['Pago en verificación',<%= metrics.funnelSteps.done %>,      '#6366F1'],
-        ['Pagaron',             <%= metrics.funnelSteps.paid %>,       '#10B981']
+        ['Datos personales',    <%= metrics.funnelSteps.personal %>,  '#9CA3AF', 'personal'],
+        ['Documentación',       <%= metrics.funnelSteps.documents %>, '#F59E0B', 'documents'],
+        ['Pago pendiente',      <%= metrics.funnelSteps.payment %>,   '#3B82F6', 'payment'],
+        ['Pago en verificación',<%= metrics.funnelSteps.done %>,      '#6366F1', 'done'],
+        ['Pagaron',             <%= metrics.funnelSteps.paid %>,       '#10B981', 'paid']
       ];
+      var funnelUsers = <%- JSON.stringify(metrics.funnelUsers) %>;
+      var sliceAngles = [];
       var total = steps.reduce(function(s,r){return s+r[1];},0);
       var canvas = document.getElementById('funnelPie');
       var ctx = canvas.getContext('2d');
       var cx=90, cy=90, r=80, start=-Math.PI/2;
+
       steps.forEach(function(row){
-        if(!row[1]) return;
+        if(!row[1]) { sliceAngles.push(null); return; }
         var slice = (row[1]/total)*2*Math.PI;
         ctx.beginPath();
         ctx.moveTo(cx,cy);
@@ -303,18 +318,74 @@
         ctx.strokeStyle='#fff';
         ctx.lineWidth=2;
         ctx.stroke();
+        sliceAngles.push({ start: start, end: start+slice, label: row[0], key: row[3], color: row[2] });
         start += slice;
       });
-      // Leyenda
+
+      // Click en torta → abrir modal
+      canvas.addEventListener('click', function(e){
+        var rect = canvas.getBoundingClientRect();
+        var scaleX = canvas.width / rect.width;
+        var scaleY = canvas.height / rect.height;
+        var mx = (e.clientX - rect.left) * scaleX;
+        var my = (e.clientY - rect.top) * scaleY;
+        var dx = mx - cx, dy = my - cy;
+        var dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist > r) return;
+        var angle = Math.atan2(dy, dx);
+        for (var i=0; i<sliceAngles.length; i++){
+          var s = sliceAngles[i];
+          if (!s) continue;
+          var a = angle;
+          // normalizar al mismo rango que start
+          while(a < s.start) a += 2*Math.PI;
+          if (a <= s.end) { openModal(s.label, s.key, s.color); return; }
+        }
+      });
+
+      function openModal(label, key, color) {
+        var users = funnelUsers[key] || [];
+        document.getElementById('funnelModalTitle').innerHTML =
+          '<span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:'+color+';margin-right:8px;vertical-align:middle;"></span>'
+          + label + ' <span style="font-weight:400;color:#6B7280;font-size:0.88rem;">('+users.length+')</span>';
+        var list = document.getElementById('funnelModalList');
+        if (users.length === 0) {
+          list.innerHTML = '<p style="color:#6B7280;font-size:0.9rem;text-align:center;padding:20px 0;">Sin clientes en esta etapa</p>';
+        } else {
+          list.innerHTML = users.map(function(u){
+            return '<a href="/admin/user/'+u.id+'" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #F3F4F6;text-decoration:none;color:inherit;">'
+              +'<div style="width:32px;height:32px;border-radius:50%;background:'+color+'22;color:'+color+';font-weight:700;font-size:0.8rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
+              +(u.name||u.email).charAt(0).toUpperCase()
+              +'</div>'
+              +'<div style="flex:1;min-width:0;">'
+              +'<div style="font-weight:600;font-size:0.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+u.name+'</div>'
+              +'<div style="font-size:0.75rem;color:#6B7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+u.email+'</div>'
+              +'</div>'
+              +'<span style="font-size:0.75rem;color:#9CA3AF;flex-shrink:0;">Ver →</span>'
+              +'</a>';
+          }).join('');
+        }
+        document.getElementById('funnelModal').style.display='flex';
+      }
+
+      // Cerrar modal al hacer click fuera
+      document.getElementById('funnelModal').addEventListener('click', function(e){
+        if (e.target === this) this.style.display='none';
+      });
+
+      // Leyenda clickeable
       var leg = document.getElementById('funnelLegend');
-      steps.forEach(function(row){
+      steps.forEach(function(row, i){
         var pct = total ? Math.round(row[1]/total*100) : 0;
         var div = document.createElement('div');
-        div.style.cssText='display:flex;align-items:center;gap:10px;';
+        div.style.cssText='display:flex;align-items:center;gap:10px;cursor:pointer;padding:4px 6px;border-radius:6px;transition:background .12s;';
         div.innerHTML = '<div style="width:12px;height:12px;border-radius:3px;background:'+row[2]+';flex-shrink:0;"></div>'
           +'<span style="flex:1;font-size:0.88rem;color:#374151;">'+row[0]+'</span>'
           +'<span style="font-family:monospace;font-weight:700;font-size:0.9rem;color:#111827;">'+row[1]+'</span>'
           +'<span style="font-size:0.75rem;color:#9CA3AF;width:34px;text-align:right;">'+pct+'%</span>';
+        div.addEventListener('mouseenter', function(){ this.style.background='#F3F4F6'; });
+        div.addEventListener('mouseleave', function(){ this.style.background=''; });
+        div.addEventListener('click', function(){ openModal(row[0], row[3], row[2]); });
         leg.appendChild(div);
       });
     })();
