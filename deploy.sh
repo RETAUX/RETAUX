@@ -43,7 +43,7 @@ rsync -az -e "ssh $SSH_OPTS" \
   --exclude='EngagementLetters' \
   --exclude='emails-dev.log' \
   --exclude='files.zip' \
-  --exclude='admin.js' \
+  --exclude='/admin.js' \
   --exclude='upload_drive*.js' \
   --exclude='dedup_drive.js' \
   "$LOCAL" "$SERVER:$REMOTE"
