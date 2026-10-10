@@ -233,15 +233,15 @@
   <% } %>
 
   <!-- Send to agent -->
-  <% if (req.query.sent === '1') { %>
+  <% if (sentOk) { %>
   <div style="background:#F0FDF4;border:2px solid #86EFAC;border-radius:10px;padding:14px 20px;margin-bottom:16px;">
     ✅ <strong style="color:#166534;">DASP claim sent to agent</strong>
     <% if (daspRequest.agentSentTo) { %> — <%= daspRequest.agentSentTo %><% } %>
   </div>
   <% } %>
-  <% if (req.query.error) { %>
+  <% if (errorMsg) { %>
   <div style="background:#FEF2F2;border:2px solid #FECACA;border-radius:10px;padding:14px 20px;margin-bottom:16px;">
-    ⚠ Error: <%= req.query.error %>
+    ⚠ Error: <%= errorMsg %>
   </div>
   <% } %>
 

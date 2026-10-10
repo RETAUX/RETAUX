@@ -30,10 +30,16 @@
   <form method="GET" action="/admin" class="search-bar" style="margin-bottom:16px;flex-wrap:wrap;gap:8px">
     <input type="text" name="q" placeholder="Buscar por nombre o e-mail..." value="<%= q %>">
     <select name="status" style="padding:9px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;outline:none">
-      <option value="">Clientes</option>
-      <option value="paid" <%= status === 'paid' ? 'selected' : '' %>>Pagaron</option>
-      <option value="pending" <%= status === 'pending' ? 'selected' : '' %>>Sin pagar</option>
-      <option value="unverified" <%= status === 'unverified' ? 'selected' : '' %>>Sin verificar</option>
+      <option value="">Todos</option>
+      <optgroup label="Formulario 1 — Individual Tax Return">
+        <option value="taxreturn" <%= status === 'taxreturn' ? 'selected' : '' %>>Individual Tax Return</option>
+        <option value="paid"      <%= status === 'paid'      ? 'selected' : '' %>>Tax Return — Pagaron</option>
+        <option value="pending"   <%= status === 'pending'   ? 'selected' : '' %>>Tax Return — Sin pagar</option>
+        <option value="unverified"<%= status === 'unverified'? 'selected' : '' %>>Tax Return — Sin verificar</option>
+      </optgroup>
+      <optgroup label="Formulario 2 — DASP">
+        <option value="dasp" <%= status === 'dasp' ? 'selected' : '' %>>DASP — Superannuation</option>
+      </optgroup>
       <option value="referrer" <%= status === 'referrer' ? 'selected' : '' %>>Referidores</option>
     </select>
     <button type="submit" class="btn btn--navy btn--sm">Buscar</button>
@@ -58,11 +64,29 @@
         <% } %>
         <% users.forEach(u => { %>
         <tr>
-          <td><strong><%= u.firstName %> <%= u.lastName %></strong><br><span class="text-muted text-sm mono"><%= u.referralCode %></span></td>
-          <td class="text-sm"><%= u.email %></td>
-          <td class="text-sm"><%= u.profile && u.profile.visaType ? u.profile.visaType.toUpperCase() : '—' %></td>
           <td>
-            <% if (u.role === 'referrer') { %>
+            <strong><%= u._type === 'dasp' ? (u._dasp && u._dasp.fullName ? u._dasp.fullName : u.fullName) : (u.firstName + ' ' + u.lastName) %></strong>
+            <% if (u._type === 'dasp') { %>
+              <br><span style="font-size:0.72rem;font-weight:700;color:#1D4ED8;background:#EFF6FF;padding:1px 6px;border-radius:4px;letter-spacing:0.04em;">DASP</span>
+            <% } else { %>
+              <br><span class="text-muted text-sm mono"><%= u.referralCode %></span>
+            <% } %>
+          </td>
+          <td class="text-sm"><%= u.email %></td>
+          <td class="text-sm">
+            <% if (u._type === 'dasp') { %>
+              <%= u._dasp && u._dasp.visaSubclass ? u._dasp.visaSubclass : (u.profile && u.profile.visaType ? u.profile.visaType.toUpperCase() : '—') %>
+            <% } else { %>
+              <%= u.profile && u.profile.visaType ? u.profile.visaType.toUpperCase() : '—' %>
+            <% } %>
+          </td>
+          <td>
+            <% if (u._type === 'dasp') { %>
+              <% var ds = u.daspStatus || 'pending_review'; %>
+              <span class="status-badge" style="background:<%= ds==='done'?'#DCFCE7':ds==='processing'?'#DBEAFE':'#FEF9C3' %>;color:<%= ds==='done'?'#166534':ds==='processing'?'#1D4ED8':'#854D0E' %>;border:none;">
+                <%= ds==='done'?'✅ DASP listo':ds==='processing'?'⚙️ DASP en trámite':'⏳ DASP pendiente' %>
+              </span>
+            <% } else if (u.role === 'referrer') { %>
               <span class="status-badge" style="background:#E8F0FE;color:#1a56db;border:1px solid #93c5fd">Referidor</span>
             <% } else if (!u.verified) { %>
               <span class="status-badge status--cancelled">Sin verificar</span>
@@ -72,11 +96,14 @@
               <span class="status-badge status--paid">Pagó ✓</span>
             <% } %>
           </td>
-          <td class="text-sm mono">
-            <% const apt = typeof appointments !== 'undefined' ? null : null %>
-            —
+          <td class="text-sm mono">—</td>
+          <td>
+            <% if (u._type === 'dasp') { %>
+              <a href="/admin/user/<%= u.id %>/dasp-preview" class="btn btn--sm btn--outline" style="border-color:#3B82F6;color:#1D4ED8;">Ver DASP</a>
+            <% } else { %>
+              <a href="/admin/client/<%= u.id %>" class="btn btn--sm btn--outline">Ver</a>
+            <% } %>
           </td>
-          <td><a href="/admin/client/<%= u.id %>" class="btn btn--sm btn--outline">Ver</a></td>
         </tr>
         <% }) %>
       </tbody>
