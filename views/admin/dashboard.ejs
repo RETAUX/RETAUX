@@ -273,24 +273,52 @@
     <!-- ── Funnel por etapa ──────────────────────────────────────────────────── -->
     <div class="card" style="margin-bottom:24px;">
       <h3 style="margin-bottom:18px; font-size:1rem;">Funnel por etapa</h3>
-      <% [
-        ['Datos personales', metrics.funnelSteps.personal, '#aaa'],
-        ['Documentación',    metrics.funnelSteps.documents, '#f59e0b'],
-        ['Pago pendiente',   metrics.funnelSteps.payment,   '#3B82F6'],
-        ['Pago en verificación', metrics.funnelSteps.done,  '#6366f1'],
-        ['Pagaron',          metrics.funnelSteps.paid,      '#10b981']
-      ].forEach(function(row) { %>
-        <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
-          <div style="width:12px;height:12px;border-radius:50%;background:<%= row[2] %>;flex-shrink:0;"></div>
-          <div style="font-size:0.9rem; flex:1; color:var(--ink);"><%= row[0] %></div>
-          <span style="font-size:0.95rem; font-family:var(--font-mono); font-weight:700; color:var(--ink);"><%= row[1] %></span>
-          <div style="width:140px; background:var(--bg-page); border-radius:4px; height:10px; overflow:hidden;">
-            <div style="height:100%; background:<%= row[2] %>; width:<%= totalUsers ? Math.round(row[1]/totalUsers*100) : 0 %>%;"></div>
-          </div>
-          <span style="font-size:0.78rem; font-family:var(--font-mono); color:var(--muted); width:36px; text-align:right;"><%= totalUsers ? Math.round(row[1]/totalUsers*100) : 0 %>%</span>
-        </div>
-      <% }); %>
+      <div style="display:flex;align-items:center;gap:32px;flex-wrap:wrap;">
+        <canvas id="funnelPie" width="180" height="180" style="flex-shrink:0;"></canvas>
+        <div id="funnelLegend" style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:10px;"></div>
+      </div>
     </div>
+    <script>
+    (function(){
+      var steps = [
+        ['Datos personales',    <%= metrics.funnelSteps.personal %>,  '#9CA3AF'],
+        ['Documentación',       <%= metrics.funnelSteps.documents %>, '#F59E0B'],
+        ['Pago pendiente',      <%= metrics.funnelSteps.payment %>,   '#3B82F6'],
+        ['Pago en verificación',<%= metrics.funnelSteps.done %>,      '#6366F1'],
+        ['Pagaron',             <%= metrics.funnelSteps.paid %>,       '#10B981']
+      ];
+      var total = steps.reduce(function(s,r){return s+r[1];},0);
+      var canvas = document.getElementById('funnelPie');
+      var ctx = canvas.getContext('2d');
+      var cx=90, cy=90, r=80, start=-Math.PI/2;
+      steps.forEach(function(row){
+        if(!row[1]) return;
+        var slice = (row[1]/total)*2*Math.PI;
+        ctx.beginPath();
+        ctx.moveTo(cx,cy);
+        ctx.arc(cx,cy,r,start,start+slice);
+        ctx.closePath();
+        ctx.fillStyle = row[2];
+        ctx.fill();
+        ctx.strokeStyle='#fff';
+        ctx.lineWidth=2;
+        ctx.stroke();
+        start += slice;
+      });
+      // Leyenda
+      var leg = document.getElementById('funnelLegend');
+      steps.forEach(function(row){
+        var pct = total ? Math.round(row[1]/total*100) : 0;
+        var div = document.createElement('div');
+        div.style.cssText='display:flex;align-items:center;gap:10px;';
+        div.innerHTML = '<div style="width:12px;height:12px;border-radius:3px;background:'+row[2]+';flex-shrink:0;"></div>'
+          +'<span style="flex:1;font-size:0.88rem;color:#374151;">'+row[0]+'</span>'
+          +'<span style="font-family:monospace;font-weight:700;font-size:0.9rem;color:#111827;">'+row[1]+'</span>'
+          +'<span style="font-size:0.75rem;color:#9CA3AF;width:34px;text-align:right;">'+pct+'%</span>';
+        leg.appendChild(div);
+      });
+    })();
+    </script>
 
     <!-- ── Kanban por etapa del trámite ────────────────────────────────────────── -->
     <div style="margin-bottom:28px;">
