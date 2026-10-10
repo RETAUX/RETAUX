@@ -12,6 +12,13 @@
     .sidebar nav a { display:block; padding:10px 20px; color:rgba(247,242,231,.65); font-size:0.9rem; text-decoration:none; }
     .sidebar nav a:hover { color:var(--paper); background:rgba(255,255,255,.07); text-decoration:none; }
     .sidebar-divider { border:none; border-top:1px solid rgba(255,255,255,.08); margin:8px 0; }
+
+    /* Dropdown menu ⋮ */
+    .ud-menu-item { display:flex; align-items:center; gap:10px; width:100%; padding:10px 16px; font-size:0.875rem; color:#111827; background:none; border:none; border-bottom:1px solid #F3F4F6; cursor:pointer; font-weight:600; text-align:left; text-decoration:none; box-sizing:border-box; }
+    .ud-menu-item:hover { background:#F3F4F6; color:#111827; }
+    .ud-menu-item.danger { color:#DC2626; border-bottom:none; border-top:1px solid #FEE2E2; }
+    .ud-menu-item.danger:hover { background:#FEF2F2; }
+    .ud-menu-sep { padding:6px 14px; font-size:0.7rem; font-weight:800; color:#9CA3AF; text-transform:uppercase; letter-spacing:0.08em; background:#F9FAFB; border-bottom:1px solid #F3F4F6; }
     .admin-main { flex:1; padding:32px; background:var(--paper); overflow-y:auto; }
     @media(max-width:900px) { .admin-wrap{flex-direction:column;} .sidebar{width:100%;height:auto;position:static;} }
 
@@ -124,56 +131,43 @@
             style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:1.25rem;line-height:1;width:38px;height:38px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;">
             ⋮
           </button>
-          <div id="ud-menu" style="display:none;position:absolute;right:0;top:46px;background:#fff;border:1px solid #E5E7EB;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.14);min-width:230px;z-index:200;overflow:hidden;">
+          <div id="ud-menu" style="display:none;position:absolute;right:0;top:46px;background:#fff;border:1px solid #E5E7EB;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.14);min-width:240px;z-index:200;overflow:hidden;">
 
-            <div style="padding:6px 14px;font-size:0.7rem;font-weight:800;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.08em;background:#F9FAFB;border-bottom:1px solid #F3F4F6;">Informes</div>
+            <div class="ud-menu-sep">Informes</div>
 
-            <a href="/admin/export/user/<%= u.id %>-retaux.xlsx"
-              style="display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:0.875rem;color:#111827;text-decoration:none;font-weight:600;border-bottom:1px solid #F3F4F6;"
-              onmouseover="this.style.background='#F9FAFB'" onmouseout="this.style.background=''">
+            <a href="/admin/export/user/<%= u.id %>-retaux.xlsx" class="ud-menu-item">
               📁 Informe RETAUX (.xlsx)
             </a>
 
             <% if (daspRequest) { %>
-            <a href="/admin/user/<%= u.id %>/dasp-preview"
-              style="display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:0.875rem;color:#111827;text-decoration:none;font-weight:600;border-bottom:1px solid #F3F4F6;"
-              onmouseover="this.style.background='#F9FAFB'" onmouseout="this.style.background=''">
+            <a href="/admin/user/<%= u.id %>/dasp-preview" class="ud-menu-item">
               🏦 Informe DASP
             </a>
             <% } %>
 
-            <a href="/admin/user/<%= u.id %>/taxagent-preview"
-              style="display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:0.875rem;color:#111827;text-decoration:none;font-weight:600;border-bottom:1px solid #F3F4F6;"
-              onmouseover="this.style.background='#F9FAFB'" onmouseout="this.style.background=''">
+            <a href="/admin/user/<%= u.id %>/taxagent-preview" class="ud-menu-item">
               📧 Informe Tax Agent
             </a>
 
             <% if (u.taxAgentReportHtml) { %>
             <form method="POST" action="/admin/user/<%= u.id %>/resend-taxagent" style="margin:0;">
-              <button type="submit" id="btn-resend-taxagent"
-                style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 16px;font-size:0.875rem;color:#111827;background:none;border:none;border-bottom:1px solid #F3F4F6;cursor:pointer;font-weight:600;text-align:left;"
-                title="Reenviar informe guardado · Ctrl+Enter"
-                onmouseover="this.style.background='#F9FAFB'" onmouseout="this.style.background=''">
+              <button type="submit" id="btn-resend-taxagent" class="ud-menu-item" title="Reenviar informe guardado · Ctrl+Enter">
                 📤 Reenviar a ambos <span style="margin-left:auto;font-size:0.7rem;color:#9CA3AF;">Ctrl+↵</span>
               </button>
             </form>
             <% } %>
 
-            <a href="/admin/user/<%= u.id %>/download-taa-docx"
-              style="display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:0.875rem;color:#111827;text-decoration:none;font-weight:600;border-bottom:1px solid #F3F4F6;"
-              onmouseover="this.style.background='#F9FAFB'" onmouseout="this.style.background=''">
+            <a href="/admin/user/<%= u.id %>/download-taa-docx" class="ud-menu-item">
               📄 Descargar TAA DOCX
             </a>
 
-            <div style="padding:6px 14px;font-size:0.7rem;font-weight:800;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.08em;background:#F9FAFB;border-bottom:1px solid #F3F4F6;">Acciones</div>
+            <div class="ud-menu-sep">Acciones</div>
 
             <form method="POST" action="/admin/user/<%= u.id %>/send-consent" style="margin:0;" id="consent-form">
               <% var consentTitle = u.consentSignedAt ? 'Firmó el ' + new Date(u.consentSignedAt).toLocaleDateString('es-AR') + ' como ' + (u.consentSignedName || '') : 'Aún no firmó la autorización ATO'; %>
-              <button type="submit"
-                style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 16px;font-size:0.875rem;color:#111827;background:none;border:none;border-bottom:1px solid #F3F4F6;cursor:pointer;font-weight:600;text-align:left;"
+              <button type="submit" class="ud-menu-item"
                 onclick="return confirm('¿Enviar solicitud de firma de autorización ATO a <%= u.email %>?')"
-                title="<%= consentTitle %>"
-                onmouseover="this.style.background='#F9FAFB'" onmouseout="this.style.background=''">
+                title="<%= consentTitle %>">
                 <%= u.consentSignedAt ? '✅ Re-enviar firma ATO' : '✍️ Pedir firma ATO' %>
               </button>
             </form>
@@ -183,18 +177,14 @@
                 var _rawPhone = (u.phone || '').replace(/\D/g,'');
                 var _waPhone = _rawPhone.startsWith('0') ? '61' + _rawPhone.slice(1) : _rawPhone;
               %>
-              <a href="https://wa.me/<%= _waPhone %>" target="_blank"
-                style="display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:0.875rem;color:#111827;text-decoration:none;font-weight:600;border-bottom:1px solid #F3F4F6;"
-                onmouseover="this.style.background='#F9FAFB'" onmouseout="this.style.background=''">
+              <a href="https://wa.me/<%= _waPhone %>" target="_blank" class="ud-menu-item">
                 💬 WhatsApp
               </a>
             <% } %>
 
             <form method="POST" action="/admin/user/<%= u.id %>/delete"
               onsubmit="return confirm('¿Eliminar a <%= u.fullName %>? No se puede deshacer.')">
-              <button type="submit"
-                style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 16px;font-size:0.875rem;color:#DC2626;background:none;border:none;cursor:pointer;font-weight:600;text-align:left;"
-                onmouseover="this.style.background='#FEF2F2'" onmouseout="this.style.background=''">
+              <button type="submit" class="ud-menu-item danger">
                 🗑 Eliminar usuario
               </button>
             </form>

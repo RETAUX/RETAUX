@@ -57,16 +57,45 @@
     /* Status panel */
     .status-form { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
 
+    /* ── Sticky send bar (same as taxagent-preview) ── */
+    .admin-wrap { display:flex; min-height:100vh; }
+    .sidebar { width:210px; background:var(--ink); flex-shrink:0; padding:0; position:sticky; top:0; height:100vh; overflow-y:auto; }
+    .sidebar-logo { padding:24px 20px 20px; font-family:var(--font-display); font-size:1.2rem; color:var(--paper); border-bottom:1px solid rgba(255,255,255,.1); }
+    .sidebar-logo span { color:var(--ochre); }
+    .sidebar nav a { display:block; padding:10px 20px; color:rgba(247,242,231,.65); font-size:0.9rem; text-decoration:none; }
+    .sidebar nav a:hover { color:var(--paper); background:rgba(255,255,255,.07); }
+    .sidebar-divider { border:none; border-top:1px solid rgba(255,255,255,.08); margin:8px 0; }
+    .admin-main { flex:1; background:#F3F4F6; overflow-y:auto; }
+
+    .send-bar { position:sticky; top:0; z-index:50; background:#0A0E5C; color:#fff; box-shadow:0 2px 12px rgba(10,14,92,0.18); }
+    .send-bar-top { padding:12px 28px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+    .send-bar .client-name { font-weight:700; font-size:1rem; flex:1; }
+    .send-bar .doc-count { font-size:0.82rem; color:rgba(255,255,255,0.55); }
+    .btn-send { background:#16a34a; color:#fff; border:none; border-radius:8px; font-size:0.95rem; font-weight:700; padding:9px 22px; cursor:pointer; }
+    .btn-send:hover { background:#15803d; }
+    .btn-back { font-size:0.78rem; color:rgba(255,255,255,0.5); text-decoration:none; }
+
+    .compose-bar { border-top:1px solid rgba(255,255,255,0.12); padding:10px 28px 14px; display:grid; grid-template-columns:60px 1fr; gap:6px 12px; align-items:center; font-size:0.84rem; }
+    .compose-bar label { color:rgba(255,255,255,0.55); font-weight:600; text-align:right; font-size:0.78rem; letter-spacing:.04em; text-transform:uppercase; }
+    .compose-bar input[type=text] { background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); border-radius:6px; color:#fff; font-size:0.84rem; padding:5px 10px; width:100%; box-sizing:border-box; }
+    .compose-bar input[type=text]:focus { outline:none; border-color:#38BDF8; background:rgba(255,255,255,0.15); }
+    .compose-cc-row { display:flex; align-items:center; gap:8px; }
+    .cc-fixed-chip { background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.25); border-radius:20px; padding:3px 10px; font-size:0.78rem; color:#93C5FD; white-space:nowrap; display:flex; align-items:center; gap:4px; }
+    .cc-fixed-chip span { color:rgba(255,255,255,0.4); font-size:0.68rem; }
+
     @media print {
-      nav, .ph .actions, .card:last-child { display:none !important; }
+      .send-bar, .sidebar, .card:last-child { display:none !important; }
       .pw { margin:0; padding:10px; }
       .card { break-inside:avoid; box-shadow:none; }
       .elig, .elig-warn { break-inside:avoid; }
     }
+    @media(max-width:900px){
+      .admin-wrap { flex-direction:column; }
+      .sidebar { width:100%; height:auto; position:static; }
+    }
   </style>
 </head>
 <body>
-<%- include('../partials/nav', { active: 'admin', user: { role: 'admin' } }) %>
 
 <%
   var ds = daspRequest.status || 'pending_review';
@@ -85,19 +114,70 @@
   var fundsIncomplete = (daspRequest.funds || []).filter(function(f){ return !f.fundName || !f.fundABN || !f.memberNumber; });
 %>
 
-<div class="pw">
+<div class="admin-wrap">
+  <aside class="sidebar">
+    <div class="sidebar-logo">RE<span>TAUX</span></div>
+    <nav>
+      <a href="/admin">← Panel principal</a>
+      <a href="/admin/user/<%= u.id %>">← Volver al cliente</a>
+      <hr class="sidebar-divider">
+      <a href="/admin/logout" style="color:rgba(247,242,231,.35);font-size:0.82rem;">Cerrar sesión</a>
+    </nav>
+  </aside>
 
-  <!-- Page header -->
-  <div class="ph">
-    <div>
-      <h1>DASP Claim — <%= daspRequest.fullName || u.fullName %></h1>
-      <p>Prepared by RETAUX · <%= new Date().toLocaleDateString('en-AU', {day:'2-digit',month:'long',year:'numeric'}) %> · Ready for ATO DASP Online System</p>
+  <main class="admin-main">
+
+  <!-- ── Sticky send bar ── -->
+  <form method="POST" action="/admin/user/<%= u.id %>/send-dasp-agent">
+    <div class="send-bar">
+      <div class="send-bar-top">
+        <div class="client-name">🏦 DASP — <%= daspRequest.fullName || u.fullName %></div>
+        <div class="doc-count">
+          <%= (daspRequest.flightTickets||[]).length %> ticket<%= (daspRequest.flightTickets||[]).length !== 1 ? 's' : '' %> adjunto<%= (daspRequest.flightTickets||[]).length !== 1 ? 's' : '' %>
+          <% if (missing.length) { %> · <span style="color:#FCA5A5;"><%= missing.length %> campo<%= missing.length!==1?'s':'' %> faltante<%= missing.length!==1?'s':'' %></span><% } %>
+        </div>
+        <button type="submit" class="btn-send">📧 Enviar al Tax Agent</button>
+        <a href="/admin/user/<%= u.id %>" class="btn-back">Cancelar</a>
+      </div>
+
+      <div class="compose-bar">
+        <label>Para</label>
+        <input type="text" name="sendTo" required
+          value="<%= daspRequest.agentSentTo || 'estiguannavas@gmail.com' %>"
+          placeholder="agente@ejemplo.com"
+          title="Destinatario principal">
+
+        <label>CC</label>
+        <div class="compose-cc-row">
+          <div class="cc-fixed-chip">🔒 hola@retaux.com <span>siempre</span></div>
+          <input type="text" name="sendCc"
+            placeholder="cc adicional (opcional)"
+            title="CC adicional además de hola@retaux.com">
+          <input type="hidden" name="sendCcFixed" value="hola@retaux.com">
+        </div>
+
+        <label>Asunto</label>
+        <input type="text" name="sendSubject"
+          value="DASP Claim — <%= daspRequest.fullName || u.fullName %>"
+          title="Asunto del email">
+      </div>
     </div>
-    <div class="actions" style="display:flex;gap:10px;">
-      <a href="/admin/user/<%= u.id %>" class="btn btn-ghost btn-sm">← Back</a>
-      <button onclick="window.print()" class="btn btn--navy btn-sm">🖨️ Print / PDF</button>
-    </div>
+  </form>
+  <!-- ── Fin send bar ── -->
+
+  <% if (sentOk) { %>
+  <div style="background:#F0FDF4;border-bottom:2px solid #86EFAC;padding:12px 28px;font-size:0.9rem;">
+    ✅ <strong style="color:#166534;">DASP claim sent to agent</strong>
+    <% if (daspRequest.agentSentTo) { %> — <%= daspRequest.agentSentTo %><% } %>
   </div>
+  <% } %>
+  <% if (errorMsg) { %>
+  <div style="background:#FEF2F2;border-bottom:2px solid #FECACA;padding:12px 28px;font-size:0.9rem;">
+    ⚠ Error: <%= errorMsg %>
+  </div>
+  <% } %>
+
+<div class="pw">
 
   <!-- Missing fields warning -->
   <% if (missing.length > 0) { %>
@@ -232,55 +312,16 @@
   </div>
   <% } %>
 
-  <!-- Send to agent -->
-  <% if (sentOk) { %>
-  <div style="background:#F0FDF4;border:2px solid #86EFAC;border-radius:10px;padding:14px 20px;margin-bottom:16px;">
-    ✅ <strong style="color:#166534;">DASP claim sent to agent</strong>
-    <% if (daspRequest.agentSentTo) { %> — <%= daspRequest.agentSentTo %><% } %>
-  </div>
-  <% } %>
-  <% if (errorMsg) { %>
-  <div style="background:#FEF2F2;border:2px solid #FECACA;border-radius:10px;padding:14px 20px;margin-bottom:16px;">
-    ⚠ Error: <%= errorMsg %>
-  </div>
-  <% } %>
-
-  <div class="card">
-    <div class="card-hd">Send to Tax Agent <span class="step">DASP Lodgement</span></div>
-    <div class="card-bd">
-      <% if (daspRequest.agentSentAt) { %>
-      <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:8px 14px;margin-bottom:14px;font-size:0.85rem;color:#92400E;">
-        📨 Previously sent to <strong><%= daspRequest.agentSentTo || '—' %></strong>
-        on <%= new Date(daspRequest.agentSentAt).toLocaleDateString('en-AU', {day:'2-digit',month:'short',year:'numeric'}) %>
-      </div>
-      <% } %>
-      <form method="POST" action="/admin/user/<%= u.id %>/send-dasp-agent">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
-          <div>
-            <label style="font-size:0.8rem;font-weight:700;color:#374151;display:block;margin-bottom:4px;">Send To (Tax Agent) *</label>
-            <input type="email" name="sendTo" required
-              value="<%= daspRequest.agentSentTo || u.taxAgentEmail || '' %>"
-              placeholder="agent@example.com"
-              style="width:100%;padding:8px 10px;border:1px solid #D1D5DB;border-radius:6px;font-size:0.88rem;box-sizing:border-box;">
-          </div>
-          <div>
-            <label style="font-size:0.8rem;font-weight:700;color:#374151;display:block;margin-bottom:4px;">CC (optional)</label>
-            <input type="email" name="sendCc"
-              placeholder="cc@example.com"
-              style="width:100%;padding:8px 10px;border:1px solid #D1D5DB;border-radius:6px;font-size:0.88rem;box-sizing:border-box;">
-          </div>
-        </div>
-        <button type="submit" class="btn btn--navy" style="font-size:0.9rem;">
-          📧 Send DASP Claim to Agent
-          <% if (daspRequest.flightTickets && daspRequest.flightTickets.length) { %>
-            (+ <%= daspRequest.flightTickets.length %> ticket<%= daspRequest.flightTickets.length !== 1 ? 's' : '' %>)
-          <% } %>
-        </button>
-      </form>
+  <% if (daspRequest.agentSentAt) { %>
+  <div class="card" style="border-left:4px solid #FCD34D;">
+    <div class="card-bd" style="padding:10px 18px;font-size:0.85rem;color:#92400E;background:#FFFBEB;">
+      📨 Previously sent to <strong><%= daspRequest.agentSentTo || '—' %></strong>
+      on <%= new Date(daspRequest.agentSentAt).toLocaleDateString('en-AU', {day:'2-digit',month:'short',year:'numeric'}) %>
     </div>
   </div>
+  <% } %>
 
-  <!-- Status management (admin only, hidden on print) -->
+  <!-- Status management -->
   <div class="card">
     <div class="card-hd">Claim Status — Internal</div>
     <div class="card-bd">
@@ -298,7 +339,7 @@
       <form method="POST" action="/admin/dasp/<%= daspRequest.id %>/status" class="status-form">
         <label style="font-size:0.85rem;font-weight:700;">Change status:</label>
         <select name="status" style="padding:7px 12px;border:1px solid var(--border);border-radius:6px;font-size:0.88rem;">
-          <option value="pending_review" <%= (ds)==='pending_review'?'selected':'' %>>⏳ Pending review</option>
+          <option value="pending_review" <%= ds==='pending_review'?'selected':'' %>>⏳ Pending review</option>
           <option value="processing"     <%= ds==='processing'?'selected':'' %>>⚙️ Processing</option>
           <option value="done"           <%= ds==='done'?'selected':'' %>>✅ Done</option>
         </select>
@@ -307,6 +348,8 @@
     </div>
   </div>
 
-</div>
+</div><!-- /.pw -->
+  </main>
+</div><!-- /.admin-wrap -->
 </body>
 </html>
