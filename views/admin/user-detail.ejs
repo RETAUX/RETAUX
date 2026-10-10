@@ -115,61 +115,95 @@
             <% if (u.referredByCode) { %><span class="badge-sm badge-ref">Referido</span><% } %>
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;">
-          <a href="/admin/export/user/<%= u.id %>-retaux.xlsx" class="btn btn--sm" style="background:var(--ochre);color:var(--ink);border:none;font-weight:700;">📁 Informe RETAUX</a>
+        <div style="position:relative;">
           <% if (taxAgentSent) { %>
-            <span style="color:#4ade80;font-size:0.82rem;font-weight:700;">✓ Email enviado al tax agent</span>
+            <div style="color:#4ade80;font-size:0.78rem;font-weight:700;text-align:right;margin-bottom:6px;">✓ Email enviado al tax agent</div>
           <% } %>
-          <% if (daspRequest) { %>
-          <a href="/admin/user/<%= u.id %>/dasp-preview" class="btn btn--sm" style="background:#1D4ED8;color:#fff;border:none;font-weight:700;white-space:nowrap;">
-            🏦 Preparar informe DASP
-          </a>
-          <% } %>
-          <a href="/admin/user/<%= u.id %>/taxagent-preview" class="btn btn--sm" style="background:#16a34a;color:#fff;border:none;font-weight:700;white-space:nowrap;">
-            📧 Preparar envío al Tax Agent
-          </a>
-          <% if (u.taxAgentReportHtml) { %>
-          <form method="POST" action="/admin/user/<%= u.id %>/resend-taxagent" style="margin:0;">
-            <button type="submit" id="btn-resend-taxagent" class="btn btn--sm"
-              style="background:#1E40AF;color:#fff;border:none;font-weight:700;white-space:nowrap;"
-              title="Reenviar informe guardado a Hisham + hola@retaux.com · Ctrl+Enter">
-              📤 Reenviar a ambos <kbd style="font-size:0.68rem;opacity:0.75;font-weight:400;">Ctrl+↵</kbd>
-            </button>
-          </form>
-          <% } %>
-          <a href="/admin/user/<%= u.id %>/download-taa-docx" class="btn btn--sm"
-            style="background:#065f46;color:#fff;font-weight:700;white-space:nowrap;text-decoration:none;"
-            title="Descargar formulario TAA ENPRESA completado con datos del cliente">
-            📄 Descargar TAA DOCX
-          </a>
-          <form method="POST" action="/admin/user/<%= u.id %>/send-consent" style="margin:0;" id="consent-form">
-            <% var consentTitle = u.consentSignedAt ? 'Firmó el ' + new Date(u.consentSignedAt).toLocaleDateString('es-AR') + ' como ' + (u.consentSignedName || '') : 'Aún no firmó la autorización ATO'; %>
-            <button type="submit" class="btn btn--sm"
-              style="background:<%= u.consentSignedAt ? '#15803d' : '#b45309' %>;color:#fff;border:none;font-weight:700;white-space:nowrap;"
-              onclick="return confirm('¿Enviar solicitud de firma de autorización ATO a <%= u.email %>?')"
-              title="<%= consentTitle %>">
-              <%= u.consentSignedAt ? '✅ Re-enviar firma' : '✍️ Pedir firma ATO' %>
-            </button>
-          </form>
-          <% if (u.phone) { %>
-            <%
-              var _rawPhone = (u.phone || '').replace(/\D/g,'');
-              // Normalizar a formato internacional: si empieza con 0, reemplazar por 61 (Australia)
-              var _waPhone = _rawPhone.startsWith('0') ? '61' + _rawPhone.slice(1) : _rawPhone;
-            %>
-            <a href="https://wa.me/<%= _waPhone %>" target="_blank"
-               class="btn btn--sm"
-               style="background:#25D366;color:#fff;border:none;font-weight:700;white-space:nowrap;">
-              💬 WhatsApp
+          <!-- Menú ⋮ -->
+          <button id="ud-menu-btn" onclick="(function(e){e.stopPropagation();var m=document.getElementById('ud-menu');m.style.display=m.style.display==='block'?'none':'block';})(event)"
+            style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:1.25rem;line-height:1;width:38px;height:38px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;">
+            ⋮
+          </button>
+          <div id="ud-menu" style="display:none;position:absolute;right:0;top:46px;background:#fff;border:1px solid #E5E7EB;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.14);min-width:230px;z-index:200;overflow:hidden;">
+
+            <div style="padding:6px 14px;font-size:0.7rem;font-weight:800;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.08em;background:#F9FAFB;border-bottom:1px solid #F3F4F6;">Informes</div>
+
+            <a href="/admin/export/user/<%= u.id %>-retaux.xlsx"
+              style="display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:0.875rem;color:#111827;text-decoration:none;font-weight:600;border-bottom:1px solid #F3F4F6;"
+              onmouseover="this.style.background='#F9FAFB'" onmouseout="this.style.background=''">
+              📁 Informe RETAUX (.xlsx)
             </a>
-          <% } %>
-          <form method="POST" action="/admin/user/<%= u.id %>/delete"
-            onsubmit="return confirm('¿Eliminar a <%= u.fullName %>? No se puede deshacer.')">
-            <button type="submit" class="btn btn--sm" style="background:transparent;border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.5);font-size:0.78rem;">
-              🗑 Eliminar usuario
-            </button>
-          </form>
+
+            <% if (daspRequest) { %>
+            <a href="/admin/user/<%= u.id %>/dasp-preview"
+              style="display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:0.875rem;color:#111827;text-decoration:none;font-weight:600;border-bottom:1px solid #F3F4F6;"
+              onmouseover="this.style.background='#F9FAFB'" onmouseout="this.style.background=''">
+              🏦 Informe DASP
+            </a>
+            <% } %>
+
+            <a href="/admin/user/<%= u.id %>/taxagent-preview"
+              style="display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:0.875rem;color:#111827;text-decoration:none;font-weight:600;border-bottom:1px solid #F3F4F6;"
+              onmouseover="this.style.background='#F9FAFB'" onmouseout="this.style.background=''">
+              📧 Informe Tax Agent
+            </a>
+
+            <% if (u.taxAgentReportHtml) { %>
+            <form method="POST" action="/admin/user/<%= u.id %>/resend-taxagent" style="margin:0;">
+              <button type="submit" id="btn-resend-taxagent"
+                style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 16px;font-size:0.875rem;color:#111827;background:none;border:none;border-bottom:1px solid #F3F4F6;cursor:pointer;font-weight:600;text-align:left;"
+                title="Reenviar informe guardado · Ctrl+Enter"
+                onmouseover="this.style.background='#F9FAFB'" onmouseout="this.style.background=''">
+                📤 Reenviar a ambos <span style="margin-left:auto;font-size:0.7rem;color:#9CA3AF;">Ctrl+↵</span>
+              </button>
+            </form>
+            <% } %>
+
+            <a href="/admin/user/<%= u.id %>/download-taa-docx"
+              style="display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:0.875rem;color:#111827;text-decoration:none;font-weight:600;border-bottom:1px solid #F3F4F6;"
+              onmouseover="this.style.background='#F9FAFB'" onmouseout="this.style.background=''">
+              📄 Descargar TAA DOCX
+            </a>
+
+            <div style="padding:6px 14px;font-size:0.7rem;font-weight:800;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.08em;background:#F9FAFB;border-bottom:1px solid #F3F4F6;">Acciones</div>
+
+            <form method="POST" action="/admin/user/<%= u.id %>/send-consent" style="margin:0;" id="consent-form">
+              <% var consentTitle = u.consentSignedAt ? 'Firmó el ' + new Date(u.consentSignedAt).toLocaleDateString('es-AR') + ' como ' + (u.consentSignedName || '') : 'Aún no firmó la autorización ATO'; %>
+              <button type="submit"
+                style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 16px;font-size:0.875rem;color:#111827;background:none;border:none;border-bottom:1px solid #F3F4F6;cursor:pointer;font-weight:600;text-align:left;"
+                onclick="return confirm('¿Enviar solicitud de firma de autorización ATO a <%= u.email %>?')"
+                title="<%= consentTitle %>"
+                onmouseover="this.style.background='#F9FAFB'" onmouseout="this.style.background=''">
+                <%= u.consentSignedAt ? '✅ Re-enviar firma ATO' : '✍️ Pedir firma ATO' %>
+              </button>
+            </form>
+
+            <% if (u.phone) { %>
+              <%
+                var _rawPhone = (u.phone || '').replace(/\D/g,'');
+                var _waPhone = _rawPhone.startsWith('0') ? '61' + _rawPhone.slice(1) : _rawPhone;
+              %>
+              <a href="https://wa.me/<%= _waPhone %>" target="_blank"
+                style="display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:0.875rem;color:#111827;text-decoration:none;font-weight:600;border-bottom:1px solid #F3F4F6;"
+                onmouseover="this.style.background='#F9FAFB'" onmouseout="this.style.background=''">
+                💬 WhatsApp
+              </a>
+            <% } %>
+
+            <form method="POST" action="/admin/user/<%= u.id %>/delete"
+              onsubmit="return confirm('¿Eliminar a <%= u.fullName %>? No se puede deshacer.')">
+              <button type="submit"
+                style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 16px;font-size:0.875rem;color:#DC2626;background:none;border:none;cursor:pointer;font-weight:600;text-align:left;"
+                onmouseover="this.style.background='#FEF2F2'" onmouseout="this.style.background=''">
+                🗑 Eliminar usuario
+              </button>
+            </form>
+
+          </div>
         </div>
+        <script>
+          document.addEventListener('click', function(){ var m=document.getElementById('ud-menu'); if(m) m.style.display='none'; });
+        </script>
       </div>
 
       <!-- ── Referral / quién lo refirió ───────────────────────────────── -->
@@ -1055,7 +1089,7 @@
       <div class="section">
         <div class="section-title" style="display:flex;align-items:center;justify-content:space-between;">
           <span>🟡 Solicitud DASP</span>
-          <a href="/admin/user/<%= u.id %>/dasp-preview" class="btn btn--sm btn--navy" style="font-size:0.8rem;">📋 Preparar informe DASP</a>
+          <a href="/admin/user/<%= u.id %>/dasp-preview" style="font-size:0.8rem;color:var(--navy);font-weight:600;text-decoration:underline;">Ver informe →</a>
         </div>
         <div class="section-body" style="padding:16px;">
 
