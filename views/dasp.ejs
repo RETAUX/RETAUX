@@ -163,6 +163,9 @@
                 value="<%= existing && existing.phone ? existing.phone : (user.phone || '') %>">
             </div>
           </div>
+          <div style="background:#FFF8E1;border-left:4px solid #FFC107;border-radius:0 6px 6px 0;padding:10px 14px;margin-bottom:14px;font-size:0.87rem;color:#7B5800;">
+            <strong>⚠️ <%- __('dasp.passport_important_title') %>:</strong> <%- __('dasp.passport_important_body') %>
+          </div>
           <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
             <div class="form-group">
               <label><%- __('dasp.passport_number') %> *</label>

@@ -703,6 +703,8 @@
     "phone": "Teléfono / WhatsApp",
     "passport_number": "Número de pasaporte",
     "passport_country": "País emisor del pasaporte",
+    "passport_important_title": "Importante",
+    "passport_important_body": "Ingresá el pasaporte que presentaste para obtener o usar tu visa australiana. Debe coincidir exactamente con el que figura en los registros del Departamento de Interior (Home Affairs).",
     "dob": "Fecha de nacimiento",
     "tfn_hint": "Muy recomendado — permite encontrar todos tus fondos automáticamente.",
     "sec_visa": "Visa y salida de Australia",

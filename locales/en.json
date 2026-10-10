@@ -703,6 +703,8 @@
     "phone": "Phone / WhatsApp",
     "passport_number": "Passport number",
     "passport_country": "Passport issuing country",
+    "passport_important_title": "Important",
+    "passport_important_body": "Enter the passport you used to obtain or travel on your Australian visa. It must exactly match the one on file with the Department of Home Affairs.",
     "dob": "Date of birth",
     "tfn_hint": "Highly recommended — allows us to find all your funds automatically.",
     "sec_visa": "Visa & departure from Australia",

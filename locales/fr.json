@@ -703,6 +703,8 @@
     "phone": "Téléphone / WhatsApp",
     "passport_number": "Numéro de passeport",
     "passport_country": "Pays d'émission du passeport",
+    "passport_important_title": "Important",
+    "passport_important_body": "Indiquez le passeport que vous avez utilisé pour obtenir ou voyager avec votre visa australien. Il doit correspondre exactement à celui enregistré auprès du Département de l'Intérieur (Home Affairs).",
     "dob": "Date de naissance",
     "tfn_hint": "Très recommandé — permet de trouver automatiquement tous vos fonds.",
     "sec_visa": "Visa et départ d'Australie",
