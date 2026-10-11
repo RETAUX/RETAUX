@@ -1534,7 +1534,7 @@ function udSaveVehicles(btn) {
   });
   btn.disabled = true;
   btn.textContent = '⏳ Guardando...';
-  fetch(action, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'fetch' }, body: body.toString() })
+  fetch(action, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'fetch' }, body: body.toString() })
     .then(function(r) {
       btn.disabled = false;
       btn.textContent = '💾 Guardar todos';
@@ -1569,7 +1569,7 @@ function udSaveHealth(btn) {
   });
   btn.disabled = true;
   btn.textContent = '⏳ Guardando...';
-  fetch(action, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'fetch' }, body: body.toString() })
+  fetch(action, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'fetch' }, body: body.toString() })
     .then(function(r) {
       btn.disabled = false;
       btn.textContent = '💾 Guardar seguro';
