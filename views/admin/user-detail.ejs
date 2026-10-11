@@ -751,6 +751,7 @@
                       <span id="ud-vehicles-msg" style="font-size:0.82rem;display:none;"></span>
                     </div>
                     <input type="hidden" name="vehicleCount" id="ud-vehicle-count" value="<%= udVehicles.length %>">
+                    <input type="hidden" name="fyProfileId" value="<%= fyProfile.id %>">
                   </div>
                 </td>
               </tr>
@@ -796,6 +797,7 @@
                         </div>
                       </div>
                     </div>
+                    <input type="hidden" name="fyProfileId" value="<%= fyProfile.id %>">
                     <div style="margin-top:10px;display:flex;align-items:center;gap:10px;">
                       <button type="button" onclick="udSaveHealth(this)" style="background:#7C3AED;color:#fff;border:none;border-radius:6px;padding:5px 16px;font-size:0.82rem;font-weight:700;cursor:pointer;">💾 Guardar seguro</button>
                       <span id="ud-health-msg" style="font-size:0.82rem;display:none;"></span>
