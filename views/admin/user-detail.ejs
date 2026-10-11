@@ -692,7 +692,7 @@
                           ? [{ brand: fyProfile.carBrand||'', model: fyProfile.carModel||'', year: fyProfile.carYear||'', plate: fyProfile.carPlate||'', km: fyProfile.carWorkKm||'' }]
                           : [{ brand:'', model:'', year:'', plate:'', km:'' }]);
                   %>
-                  <form method="POST" action="/admin/user/<%= u.id %>/update-vehicles" id="ud-vehicles-form">
+                  <div id="ud-vehicles-form" data-action="/admin/user/<%= u.id %>/update-vehicles">
                     <div id="ud-vehicles-list" style="display:flex;flex-direction:column;gap:10px;">
                       <% udVehicles.forEach(function(v, i) { %>
                       <div class="ud-vehicle-row" style="background:#F8FAFC;border:1px solid #E5E7EB;border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;">
@@ -725,16 +725,17 @@
                     </div>
                     <div style="display:flex;gap:8px;margin-top:10px;align-items:center;">
                       <button type="button" onclick="udAddVehicle()" style="background:#F0F9FF;color:#0369A1;border:1.5px dashed #BAE6FD;border-radius:6px;padding:5px 14px;font-size:0.82rem;font-weight:700;cursor:pointer;">+ Agregar vehículo</button>
-                      <button type="submit" style="background:#1D4ED8;color:#fff;border:none;border-radius:6px;padding:5px 16px;font-size:0.82rem;font-weight:700;cursor:pointer;">💾 Guardar todos</button>
+                      <button type="button" onclick="udSaveVehicles(this)" style="background:#1D4ED8;color:#fff;border:none;border-radius:6px;padding:5px 16px;font-size:0.82rem;font-weight:700;cursor:pointer;">💾 Guardar todos</button>
+                      <span id="ud-vehicles-msg" style="font-size:0.82rem;display:none;"></span>
                     </div>
                     <input type="hidden" name="vehicleCount" id="ud-vehicle-count" value="<%= udVehicles.length %>">
-                  </form>
+                  </div>
                 </td>
               </tr>
               <tr>
                 <th style="vertical-align:top;padding-top:10px;">🏥 Seguro de salud</th>
                 <td>
-                  <form method="POST" action="/admin/user/<%= u.id %>/update-health">
+                  <div id="ud-health-form" data-action="/admin/user/<%= u.id %>/update-health">
                     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
                       <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer;">
                         <input type="checkbox" name="hasHealthInsurance" value="1" <%= fyProfile.hasHealthInsurance ? 'checked' : '' %>
@@ -773,10 +774,11 @@
                         </div>
                       </div>
                     </div>
-                    <div style="margin-top:10px;">
-                      <button type="submit" style="background:#7C3AED;color:#fff;border:none;border-radius:6px;padding:5px 16px;font-size:0.82rem;font-weight:700;cursor:pointer;">💾 Guardar seguro</button>
+                    <div style="margin-top:10px;display:flex;align-items:center;gap:10px;">
+                      <button type="button" onclick="udSaveHealth(this)" style="background:#7C3AED;color:#fff;border:none;border-radius:6px;padding:5px 16px;font-size:0.82rem;font-weight:700;cursor:pointer;">💾 Guardar seguro</button>
+                      <span id="ud-health-msg" style="font-size:0.82rem;display:none;"></span>
                     </div>
-                  </form>
+                  </div>
                 </td>
               </tr>
           </table>
@@ -1493,6 +1495,77 @@ function udAddVehicle() {
 
 function udToggleHealth(cb) {
   document.getElementById('ud-health-fields').style.display = cb.checked ? 'flex' : 'none';
+}
+
+function udSaveVehicles(btn) {
+  var container = document.getElementById('ud-vehicles-form');
+  var action = container.dataset.action;
+  var msg = document.getElementById('ud-vehicles-msg');
+  // Recoger todos los inputs del contenedor
+  var body = new URLSearchParams();
+  container.querySelectorAll('input[name]').forEach(function(inp) {
+    if (inp.type === 'checkbox') {
+      if (inp.checked) body.append(inp.name, inp.value);
+    } else {
+      body.append(inp.name, inp.value);
+    }
+  });
+  btn.disabled = true;
+  btn.textContent = '⏳ Guardando...';
+  fetch(action, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'fetch' }, body: body.toString() })
+    .then(function(r) {
+      btn.disabled = false;
+      btn.textContent = '💾 Guardar todos';
+      if (r.ok) {
+        msg.textContent = '✅ Guardado';
+        msg.style.cssText = 'font-size:0.82rem;color:#065F46;display:inline;';
+        setTimeout(function(){ msg.style.display='none'; }, 3000);
+      } else {
+        msg.textContent = '❌ Error al guardar';
+        msg.style.cssText = 'font-size:0.82rem;color:#DC2626;display:inline;';
+      }
+    })
+    .catch(function() {
+      btn.disabled = false;
+      btn.textContent = '💾 Guardar todos';
+      msg.textContent = '❌ Error de red';
+      msg.style.cssText = 'font-size:0.82rem;color:#DC2626;display:inline;';
+    });
+}
+
+function udSaveHealth(btn) {
+  var container = document.getElementById('ud-health-form');
+  var action = container.dataset.action;
+  var msg = document.getElementById('ud-health-msg');
+  var body = new URLSearchParams();
+  container.querySelectorAll('input[name]').forEach(function(inp) {
+    if (inp.type === 'checkbox') {
+      if (inp.checked) body.append(inp.name, inp.value);
+    } else {
+      body.append(inp.name, inp.value);
+    }
+  });
+  btn.disabled = true;
+  btn.textContent = '⏳ Guardando...';
+  fetch(action, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'fetch' }, body: body.toString() })
+    .then(function(r) {
+      btn.disabled = false;
+      btn.textContent = '💾 Guardar seguro';
+      if (r.ok) {
+        msg.textContent = '✅ Guardado';
+        msg.style.cssText = 'font-size:0.82rem;color:#065F46;display:inline;';
+        setTimeout(function(){ msg.style.display='none'; }, 3000);
+      } else {
+        msg.textContent = '❌ Error al guardar';
+        msg.style.cssText = 'font-size:0.82rem;color:#DC2626;display:inline;';
+      }
+    })
+    .catch(function() {
+      btn.disabled = false;
+      btn.textContent = '💾 Guardar seguro';
+      msg.textContent = '❌ Error de red';
+      msg.style.cssText = 'font-size:0.82rem;color:#DC2626;display:inline;';
+    });
 }
 
 function udRemoveVehicle(btn) {
