@@ -683,76 +683,37 @@
             <% if (fyProfile.workLocations) { %><tr><th>Ubicaciones de trabajo</th><td><%= fyProfile.workLocations %></td></tr><% } %>
               <tr>
                 <th style="vertical-align:top;padding-top:10px;">Vehículos</th>
-                <td>
+                <td id="ud-vehicles-display">
                   <%
-                    // Normalizar: preferir array vehicles; si no existe, construirlo desde campos planos.
-                    // Los campos planos pueden contener múltiples vehículos concatenados con "+" (formato legacy del formulario del cliente).
                     var udVehicles;
                     if (fyProfile.vehicles && fyProfile.vehicles.length) {
                       udVehicles = fyProfile.vehicles;
                     } else if (fyProfile.carBrand || fyProfile.carWorkKm) {
-                      // Detectar si hay múltiples vehículos concatenados con "+"
-                      var brands  = (fyProfile.carBrand  || '').split('+').map(function(s){ return s.trim(); });
-                      var models  = (fyProfile.carModel  || '').split('+').map(function(s){ return s.trim(); });
-                      var years   = (fyProfile.carYear   || '').split('+').map(function(s){ return s.trim(); });
-                      var plates  = (fyProfile.carPlate  || '').split('+').map(function(s){ return s.trim(); });
-                      var kms     = fyProfile.carWorkKm
-                        ? String(fyProfile.carWorkKm).split('+').map(function(s){ return parseFloat(s.trim()) || 0; })
-                        : [];
-                      var vCount  = Math.max(brands.length, 1);
+                      var brands = (fyProfile.carBrand||'').split('+').map(function(s){return s.trim();});
+                      var models = (fyProfile.carModel||'').split('+').map(function(s){return s.trim();});
+                      var years  = (fyProfile.carYear ||'').split('+').map(function(s){return s.trim();});
+                      var plates = (fyProfile.carPlate||'').split('+').map(function(s){return s.trim();});
+                      var kms    = fyProfile.carWorkKm ? String(fyProfile.carWorkKm).split('+').map(function(s){return parseFloat(s.trim())||0;}) : [];
                       udVehicles = [];
-                      for (var vi = 0; vi < vCount; vi++) {
-                        udVehicles.push({
-                          brand: brands[vi] || '',
-                          model: models[vi] || '',
-                          year:  years[vi]  || '',
-                          plate: plates[vi] || '',
-                          km:    kms[vi]    || ''
-                        });
+                      for (var vi=0;vi<Math.max(brands.length,1);vi++) {
+                        udVehicles.push({brand:brands[vi]||'',model:models[vi]||'',year:years[vi]||'',plate:plates[vi]||'',km:kms[vi]||0});
                       }
                     } else {
-                      udVehicles = [{ brand:'', model:'', year:'', plate:'', km:'' }];
+                      udVehicles = [];
                     }
                   %>
-                  <div id="ud-vehicles-form" data-action="/admin/user/<%= u.id %>/update-vehicles">
-                    <div id="ud-vehicles-list" style="display:flex;flex-direction:column;gap:10px;">
-                      <% udVehicles.forEach(function(v, i) { %>
-                      <div class="ud-vehicle-row" style="background:#F8FAFC;border:1px solid #E5E7EB;border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;">
-                        <div style="display:flex;align-items:center;justify-content:space-between;">
-                          <span style="font-size:0.72rem;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.05em;">Vehículo <%= i+1 %></span>
-                          <% if (i > 0) { %>
-                          <button type="button" onclick="udRemoveVehicle(this)" style="background:none;border:none;color:#DC2626;font-size:0.8rem;cursor:pointer;padding:0;">✕ Quitar</button>
-                          <% } %>
-                        </div>
-                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                          <input type="text" name="v_brand_<%= i %>" value="<%= v.brand||'' %>" placeholder="Marca"
-                            style="width:100px;padding:4px 8px;border:1.5px solid #D1D5DB;border-radius:6px;font-size:0.85rem;">
-                          <input type="text" name="v_model_<%= i %>" value="<%= v.model||'' %>" placeholder="Modelo"
-                            style="width:110px;padding:4px 8px;border:1.5px solid #D1D5DB;border-radius:6px;font-size:0.85rem;">
-                          <input type="text" name="v_year_<%= i %>" value="<%= v.year||'' %>" placeholder="Año" maxlength="4"
-                            style="width:64px;padding:4px 8px;border:1.5px solid #D1D5DB;border-radius:6px;font-size:0.85rem;font-family:monospace;">
-                          <input type="text" name="v_plate_<%= i %>" value="<%= v.plate||'' %>" placeholder="Patente"
-                            style="width:90px;padding:4px 8px;border:1.5px solid #D1D5DB;border-radius:6px;font-size:0.85rem;font-family:monospace;text-transform:uppercase;">
-                        </div>
-                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                          <input type="number" name="v_km_<%= i %>" value="<%= v.km||'' %>" min="0" step="1" placeholder="0"
-                            style="width:90px;padding:4px 8px;border:1.5px solid #BFDBFE;border-radius:6px;font-size:0.9rem;font-weight:700;font-family:monospace;color:#1D4ED8;"
-                            oninput="udKmCalcRow(this)">
-                          <span style="color:#9CA3AF;font-size:0.82rem;">km × $0.88 =</span>
-                          <span class="ud-km-result mono" style="color:#1D4ED8;font-weight:700;">AUD $<%= v.km ? (v.km*0.88).toFixed(2) : '0.00' %></span>
-                          <% if (v.km > 5000) { %><span style="background:#FEF3C7;color:#92400E;font-size:0.72rem;font-weight:700;padding:2px 7px;border-radius:8px;border:1px solid #FCD34D;">⚠ >5,000 km</span><% } %>
-                        </div>
-                      </div>
-                      <% }); %>
-                    </div>
-                    <div style="display:flex;gap:8px;margin-top:10px;align-items:center;">
-                      <button type="button" onclick="udAddVehicle()" style="background:#F0F9FF;color:#0369A1;border:1.5px dashed #BAE6FD;border-radius:6px;padding:5px 14px;font-size:0.82rem;font-weight:700;cursor:pointer;">+ Agregar vehículo</button>
-                      <button type="button" onclick="udSaveVehicles(this)" style="background:#1D4ED8;color:#fff;border:none;border-radius:6px;padding:5px 16px;font-size:0.82rem;font-weight:700;cursor:pointer;">💾 Guardar todos</button>
-                      <span id="ud-vehicles-msg" style="font-size:0.82rem;display:none;"></span>
-                    </div>
-                    <input type="hidden" name="vehicleCount" id="ud-vehicle-count" value="<%= udVehicles.length %>">
-                    <input type="hidden" name="fyProfileId" value="<%= fyProfile.id %>">
+                  <% udVehicles.forEach(function(v,i){ %>
+                  <div style="font-size:0.88rem;margin-bottom:4px;">
+                    <strong><%= v.brand %> <%= v.model %></strong> (<%= v.year %>) — placa <span style="font-family:monospace;"><%= v.plate %></span>
+                    — <span style="color:#1D4ED8;font-weight:700;font-family:monospace;"><%= v.km || 0 %> km</span>
+                    <% if (!v.km) { %><span style="color:#DC2626;font-size:0.75rem;font-weight:700;"> ⚠ sin km</span><% } %>
                   </div>
+                  <% }); %>
+                  <% if (!udVehicles.length) { %><span style="color:var(--muted);font-size:0.85rem;">Sin vehículos</span><% } %>
+                  <button type="button" onclick="document.getElementById('ud-vehicles-edit').style.display='block';this.style.display='none';"
+                    style="margin-top:8px;background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;border-radius:6px;padding:4px 12px;font-size:0.8rem;font-weight:700;cursor:pointer;">
+                    ✏️ Editar vehículos
+                  </button>
                 </td>
               </tr>
               <tr>
@@ -806,6 +767,44 @@
                 </td>
               </tr>
           </table>
+
+          <!-- Form edición vehículos — FUERA de la tabla -->
+          <div id="ud-vehicles-edit" style="display:none;margin-top:16px;background:#F0F9FF;border:2px solid #BFDBFE;border-radius:10px;padding:16px 20px;">
+            <div style="font-weight:700;font-size:0.9rem;color:#1D4ED8;margin-bottom:12px;">✏️ Editar vehículos — <%= fyProfile.taxYear || '' %></div>
+            <form method="POST" action="/admin/user/<%= u.id %>/update-vehicles">
+              <input type="hidden" name="fyProfileId" value="<%= fyProfile.id %>">
+              <div id="ud-vehicles-list" style="display:flex;flex-direction:column;gap:10px;">
+                <% udVehicles.forEach(function(v, i) { %>
+                <div class="ud-vehicle-row" style="background:#fff;border:1px solid #BFDBFE;border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;">
+                  <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <span style="font-size:0.72rem;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.05em;">Vehículo <%= i+1 %></span>
+                    <% if (i > 0) { %><button type="button" onclick="udRemoveVehicle(this)" style="background:none;border:none;color:#DC2626;font-size:0.8rem;cursor:pointer;">✕ Quitar</button><% } %>
+                  </div>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <input type="text" name="v_brand_<%= i %>" value="<%= v.brand||'' %>" placeholder="Marca" style="width:100px;padding:4px 8px;border:1.5px solid #D1D5DB;border-radius:6px;font-size:0.85rem;">
+                    <input type="text" name="v_model_<%= i %>" value="<%= v.model||'' %>" placeholder="Modelo" style="width:110px;padding:4px 8px;border:1.5px solid #D1D5DB;border-radius:6px;font-size:0.85rem;">
+                    <input type="text" name="v_year_<%= i %>" value="<%= v.year||'' %>" placeholder="Año" maxlength="4" style="width:64px;padding:4px 8px;border:1.5px solid #D1D5DB;border-radius:6px;font-size:0.85rem;font-family:monospace;">
+                    <input type="text" name="v_plate_<%= i %>" value="<%= v.plate||'' %>" placeholder="Patente" style="width:90px;padding:4px 8px;border:1.5px solid #D1D5DB;border-radius:6px;font-size:0.85rem;font-family:monospace;text-transform:uppercase;">
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                    <input type="number" name="v_km_<%= i %>" value="<%= v.km||0 %>" min="0" step="1" placeholder="0"
+                      style="width:110px;padding:6px 10px;border:2px solid #3B82F6;border-radius:6px;font-size:1rem;font-weight:700;font-family:monospace;color:#1D4ED8;"
+                      oninput="udKmCalcRow(this)">
+                    <span style="color:#9CA3AF;font-size:0.82rem;">km × $0.88 =</span>
+                    <span class="ud-km-result mono" style="color:#1D4ED8;font-weight:700;">AUD $<%= v.km ? (v.km*0.88).toFixed(2) : '0.00' %></span>
+                  </div>
+                </div>
+                <% }); %>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap;">
+                <button type="button" onclick="udAddVehicle()" style="background:#F0F9FF;color:#0369A1;border:1.5px dashed #BAE6FD;border-radius:6px;padding:5px 14px;font-size:0.82rem;font-weight:700;cursor:pointer;">+ Agregar vehículo</button>
+                <button type="submit" style="background:#1D4ED8;color:#fff;border:none;border-radius:6px;padding:6px 20px;font-size:0.88rem;font-weight:700;cursor:pointer;">💾 Guardar vehículos</button>
+                <button type="button" onclick="document.getElementById('ud-vehicles-edit').style.display='none';document.querySelector('#ud-vehicles-display button').style.display='inline-block';" style="background:none;border:1px solid #D1D5DB;color:#6B7280;border-radius:6px;padding:5px 14px;font-size:0.82rem;font-weight:600;cursor:pointer;">Cancelar</button>
+              </div>
+              <input type="hidden" name="vehicleCount" id="ud-vehicle-count" value="<%= udVehicles.length %>">
+            </form>
+          </div>
+
         </div>
       </div>
       <% } %>
