@@ -14,7 +14,7 @@ router.get('/taxagent-bundle/:token', (req, res) => {
     return res.status(404).send('<h2>Link not found or already expired.</h2>');
   }
 
-  if (new Date(bundle.expiresAt) < new Date()) {
+  if (bundle.expiresAt && new Date(bundle.expiresAt) < new Date()) {
     return res.status(410).send('<h2>This download link has expired. Please contact hola@retaux.com to request a new one.</h2>');
   }
 

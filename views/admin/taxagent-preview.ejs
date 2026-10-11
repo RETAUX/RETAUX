@@ -276,6 +276,22 @@
               <input type="text" name="occupation" value="<%= u.occupation || '' %>" class="<%= !u.occupation ? 'miss' : '' %>">
             </div>
           </div>
+          <% if (fyProfile && (fyProfile.jobsDescription || fyProfile.workLocations)) { %>
+          <div class="edit-row cols-2">
+            <% if (fyProfile.jobsDescription) { %>
+            <div class="edit-field">
+              <label>Trabajos / Roles</label>
+              <input type="text" value="<%= fyProfile.jobsDescription %>" readonly style="background:#f8fafc;color:#555;">
+            </div>
+            <% } %>
+            <% if (fyProfile.workLocations) { %>
+            <div class="edit-field">
+              <label>Lugares de trabajo</label>
+              <input type="text" value="<%= fyProfile.workLocations %>" readonly style="background:#f8fafc;color:#555;">
+            </div>
+            <% } %>
+          </div>
+          <% } %>
         </div>
 
         <!-- ── 2. Visa y residencia ── -->
