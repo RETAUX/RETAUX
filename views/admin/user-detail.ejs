@@ -685,12 +685,34 @@
                 <th style="vertical-align:top;padding-top:10px;">Vehículos</th>
                 <td>
                   <%
-                    // Normalizar: si no hay array vehicles, construirlo desde campos planos
-                    var udVehicles = fyProfile.vehicles && fyProfile.vehicles.length
-                      ? fyProfile.vehicles
-                      : (fyProfile.carBrand || fyProfile.carWorkKm
-                          ? [{ brand: fyProfile.carBrand||'', model: fyProfile.carModel||'', year: fyProfile.carYear||'', plate: fyProfile.carPlate||'', km: fyProfile.carWorkKm||'' }]
-                          : [{ brand:'', model:'', year:'', plate:'', km:'' }]);
+                    // Normalizar: preferir array vehicles; si no existe, construirlo desde campos planos.
+                    // Los campos planos pueden contener múltiples vehículos concatenados con "+" (formato legacy del formulario del cliente).
+                    var udVehicles;
+                    if (fyProfile.vehicles && fyProfile.vehicles.length) {
+                      udVehicles = fyProfile.vehicles;
+                    } else if (fyProfile.carBrand || fyProfile.carWorkKm) {
+                      // Detectar si hay múltiples vehículos concatenados con "+"
+                      var brands  = (fyProfile.carBrand  || '').split('+').map(function(s){ return s.trim(); });
+                      var models  = (fyProfile.carModel  || '').split('+').map(function(s){ return s.trim(); });
+                      var years   = (fyProfile.carYear   || '').split('+').map(function(s){ return s.trim(); });
+                      var plates  = (fyProfile.carPlate  || '').split('+').map(function(s){ return s.trim(); });
+                      var kms     = fyProfile.carWorkKm
+                        ? String(fyProfile.carWorkKm).split('+').map(function(s){ return parseFloat(s.trim()) || 0; })
+                        : [];
+                      var vCount  = Math.max(brands.length, 1);
+                      udVehicles = [];
+                      for (var vi = 0; vi < vCount; vi++) {
+                        udVehicles.push({
+                          brand: brands[vi] || '',
+                          model: models[vi] || '',
+                          year:  years[vi]  || '',
+                          plate: plates[vi] || '',
+                          km:    kms[vi]    || ''
+                        });
+                      }
+                    } else {
+                      udVehicles = [{ brand:'', model:'', year:'', plate:'', km:'' }];
+                    }
                   %>
                   <div id="ud-vehicles-form" data-action="/admin/user/<%= u.id %>/update-vehicles">
                     <div id="ud-vehicles-list" style="display:flex;flex-direction:column;gap:10px;">
