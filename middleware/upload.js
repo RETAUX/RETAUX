@@ -29,8 +29,8 @@ async function compressImage(filePath) {
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const taxYear = req.params.taxYear || req.body.taxYear || 'general';
-    const isSelfie = req.body.category === 'selfie_id' || req.route?.path?.includes('selfie') || file.fieldname === 'selfie';
+    const taxYear = req.params.taxYear || (req.body && req.body.taxYear) || 'general';
+    const isSelfie = (req.body && req.body.category === 'selfie_id') || req.route?.path?.includes('selfie') || file.fieldname === 'selfie';
     const dir = isSelfie
       ? path.join(UPLOAD_ROOT, req.user.id)
       : path.join(UPLOAD_ROOT, req.user.id, taxYear);
@@ -51,7 +51,7 @@ const allowedExt = ['.pdf', '.jpg', '.jpeg', '.png', '.heic', '.webp', '.doc', '
 
 const upload = multer({
   storage,
-  limits: { fileSize: 30 * 1024 * 1024 },
+  limits: { fileSize: 50 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
     if (allowedExt.includes(ext)) cb(null, true);
