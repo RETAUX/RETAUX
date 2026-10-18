@@ -1269,6 +1269,7 @@ router.post('/user/:id/send-verification', requireAdmin, async (req, res) => {
 });
 
 router.post('/user/:id/send-taxagent', requireAdmin, handleTaxAgentUpload, async (req, res) => {
+  try {
   const { sendMail } = require('../lib/mailer');
   const { UPLOAD_ROOT } = require('../middleware/upload');
   const u = db.get('users').find({ id: req.params.id }).value();
@@ -2105,6 +2106,10 @@ router.post('/user/:id/send-taxagent', requireAdmin, handleTaxAgentUpload, async
   }
 
   res.redirect(`/admin/user/${u.id}?taxAgentSent=1`);
+  } catch (fatalErr) {
+    console.error('[TAXAGENT FATAL] Error no capturado en send-taxagent:', fatalErr.message, fatalErr.stack?.split('\n')[1]);
+    if (!res.headersSent) res.redirect(`/admin/user/${req.params.id}?error=taxagent_fatal`);
+  }
 });
 
 // ── Reenvío rápido del informe del tax agent (desde user-detail) ──────────────
