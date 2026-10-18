@@ -1726,6 +1726,7 @@ router.post('/user/:id/send-taxagent', requireAdmin, handleTaxAgentUpload, async
 
   // Necesita ZIP si hay archivos incompatibles (HEIC) o el tamaño supera el límite
   const needsZip = totalBytes > LIMIT_BYTES || incompatible.length > 0;
+  console.log(`[TAXAGENT DIAG] cliente=${clientName} docs=${attachments.length} incomp=${incompatible.length} totalMB=${(totalBytes/1024/1024).toFixed(2)} needsZip=${needsZip}`);
 
   let mailAttachments = allAttachmentsFull;
   let downloadSection = '';
@@ -2047,6 +2048,9 @@ router.post('/user/:id/send-taxagent', requireAdmin, handleTaxAgentUpload, async
   // (los PDFs ENPRESA y bank statement son siempre pequeños y se mantienen)
   const BREVO_HARD_LIMIT = 19 * 1024 * 1024; // 19MB margen
   const totalEmailBytes = emailAttachments.reduce((s, a) => s + (a.content ? Buffer.from(a.content, 'base64').length : 0), 0);
+  const enpresaMB = enpresaAttachments.reduce((s, a) => s + (a.content ? Buffer.from(a.content, 'base64').length : 0), 0) / 1024 / 1024;
+  const bankMB = bankStatementAttachments.reduce((s, a) => s + (a.content ? Buffer.from(a.content, 'base64').length : 0), 0) / 1024 / 1024;
+  console.log(`[TAXAGENT DIAG] emailAttachments=${emailAttachments.length} totalEmailMB=${(totalEmailBytes/1024/1024).toFixed(2)} enpresaMB=${enpresaMB.toFixed(2)} bankMB=${bankMB.toFixed(2)}`);
   if (totalEmailBytes > BREVO_HARD_LIMIT) {
     console.warn(`[TAXAGENT EMAIL] Email demasiado grande (${(totalEmailBytes/1024/1024).toFixed(1)}MB) — forzando bundle y quitando adjuntos de cliente`);
     // Regenerar bundle si no se había generado
