@@ -1724,69 +1724,93 @@ router.post('/user/:id/send-taxagent', requireAdmin, handleTaxAgentUpload, async
   const totalBytes = allAttachmentsFull.reduce((sum, a) => sum + Buffer.from(a.content, 'base64').length, 0);
   const LIMIT_BYTES = 15 * 1024 * 1024; // 15MB margen seguro
 
-  // Necesita bundle si los archivos son demasiado grandes O si hay archivos incompatibles (HEIC, etc.)
-  const needsBundle = totalBytes > LIMIT_BYTES || incompatible.length > 0;
+  // Necesita ZIP si hay archivos incompatibles (HEIC) o el tamaño supera el límite
+  const needsZip = totalBytes > LIMIT_BYTES || incompatible.length > 0;
 
   let mailAttachments = allAttachmentsFull;
   let downloadSection = '';
 
-  if (needsBundle) {
-    const crypto = require('crypto');
-    const bundleToken = crypto.randomBytes(24).toString('hex');
-    const bundleExpiry = null; // sin vencimiento
+  if (needsZip) {
+    // Comprimir TODOS los archivos del cliente en un ZIP y adjuntarlo al email
+    try {
+      const archiver  = require('archiver');
+      const os        = require('os');
+      const { PassThrough } = require('stream');
 
-    // El bundle incluye TODOS los archivos del usuario (compatibles + incompatibles)
-    const bundleFiles = [];
-    for (const d of allDocs) {
-      const finalPath = resolvePath(d);
-      if (finalPath) {
-        const catLabel = CAT_LABELS[d.category] || d.category || 'Other';
-        bundleFiles.push({ path: finalPath, name: `[${catLabel}] ${d.originalName || d.storedFilename}` });
-      }
-    }
-    extraAttachments.forEach(e => {
-      const tmpPath = path.join(UPLOAD_ROOT, u.id, '_extra_' + e.originalName);
-      fs.writeFileSync(tmpPath, Buffer.from(e.content, 'base64'));
-      bundleFiles.push({ path: tmpPath, name: e.originalName, tmp: true });
-    });
+      const zipPath = path.join(os.tmpdir(), `retaux_docs_${u.id}_${Date.now()}.zip`);
+      const output  = fs.createWriteStream(zipPath);
+      const archive = archiver('zip', { zlib: { level: 6 } });
 
-    db.get('taxBundles').push({
-      token: bundleToken,
-      userId: u.id,
-      clientName,
-      files: bundleFiles,
-      createdAt: new Date().toISOString(),
-      expiresAt: bundleExpiry
-    }).write();
+      await new Promise((resolve, reject) => {
+        output.on('close', resolve);
+        archive.on('error', reject);
+        archive.pipe(output);
 
-    const bundleUrl = `https://retaux.com/taxagent-bundle/${bundleToken}`;
-    const totalMB = (totalBytes / 1024 / 1024).toFixed(1);
+        // Archivos del cliente
+        for (const d of allDocs) {
+          const finalPath = resolvePath(d);
+          if (finalPath) {
+            const catLabel = CAT_LABELS[d.category] || d.category || 'Other';
+            archive.file(finalPath, { name: `[${catLabel}] ${d.originalName || d.storedFilename}` });
+          }
+        }
+        // Archivos extra subidos desde el formulario
+        for (const e of extraAttachments) {
+          archive.append(Buffer.from(e.content, 'base64'), { name: e.originalName });
+        }
 
-    let bundleReason = '';
-    if (totalBytes > LIMIT_BYTES && incompatible.length > 0) {
-      bundleReason = `The documents exceed the email size limit (${totalMB} MB) and include ${incompatible.length} file(s) in formats not supported as email attachments (e.g. HEIC/iPhone photos).`;
-    } else if (totalBytes > LIMIT_BYTES) {
-      bundleReason = `The client's documents total <strong>${totalMB} MB</strong> which exceeds email attachment limits.`;
-    } else {
-      const incompatNames = incompatible.map(f => f.originalName).join(', ');
-      bundleReason = `${incompatible.length} file(s) are in a format not supported as email attachments (HEIC/iPhone photos): <em>${incompatNames}</em>. All files are available via the link below.`;
-    }
+        archive.finalize();
+      });
 
-    downloadSection = `
+      const zipBuf     = fs.readFileSync(zipPath);
+      const zipContent = zipBuf.toString('base64');
+      const zipMB      = (zipBuf.length / 1024 / 1024).toFixed(1);
+      fs.unlinkSync(zipPath);
+
+      const safeName = (freshU.fullName || freshU.email).replace(/[^a-zA-Z0-9._-]/g, '_');
+      const zipName  = `Documents_${safeName}_${taxYear}.zip`;
+
+      console.log(`[TAXAGENT ZIP] Generado ZIP de ${zipMB} MB (${allDocs.length} archivos) para ${clientName}`);
+
+      // Si el ZIP entra en Brevo (< 19MB) → adjuntarlo directamente
+      if (zipBuf.length < 19 * 1024 * 1024) {
+        mailAttachments = [{ name: zipName, content: zipContent }];
+        const incompatNote = incompatible.length > 0
+          ? ` (includes ${incompatible.length} HEIC/incompatible file(s) converted to ZIP)`
+          : '';
+        downloadSection = `
+  <!-- ZIP Section -->
+  <div style="padding:14px 28px;background:#F0FDF4;border:2px solid #22C55E;border-radius:6px;margin:16px 28px;">
+    <p style="margin:0;font-size:0.92rem;font-weight:700;color:#15803D;">📦 All documents attached as ZIP${incompatNote}</p>
+    <p style="margin:4px 0 0;font-size:0.85rem;color:#374151;">File: <strong>${zipName}</strong> (${zipMB} MB compressed)</p>
+  </div>`;
+      } else {
+        // ZIP también es muy grande → usar bundle link como fallback
+        const crypto = require('crypto');
+        const bundleToken = crypto.randomBytes(24).toString('hex');
+        const bundleFiles = [];
+        for (const d of allDocs) {
+          const finalPath = resolvePath(d);
+          if (finalPath) {
+            const catLabel = CAT_LABELS[d.category] || d.category || 'Other';
+            bundleFiles.push({ path: finalPath, name: `[${catLabel}] ${d.originalName || d.storedFilename}` });
+          }
+        }
+        db.get('taxBundles').push({ token: bundleToken, userId: u.id, clientName, files: bundleFiles, createdAt: new Date().toISOString(), expiresAt: null }).write();
+        const bundleUrl = `https://retaux.com/taxagent-bundle/${bundleToken}`;
+        mailAttachments = [];
+        downloadSection = `
   <!-- Download Link Section -->
   <div style="padding:16px 28px;background:#EFF6FF;border:2px solid #3B82F6;border-radius:6px;margin:16px 28px;">
     <p style="margin:0 0 8px;font-size:0.95rem;font-weight:700;color:#1D4ED8;">📦 Documents Download Link</p>
-    <p style="margin:0 0 10px;font-size:0.88rem;color:#374151;">${bundleReason}</p>
-    <a href="${bundleUrl}" style="display:inline-block;background:#1D4ED8;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600;font-size:0.9rem;">
-      ⬇ Download All Documents
-    </a>
+    <p style="margin:0 0 10px;font-size:0.88rem;color:#374151;">The client's documents (${zipMB} MB) exceed email limits. Download all files via the link below.</p>
+    <a href="${bundleUrl}" style="display:inline-block;background:#1D4ED8;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600;font-size:0.9rem;">⬇ Download All Documents</a>
   </div>`;
-
-    // Si solo hay incompatibles pero el tamaño es OK → adjuntar los compatibles además del link
-    if (totalBytes <= LIMIT_BYTES && incompatible.length > 0) {
-      mailAttachments = allAttachmentsFull; // adjuntar los compatibles normalmente
-    } else {
-      mailAttachments = []; // solo el link, sin adjuntos
+      }
+    } catch (zipErr) {
+      console.error('[TAXAGENT ZIP] Error generando ZIP:', zipErr.message);
+      // fallback: adjuntar solo los archivos compatibles
+      mailAttachments = allAttachmentsFull;
     }
   }
 
