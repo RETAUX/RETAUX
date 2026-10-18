@@ -48,10 +48,11 @@ CLAUDE_ERRORES.md
 taa-forms/
 
 # ── admin.js raíz (versión vieja sin uso, no referenciada por PM2) ────────────
-admin.js
+/admin.js
 
 # ── Archivos de tarea internos de Claude Code ─────────────────────────────────
 .claude/
 
 # ── Carpeta de datos excluidos (si quedara alguna referencia local) ───────────
 RETAUX-datos-excluidos/
+exports/
