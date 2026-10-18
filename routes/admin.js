@@ -1722,7 +1722,9 @@ router.post('/user/:id/send-taxagent', requireAdmin, handleTaxAgentUpload, async
     ...extraAttachments
   ];
   const totalBytes = allAttachmentsFull.reduce((sum, a) => sum + Buffer.from(a.content, 'base64').length, 0);
-  const LIMIT_BYTES = 15 * 1024 * 1024; // 15MB margen seguro
+  // Brevo mide en base64 (~37% más que el raw). Con ENPRESA + bank, dejar margen:
+  // 10MB raw de docs cliente → ~13.7MB base64 → seguro bajo 20MB total
+  const LIMIT_BYTES = 10 * 1024 * 1024;
 
   // Necesita ZIP si hay archivos incompatibles (HEIC) o el tamaño supera el límite
   const needsZip = totalBytes > LIMIT_BYTES || incompatible.length > 0;
@@ -1773,8 +1775,8 @@ router.post('/user/:id/send-taxagent', requireAdmin, handleTaxAgentUpload, async
 
       console.log(`[TAXAGENT ZIP] Generado ZIP de ${zipMB} MB (${allDocs.length} archivos) para ${clientName}`);
 
-      // Si el ZIP entra en Brevo (< 19MB) → adjuntarlo directamente
-      if (zipBuf.length < 19 * 1024 * 1024) {
+      // Brevo mide base64: ZIP raw × 1.37. Límite seguro: 13MB raw → ~17.8MB base64
+      if (zipBuf.length < 13 * 1024 * 1024) {
         mailAttachments = [{ name: zipName, content: zipContent }];
         const incompatNote = incompatible.length > 0
           ? ` (includes ${incompatible.length} HEIC/incompatible file(s) converted to ZIP)`
@@ -2046,7 +2048,8 @@ router.post('/user/:id/send-taxagent', requireAdmin, handleTaxAgentUpload, async
 
   // Brevo rechaza emails >20MB — si el total supera el límite, quitar adjuntos de cliente
   // (los PDFs ENPRESA y bank statement son siempre pequeños y se mantienen)
-  const BREVO_HARD_LIMIT = 19 * 1024 * 1024; // 19MB margen
+  // 14MB raw ≈ 19.2MB base64 — justo bajo el límite de 20MB de Brevo
+  const BREVO_HARD_LIMIT = 14 * 1024 * 1024;
   const totalEmailBytes = emailAttachments.reduce((s, a) => s + (a.content ? Buffer.from(a.content, 'base64').length : 0), 0);
   const enpresaMB = enpresaAttachments.reduce((s, a) => s + (a.content ? Buffer.from(a.content, 'base64').length : 0), 0) / 1024 / 1024;
   const bankMB = bankStatementAttachments.reduce((s, a) => s + (a.content ? Buffer.from(a.content, 'base64').length : 0), 0) / 1024 / 1024;
