@@ -1723,8 +1723,8 @@ router.post('/user/:id/send-taxagent', requireAdmin, handleTaxAgentUpload, async
   ];
   const totalBytes = allAttachmentsFull.reduce((sum, a) => sum + Buffer.from(a.content, 'base64').length, 0);
   // Brevo mide en base64 (~37% más que el raw). Con ENPRESA + bank, dejar margen:
-  // 10MB raw de docs cliente → ~13.7MB base64 → seguro bajo 20MB total
-  const LIMIT_BYTES = 10 * 1024 * 1024;
+  // 8MB raw de docs cliente → ~11MB base64 → seguro bajo 20MB total
+  const LIMIT_BYTES = 8 * 1024 * 1024;
 
   // Necesita ZIP si hay archivos incompatibles (HEIC) o el tamaño supera el límite
   const needsZip = totalBytes > LIMIT_BYTES || incompatible.length > 0;
@@ -2241,29 +2241,64 @@ router.post('/user/:id/resend-taxagent', requireAdmin, async (req, res) => {
   if (!html) return res.redirect(`/admin/user/${u.id}?error=no_report`);
 
   const clientName = u.fullName || u.email;
-
-  // Recolectar adjuntos del usuario
   const allDocs = sortDocsByCategory(db.get('documents').filter({ userId: u.id }).value());
-  const attachments = [];
-  for (const d of allDocs) {
+
+  const resolveDocPath = (d) => {
     const candidates = [
-      d.storedPath,
-      d.path,
-      d.storedFilename ? path.join(UPLOAD_ROOT, u.id, d.storedFilename) : null,
-      d.storedFilename ? path.join(UPLOAD_ROOT, d.storedFilename) : null,
+      path.join(UPLOAD_ROOT, u.id, d.storedFilename),
+      path.join(UPLOAD_ROOT, u.id, 'general', d.storedFilename),
+      path.join(UPLOAD_ROOT, u.id, d.taxYear || 'general', d.storedFilename),
     ].filter(Boolean);
-    let found = null;
-    for (const p of candidates) { if (fs.existsSync(p)) { found = p; break; } }
-    if (!found) continue;
-    const ext = path.extname(found).toLowerCase();
-    const INCOMPATIBLE = ['.heic', '.heif', '.tiff', '.tif', '.bmp', '.webp'];
-    if (INCOMPATIBLE.includes(ext)) continue;
+    return candidates.find(p => fs.existsSync(p)) || null;
+  };
+
+  // Calcular tamaño total para decidir si ZIP
+  let totalBytes = 0;
+  for (const d of allDocs) {
+    const p = resolveDocPath(d);
+    if (p) try { totalBytes += fs.statSync(p).size; } catch (_) {}
+  }
+
+  let finalAttachments = [];
+  const RESEND_LIMIT = 8 * 1024 * 1024;
+
+  if (totalBytes > RESEND_LIMIT) {
     try {
-      const content = fs.readFileSync(found).toString('base64');
-      const catLabel = d.category || 'Document';
-      const fileName = `[${catLabel}] ${d.originalName || d.storedFilename}`;
-      attachments.push({ name: fileName, content });
-    } catch (_) {}
+      const archiver = require('archiver');
+      const os = require('os');
+      const zipPath = path.join(os.tmpdir(), `retaux_resend_${u.id}_${Date.now()}.zip`);
+      const output  = fs.createWriteStream(zipPath);
+      const archive = archiver('zip', { zlib: { level: 6 } });
+      await new Promise((resolve, reject) => {
+        output.on('close', resolve);
+        archive.on('error', reject);
+        archive.pipe(output);
+        for (const d of allDocs) {
+          const p = resolveDocPath(d);
+          if (p) archive.file(p, { name: `[${d.category||'doc'}] ${d.originalName||d.storedFilename}` });
+        }
+        archive.finalize();
+      });
+      const zipBuf = fs.readFileSync(zipPath);
+      fs.unlinkSync(zipPath);
+      const safeName = (u.fullName || u.email).replace(/[^a-zA-Z0-9._-]/g, '_');
+      if (zipBuf.length < 13 * 1024 * 1024) {
+        finalAttachments = [{ name: `Documents_${safeName}.zip`, content: zipBuf.toString('base64') }];
+        console.log(`[RESEND TAXAGENT] ZIP ${(zipBuf.length/1024/1024).toFixed(1)}MB para ${clientName}`);
+      } else {
+        console.warn(`[RESEND TAXAGENT] ZIP demasiado grande (${(zipBuf.length/1024/1024).toFixed(1)}MB) — enviando sin adjuntos`);
+      }
+    } catch (zipErr) {
+      console.error('[RESEND TAXAGENT] ZIP error:', zipErr.message);
+    }
+  } else {
+    for (const d of allDocs) {
+      const p = resolveDocPath(d);
+      if (!p) continue;
+      const ext = path.extname(p).toLowerCase();
+      if (['.heic','.heif','.webp','.avif'].includes(ext)) continue;
+      try { finalAttachments.push({ name: `[${d.category||'doc'}] ${d.originalName||d.storedFilename}`, content: fs.readFileSync(p).toString('base64') }); } catch (_) {}
+    }
   }
 
   try {
@@ -2271,11 +2306,11 @@ router.post('/user/:id/resend-taxagent', requireAdmin, async (req, res) => {
       to:      'hola@retaux.com',
       subject: `[RETAUX] Tax Return — ${clientName}`,
       html,
-      text:    `Tax return file for ${clientName}. ${attachments.length} document(s) attached.`,
-      attachments,
+      text:    `Tax return file for ${clientName}. ${finalAttachments.length} attachment(s).`,
+      attachments: finalAttachments,
     });
     db.get('users').find({ id: u.id }).assign({ taxAgentSentAt: new Date().toISOString() }).write();
-    console.log(`[RESEND TAXAGENT] Sent for ${clientName} — ${attachments.length} attachments`);
+    console.log(`[RESEND TAXAGENT] Sent for ${clientName} — ${finalAttachments.length} attachments`);
   } catch (e) {
     console.error('[RESEND TAXAGENT] Error:', e.message);
   }
