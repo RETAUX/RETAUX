@@ -602,7 +602,10 @@
     "rejected_box_title": "WHAT CAN YOU DO?",
     "rejected_box_body": "If you <strong>already transferred</strong> the amount, please send us proof of payment (screenshot or receipt) at <a href=\"mailto:hola@retaux.com\" style=\"color:#0A0E5C;font-weight:700;\">hola@retaux.com</a>.<br><br>If you <strong>haven't paid yet</strong>, you can complete your payment by clicking the button below.",
     "rejected_btn": "COMPLETE MY PAYMENT →",
-    "rejected_outro": "Once we confirm your payment, your case will be activated within a few hours."
+    "rejected_outro": "Once we confirm your payment, your case will be activated within a few hours.",
+    "paused_title": "Payments paused for now",
+    "paused_body": "We're working on the site and aren't taking online payments at the moment. Please message us on WhatsApp and we'll help you complete your tax return.",
+    "paused_back": "Back to my dashboard"
   },
   "referrals": {
     "page_title": "Referrals",

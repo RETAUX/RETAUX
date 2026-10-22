@@ -1,0 +1,21 @@
+<% if (typeof paymentsPaused !== 'undefined' && paymentsPaused) { %>
+<!-- Modal pagos pausados (no se puede cerrar) -->
+<style>
+  .pp-overlay { position: fixed; inset: 0; background: rgba(6,9,32,0.75); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .pp-box { background: #0d1340; border: 1px solid rgba(255,255,255,0.15); border-radius: 16px; padding: 28px; max-width: 420px; width: 100%; text-align: center; color: #fff; box-shadow: 0 32px 64px rgba(0,0,0,0.4); }
+  .pp-title { font-family: 'Fraunces',Georgia,serif; font-size: 1.2rem; font-weight: 700; color: #4FC3F7; margin-bottom: 12px; }
+  .pp-body { font-size: 0.9rem; color: rgba(255,255,255,0.75); line-height: 1.7; }
+  .pp-whatsapp { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 18px; padding: 13px; background: #25D366; color: #fff !important; font-weight: 700; font-size: 1rem; border-radius: 10px; text-decoration: none; }
+  .pp-whatsapp:hover { background: #1ebe5a; }
+  .pp-links { margin-top: 16px; font-size: 0.85rem; }
+  .pp-links a { color: #4FC3F7; text-decoration: none; }
+</style>
+<div class="pp-overlay" id="modal-payments-paused">
+  <div class="pp-box">
+    <div class="pp-title" data-i18n="payment.paused_title"><%- __('payment.paused_title') %></div>
+    <p class="pp-body" data-i18n="payment.paused_body"><%- __('payment.paused_body') %></p>
+    <a href="https://wa.me/61481315878" target="_blank" rel="noopener" class="pp-whatsapp">📱 WhatsApp +61 481 315 878</a>
+    <div class="pp-links"><a href="/dashboard" data-i18n="payment.paused_back"><%- __('payment.paused_back') %></a></div>
+  </div>
+</div>
+<% } %>

@@ -602,7 +602,10 @@
     "rejected_box_title": "QUE POUVEZ-VOUS FAIRE ?",
     "rejected_box_body": "Si vous avez <strong>déjà effectué le virement</strong>, envoyez-nous une preuve de paiement (capture d'écran ou reçu) à <a href=\"mailto:hola@retaux.com\" style=\"color:#0A0E5C;font-weight:700;\">hola@retaux.com</a>.<br><br>Si vous <strong>n'avez pas encore payé</strong>, vous pouvez compléter votre paiement en cliquant sur le bouton ci-dessous.",
     "rejected_btn": "COMPLÉTER MON PAIEMENT →",
-    "rejected_outro": "Une fois votre paiement confirmé, votre dossier sera activé en quelques heures."
+    "rejected_outro": "Une fois votre paiement confirmé, votre dossier sera activé en quelques heures.",
+    "paused_title": "Paiements suspendus pour le moment",
+    "paused_body": "Nous travaillons sur le site et n'acceptons pas de paiements en ligne pour le moment. Écris-nous sur WhatsApp et nous t'aiderons à finaliser ta démarche.",
+    "paused_back": "Retour à mon espace"
   },
   "referrals": {
     "page_title": "Parrainages",

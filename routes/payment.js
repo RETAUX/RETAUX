@@ -29,6 +29,14 @@ if (_rawPrice && _rawPrice < 100) {
 const PRICE_AUD    = _rawPrice || 150;
 const DISCOUNT_AUD = 30;
 
+// Pagos pausados: checkout muestra popup con WhatsApp y se rechaza el envío de comprobantes.
+// Para reabrir: PAYMENTS_PAUSED=false en .env + pm2 restart retaux --update-env
+const PAYMENTS_PAUSED = process.env.PAYMENTS_PAUSED !== 'false';
+function blockIfPaymentsPaused(req, res, next) {
+  if (PAYMENTS_PAUSED) return res.redirect('/payment');
+  next();
+}
+
 // ── Autorización (firma previa al pago) ──────────────────────────────────────
 
 router.get('/consent', requireAuth, requireVerified, (req, res) => {
@@ -76,7 +84,8 @@ router.get('/payment', requireAuth, requireVerified, (req, res) => {
     paymentLinkDiscount: process.env.PAYMENT_LINK_DISCOUNT || '',
     paymentLinkBase:     (process.env.PAYMENT_LINK_FULL || '').split('?')[0] || '',
     error:   req.query.error   || null,
-    success: req.query.success || null
+    success: req.query.success || null,
+    paymentsPaused: PAYMENTS_PAUSED
   });
 });
 
@@ -95,7 +104,7 @@ router.get('/payment/validate-ref', requireAuth, requireVerified, (req, res) => 
 
 // ── Cliente declara que ya pagó (crea pago pending_manual) ───────────────────
 
-router.post('/payment/submit-manual', requireAuth, requireVerified, uploadProof.single('paymentProof'), async (req, res) => {
+router.post('/payment/submit-manual', requireAuth, requireVerified, blockIfPaymentsPaused, uploadProof.single('paymentProof'), async (req, res) => {
   const existingPaid = db.get('payments').find({ userId: req.user.id, status: 'paid' }).value();
   if (existingPaid) return res.redirect('/dashboard');
 

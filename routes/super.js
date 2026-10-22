@@ -7,6 +7,7 @@ const { sendSuperPaymentPendingNotification } = require('../lib/emails');
 const router = express.Router();
 
 const SUPER_PRICE_AUD = 250;
+const PAYMENTS_PAUSED = process.env.PAYMENTS_PAUSED !== 'false';
 
 router.get('/super', requireAuth, requireVerified, (req, res) => {
   const existing = db.get('super_payments').find({ userId: req.user.id, status: 'paid' }).value();
@@ -19,11 +20,14 @@ router.get('/super', requireAuth, requireVerified, (req, res) => {
     user: req.user,
     priceAUD: SUPER_PRICE_AUD,
     paymentLink: process.env.SUPER_PAYMENT_LINK || '',
-    error: req.query.error || null
+    error: req.query.error || null,
+    paymentsPaused: PAYMENTS_PAUSED
   });
 });
 
 router.post('/super/submit', requireAuth, requireVerified, async (req, res) => {
+  if (PAYMENTS_PAUSED) return res.redirect('/super');
+
   const existingPaid = db.get('super_payments').find({ userId: req.user.id, status: 'paid' }).value();
   if (existingPaid) return res.redirect('/super/done');
 

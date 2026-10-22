@@ -602,7 +602,10 @@
     "rejected_box_title": "COSA PUOI FARE?",
     "rejected_box_body": "Se hai <strong>già effettuato il bonifico</strong>, inviaci la prova di pagamento (screenshot o ricevuta) a <a href=\"mailto:hola@retaux.com\" style=\"color:#0A0E5C;font-weight:700;\">hola@retaux.com</a>.<br><br>Se <strong>non hai ancora pagato</strong>, puoi completare il pagamento cliccando il pulsante qui sotto.",
     "rejected_btn": "COMPLETA IL MIO PAGAMENTO →",
-    "rejected_outro": "Una volta confermato il pagamento, il tuo caso verrà attivato in poche ore."
+    "rejected_outro": "Una volta confermato il pagamento, il tuo caso verrà attivato in poche ore.",
+    "paused_title": "Pagamenti sospesi per il momento",
+    "paused_body": "Stiamo lavorando al sito e al momento non accettiamo pagamenti online. Scrivici su WhatsApp e ti aiuteremo a completare la tua pratica.",
+    "paused_back": "Torna alla mia area"
   },
   "referrals": {
     "page_title": "Referral",

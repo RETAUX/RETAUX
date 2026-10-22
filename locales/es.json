@@ -602,7 +602,10 @@
     "rejected_box_title": "¿QUÉ PODÉS HACER?",
     "rejected_box_body": "Si <strong>ya transferiste</strong>, mandanos el comprobante (captura o recibo) a <a href=\"mailto:hola@retaux.com\" style=\"color:#0A0E5C;font-weight:700;\">hola@retaux.com</a>.<br><br>Si <strong>todavía no pagaste</strong>, podés completar tu pago haciendo clic en el botón de abajo.",
     "rejected_btn": "COMPLETAR MI PAGO →",
-    "rejected_outro": "Una vez que confirmemos el pago, tu caso queda activo en pocas horas."
+    "rejected_outro": "Una vez que confirmemos el pago, tu caso queda activo en pocas horas.",
+    "paused_title": "Pagos pausados por el momento",
+    "paused_body": "Estamos trabajando en la página y por ahora no estamos recibiendo pagos online. Por favor escribinos por WhatsApp y te ayudamos a completar tu trámite.",
+    "paused_back": "Volver a mi panel"
   },
   "referrals": {
     "page_title": "Referidos",
