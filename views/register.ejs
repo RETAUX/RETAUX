@@ -57,11 +57,35 @@
     .auth-footer { text-align: center; margin-top: 18px; font-size: 0.88rem; color: rgba(255,255,255,0.4); }
     .auth-footer a { color: #4FC3F7; text-decoration: none; margin-left: 4px; }
     .page-footer { text-align: center; padding: 16px; font-size: 11px; color: rgba(255,255,255,0.18); }
+    .modal-paused { text-align: center; }
+    .modal-paused .modal-title { font-size: 1.2rem; }
+    .btn-whatsapp { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 18px; padding: 13px; background: #25D366; color: #fff; font-weight: 700; font-size: 1rem; border-radius: 10px; text-decoration: none; }
+    .btn-whatsapp:hover { background: #1ebe5a; }
+    .paused-links { margin-top: 16px; font-size: 0.85rem; color: rgba(255,255,255,0.45); }
+    .paused-links a { color: #4FC3F7; text-decoration: none; }
     @media (max-width: 480px) { .top-nav { padding: 14px 20px; } .glass-card { padding: 28px 20px; } }
   </style>
 </head>
 <body>
 <div class="bg"><div class="bg-orb bg-orb-1"></div><div class="bg-orb bg-orb-2"></div></div>
+
+<% if (typeof registrationPaused !== 'undefined' && registrationPaused) { %>
+<!-- Modal registro pausado (no se puede cerrar) -->
+<div class="modal-overlay open" id="modal-paused" data-locked="1">
+  <div class="modal-box modal-paused">
+    <div class="modal-title" data-i18n="auth.paused_title"><%- __('auth.paused_title') %></div>
+    <div class="modal-body">
+      <p data-i18n="auth.paused_body"><%- __('auth.paused_body') %></p>
+    </div>
+    <a href="https://wa.me/61481315878" target="_blank" rel="noopener" class="btn-whatsapp">📱 WhatsApp +61 481 315 878</a>
+    <div class="paused-links">
+      <span data-i18n="auth.have_account"><%- __('auth.have_account') %></span>
+      <a href="/login" data-i18n="auth.go_login"><%- __('auth.go_login') %></a>
+      &nbsp;·&nbsp; <a href="/" data-i18n="auth.paused_home"><%- __('auth.paused_home') %></a>
+    </div>
+  </div>
+</div>
+<% } %>
 
 <!-- Modal TFN -->
 <div class="modal-overlay" id="modal-tfn">
@@ -196,7 +220,7 @@ function togglePwd(id,btn){var i=document.getElementById(id);var s=i.type==='pas
 function formatTFN(input){var v=input.value.replace(/\D/g,'').slice(0,9);if(v.length>6)v=v.slice(0,3)+' '+v.slice(3,6)+' '+v.slice(6);else if(v.length>3)v=v.slice(0,3)+' '+v.slice(3);input.value=v;}
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
-document.querySelectorAll('.modal-overlay').forEach(function(m){m.addEventListener('click',function(e){if(e.target===m)m.classList.remove('open');});});
+document.querySelectorAll('.modal-overlay:not([data-locked])').forEach(function(m){m.addEventListener('click',function(e){if(e.target===m)m.classList.remove('open');});});
 </script>
 <script>document.getElementById("form-ts").value=Date.now();</script>
 <script src="/js/i18n.js"></script>

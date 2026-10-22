@@ -16,6 +16,10 @@ const verifyLimiter   = rateLimit({ windowMs: 15*60*1000, max: 10, standardHeade
 const registerLimiter = rateLimit({ windowMs: 60*60*1000, max: 5,  standardHeaders: true, legacyHeaders: false, message: 'Demasiados intentos. Intentá en una hora.' });
 const disposableDomains = require('../lib/disposable-domains');
 
+// Registro de cuentas nuevas pausado: muestra popup con WhatsApp y rechaza el POST.
+// Para reabrir: REGISTRATION_PAUSED=false en .env + pm2 restart retaux --update-env
+const REGISTRATION_PAUSED = process.env.REGISTRATION_PAUSED !== 'false';
+
 function setSession(res, userId, opts = {}) {
   const maxAge = opts.longSession ? 30 * 24 * 60 * 60 * 1000 : 2 * 60 * 60 * 1000;
   const expiresIn = opts.longSession ? '30d' : '2h';
@@ -40,6 +44,7 @@ router.get('/register', (req, res) => {
     error: null,
     refCode: req.query.ref || '',
     prefill: {},
+    registrationPaused: REGISTRATION_PAUSED,
     metaTitle: 'Crear cuenta — RETAUX | Australian Tax Return',
     metaDesc: 'Recuperá tu tax return en Australia. Servicio profesional para Working Holiday Makers. AUD 120 con código de referido.',
     ogUrl: req.originalUrl
@@ -47,6 +52,9 @@ router.get('/register', (req, res) => {
 });
 
 router.post('/register', registerLimiter, async (req, res) => {
+  if (REGISTRATION_PAUSED)
+    return res.render('register', { error: null, prefill: {}, refCode: '', registrationPaused: true });
+
   // Honeypot
   if ((req.body.website || '').trim()) return res.redirect('/register');
 

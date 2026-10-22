@@ -163,7 +163,10 @@
     "mygov_format": "Your myGov username will be in the format <strong>AB123456</strong>",
     "mygov_note": "Save your username and password — you'll need them for your tax return.",
     "ato_note": "This step is important to correctly manage your tax return.",
-    "enter_code_btn": "Enter my code →"
+    "enter_code_btn": "Enter my code →",
+    "paused_title": "We're working on the site",
+    "paused_body": "We're not accepting new accounts at the moment. Please message us on WhatsApp and we'll help you with your tax return.",
+    "paused_home": "Back to home"
   },
   "personal": {
     "title": "Personal details",

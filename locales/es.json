@@ -163,7 +163,10 @@
     "mygov_format": "Tu usuario myGov será del formato <strong>AB123456</strong>",
     "mygov_note": "Guardá bien tu usuario y contraseña — los necesitarás para el trámite.",
     "ato_note": "Este paso es importante para gestionar tu declaración correctamente.",
-    "enter_code_btn": "Ingresar mi código →"
+    "enter_code_btn": "Ingresar mi código →",
+    "paused_title": "Estamos trabajando en la página",
+    "paused_body": "Por el momento no estamos aceptando cuentas nuevas. Por favor escribinos por WhatsApp y te ayudamos con tu trámite.",
+    "paused_home": "Volver al inicio"
   },
   "personal": {
     "title": "Datos personales",

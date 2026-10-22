@@ -163,7 +163,10 @@
     "mygov_format": "Votre identifiant myGov sera au format <strong>AB123456</strong>",
     "mygov_note": "Conservez bien votre identifiant et mot de passe — vous en aurez besoin pour votre déclaration.",
     "ato_note": "Cette étape est importante pour gérer correctement votre déclaration.",
-    "enter_code_btn": "Saisir mon code →"
+    "enter_code_btn": "Saisir mon code →",
+    "paused_title": "Nous travaillons sur le site",
+    "paused_body": "Nous n'acceptons pas de nouveaux comptes pour le moment. Écris-nous sur WhatsApp et nous t'aiderons avec ta démarche.",
+    "paused_home": "Retour à l'accueil"
   },
   "personal": {
     "title": "Données personnelles",
